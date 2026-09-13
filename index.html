@@ -480,6 +480,8 @@
         sponsorLink:'Sponsor', playerLink:'Player',
         playerLinkCopied:'Player link copied. Give this only to the player — it lets them start their official run.',
         challengeGame:'Game',
+        resetTryout:'Reset scores',
+        confirmResetTryout:'Clear every score on this tryout? Players keep their links — only the scores go. This cannot be undone.',
         playersWord:'players',
         tryout:'Tryout', tryoutLink:'Copy tryout link',
         tryoutBody:'Share this with the team. Players try all three games, and the totals show which one suits them best.',
@@ -668,6 +670,8 @@
         sponsorLink:'Padrino', playerLink:'Jugador',
         playerLinkCopied:'Enlace del jugador copiado. D\u00e1selo solo al jugador — con \u00e9l empieza su corrida oficial.',
         challengeGame:'Juego',
+        resetTryout:'Reiniciar puntos',
+        confirmResetTryout:'\u00bfBorrar todos los puntos de esta prueba? Los jugadores conservan sus enlaces — solo se van los puntos. No se puede deshacer.',
         playersWord:'jugadores',
         tryout:'Prueba', tryoutLink:'Copiar enlace de prueba',
         tryoutBody:'Comparte esto con el equipo. Los jugadores prueban los tres juegos y los totales muestran cuál les conviene.',
@@ -1204,7 +1208,10 @@
 
         box.innerHTML = `
           <p style="margin:0 0 8px 0;font-size:11px;color:#888;">${t('tryoutBody')}</p>
-          <button class="btn" onclick="copyTryoutLink('${campaignId}')" style="padding:8px 14px;font-size:11px;margin-bottom:12px;">${t('tryoutLink')}</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+            <button class="btn" onclick="copyTryoutLink('${campaignId}')" style="padding:8px 14px;font-size:11px;">${t('tryoutLink')}</button>
+            ${played ? `<button class="btn red" onclick="resetTryout('${campaignId}')" style="padding:8px 14px;font-size:11px;">${t('resetTryout')}</button>` : ''}
+          </div>
 
           ${played ? summary : `<p style="color:#aaa;font-size:12px;">${t('noTryouts')}</p>`}
 
@@ -1216,6 +1223,21 @@
       } catch (error) {
         console.error('Tryout:', error);
         box.innerHTML = '<p style="color:#f66;font-size:12px;">Error: ' + error.message + '</p>';
+      }
+    }
+
+    // Clears the board so a team can run another competition without
+    // last month's scores still in it. Players keep their links —
+    // only the scores go.
+    async function resetTryout(campaignId) {
+      if (!confirm(t('confirmResetTryout'))) return;
+      try {
+        await supabaseQuery('campaign_tryouts', 'DELETE', null,
+          `?campaign_id=eq.${campaignId}`);
+        loadTryout(campaignId);
+      } catch (error) {
+        console.error('Reset tryout:', error);
+        alert('Error: ' + error.message);
       }
     }
 
