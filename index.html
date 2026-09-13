@@ -233,6 +233,13 @@
               <option value="" data-i18n="selectCampaign">Select a campaign...</option>
             </select>
 
+            <label data-i18n="challengeGame">Game</label>
+            <select id="challengeGame" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;margin-top:6px;font-family:inherit;">
+              <option value="fortress">The Fortress</option>
+              <option value="recall">The Recall</option>
+              <option value="recognition">Recognition</option>
+            </select>
+
             <label data-i18n="challengeName">Challenge Name</label>
             <input type="text" id="challengeName" data-i18n-ph="challengeNamePh" placeholder="e.g. Fall Fortress Challenge">
 
@@ -472,6 +479,7 @@
         playerHasSales:'Could not remove — that player has sales or a challenge run.',
         sponsorLink:'Sponsor', playerLink:'Player',
         playerLinkCopied:'Player link copied. Give this only to the player — it lets them start their official run.',
+        challengeGame:'Game',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
@@ -655,6 +663,7 @@
         playerHasSales:'No se pudo eliminar — ese jugador tiene ventas o una corrida.',
         sponsorLink:'Padrino', playerLink:'Jugador',
         playerLinkCopied:'Enlace del jugador copiado. D\u00e1selo solo al jugador — con \u00e9l empieza su corrida oficial.',
+        challengeGame:'Juego',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
@@ -1942,6 +1951,16 @@
       return level > 0 ? (level * (level + 1)) / 2 : 0;
     }
 
+    // Every game escalates the same way, so one points formula covers
+    // all of them. A new game is a line here and its own file on the
+    // challenge site.
+    const GAME_LABELS = {
+      fortress: 'The Fortress',
+      recall: 'The Recall',
+      recognition: 'Recognition'
+    };
+    function gameLabel(key) { return GAME_LABELS[key] || GAME_LABELS.fortress; }
+
     async function createChallenge() {
       const campaignId = document.getElementById('challengeCampaign').value;
       const name = document.getElementById('challengeName').value.trim();
@@ -1958,6 +1977,7 @@
           campaign_id: campaignId,
           name,
           slug,
+          game: document.getElementById('challengeGame').value,
           pledge_deadline: document.getElementById('challengePledgeDeadline').value || null,
           run_deadline: document.getElementById('challengeRunDeadline').value || null,
           team_share_pct: parseInt(document.getElementById('challengeShare').value, 10) || 50
@@ -1999,7 +2019,7 @@
             <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;">
               <div style="flex:1;">
                 <p style="margin:0;font-weight:950;font-size:15px;">${ch.name}</p>
-                <p style="margin:4px 0 0 0;font-size:12px;color:#aaa;">${ch.campaigns ? ch.campaigns.name : ''}</p>
+                <p style="margin:4px 0 0 0;font-size:12px;color:#aaa;">${ch.campaigns ? ch.campaigns.name : ''} · ${gameLabel(ch.game)}</p>
                 <p style="margin:4px 0 0 0;font-size:11px;color:#888;">
                   ${ch.pledge_deadline ? t('pledgesClose') + ' ' + ch.pledge_deadline : ''}
                   ${ch.run_deadline ? ' · ' + t('runsClose') + ' ' + ch.run_deadline : ''}
