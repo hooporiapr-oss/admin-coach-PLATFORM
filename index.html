@@ -490,6 +490,8 @@
         cashRackNote:'Enter shots attempted, threes made and foul shots made. Every attempt scores 1, a made three adds 3, a made foul shot adds 2. Scores can be changed until you invoice.',
         needAttempts:'Enter how many shots were attempted.',
         moreMadeThanTaken:'More shots made than attempted — check the numbers.',
+        scoringLink:'Scoring link', boardLink:'Board',
+        scoringCopied:'Scoring link copied. Give this only to the scorekeeper — it records the scores that sponsors are billed on.',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
@@ -685,6 +687,8 @@
         cashRackNote:'Entra los tiros intentados, los triples anotados y los tiros libres anotados. Cada intento vale 1, un triple suma 3, un tiro libre suma 2. Las puntuaciones se pueden cambiar hasta que factures.',
         needAttempts:'Entra cu\u00e1ntos tiros se intentaron.',
         moreMadeThanTaken:'M\u00e1s tiros anotados que intentados — revisa los n\u00fameros.',
+        scoringLink:'Enlace de anotaci\u00f3n', boardLink:'Tablero',
+        scoringCopied:'Enlace de anotaci\u00f3n copiado. D\u00e1selo solo al anotador — con \u00e9l se guardan las puntuaciones por las que se factura a los padrinos.',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
@@ -2174,6 +2178,9 @@
               <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
                 <button class="btn" onclick="copyChallengeLink('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('teamLink')}</button>
                 <button class="btn alt" onclick="toggleChallengeDetail('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('detail')}</button>
+                ${isManual(ch.game) ? `
+                  <button class="btn" onclick="copyScoringLink('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('scoringLink')}</button>
+                  <button class="btn alt" onclick="openBoard('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('boardLink')}</button>` : ''}
                 <button class="btn" onclick="sendChallengeInvoices('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('sendInvoices')}</button>
                 <button class="btn red" onclick="deleteChallenge('${ch.id}','${String(ch.name).replace(/'/g, "\\'")}')" style="padding:6px 10px;font-size:11px;">${t('delete')}</button>
               </div>
@@ -2230,6 +2237,41 @@
         console.error('Run link:', error);
         alert('Error: ' + error.message);
       }
+    }
+
+    // Cash Rack lives on its own site, because it is an event rather
+    // than a page on the platform.
+    const CASHRACK_SITE = 'https://hoops.cash';
+
+    // The scoring link carries a key only the scorekeeper gets —
+    // those numbers decide what sponsors are billed.
+    async function copyScoringLink(challengeId) {
+      try {
+        let rows = await supabaseQuery('challenge_scorer_keys', 'GET', null,
+          `?challenge_id=eq.${challengeId}&select=scorer_key`);
+
+        if (!rows || rows.length === 0) {
+          const key = (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '') : String(Math.random()).slice(2)).slice(0, 18);
+          await supabaseQuery('challenge_scorer_keys', 'POST',
+            { challenge_id: challengeId, scorer_key: key }, '?select=*');
+          rows = [{ scorer_key: key }];
+        }
+
+        const link = `${CASHRACK_SITE}/score.html?c=${challengeId}&k=${rows[0].scorer_key}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(link).then(() => alert(t('scoringCopied') + '\n\n' + link)).catch(() => prompt(t('copy'), link));
+        } else {
+          prompt(t('copy'), link);
+        }
+      } catch (error) {
+        console.error('Scoring link:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // The board reads only, so it needs no key — anyone can see it.
+    function openBoard(challengeId) {
+      window.open(`${CASHRACK_SITE}/board.html?c=${challengeId}`, '_blank');
     }
 
     async function toggleChallengeDetail(challengeId) {
