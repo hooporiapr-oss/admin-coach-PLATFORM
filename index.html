@@ -237,6 +237,7 @@
               <option value="fortress">The Fortress</option>
               <option value="recall">The Recall</option>
               <option value="recognition">Recognition</option>
+              <option value="cashrack">Cash Rack (in person)</option>
             </select>
 
             <label data-i18n="challengeName">Challenge Name</label>
@@ -484,6 +485,11 @@
         tryout:'Tryout', tryoutLink:'Copy tryout link',
         tryoutBody:'Share this with the team. Players try all three games, and the totals show which one suits them best.',
         noTryouts:'Nobody has played yet.', bestFit:'Best fit', perPlayer:'Per player',
+        noScore:'No score yet', lockedWord:'locked', saveScore:'Save',
+        attShort:'Shots', threeShort:'3s made', foulShort:'FTs made',
+        cashRackNote:'Enter shots attempted, threes made and foul shots made. Every attempt scores 1, a made three adds 3, a made foul shot adds 2. Scores can be changed until you invoice.',
+        needAttempts:'Enter how many shots were attempted.',
+        moreMadeThanTaken:'More shots made than attempted — check the numbers.',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
@@ -674,6 +680,11 @@
         tryout:'Prueba', tryoutLink:'Copiar enlace de prueba',
         tryoutBody:'Comparte esto con el equipo. Los jugadores prueban los tres juegos y los totales muestran cuál les conviene.',
         noTryouts:'Todav\u00eda no ha jugado nadie.', bestFit:'Mejor opci\u00f3n', perPlayer:'Por jugador',
+        noScore:'Sin puntuaci\u00f3n', lockedWord:'fijo', saveScore:'Guardar',
+        attShort:'Tiros', threeShort:'Triples', foulShort:'Libres',
+        cashRackNote:'Entra los tiros intentados, los triples anotados y los tiros libres anotados. Cada intento vale 1, un triple suma 3, un tiro libre suma 2. Las puntuaciones se pueden cambiar hasta que factures.',
+        needAttempts:'Entra cu\u00e1ntos tiros se intentaron.',
+        moreMadeThanTaken:'M\u00e1s tiros anotados que intentados — revisa los n\u00fameros.',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
@@ -2078,8 +2089,21 @@
     const GAME_LABELS = {
       fortress: 'The Fortress',
       recall: 'The Recall',
-      recognition: 'Recognition'
+      recognition: 'Recognition',
+      cashrack: 'Cash Rack'
     };
+
+    // Cash Rack is run on a real court, so there is no link to share
+    // and no game to play — the coach's scorekeepers count, and the
+    // numbers are entered here afterwards.
+    function isManual(game) { return game === 'cashrack'; }
+
+    // Every attempt scores 1. A made three adds 3 more, a made foul
+    // shot adds 2 more. Fifteen shots, so 57 is the most anyone can
+    // score and 15 the least for a completed run.
+    function cashRackPoints(att, threes, fouls) {
+      return (att || 0) + (threes || 0) * 3 + (fouls || 0) * 2;
+    }
     function gameLabel(key) { return GAME_LABELS[key] || GAME_LABELS.fortress; }
 
     async function createChallenge() {
@@ -2223,13 +2247,13 @@
 
       try {
         const chRows = await supabaseQuery('challenges', 'GET', null,
-          `?id=eq.${challengeId}&select=campaign_id,team_share_pct`);
+          `?id=eq.${challengeId}&select=campaign_id,team_share_pct,game`);
         if (!chRows || chRows.length === 0) return;
         const ch = chRows[0];
 
         const [players, runs, practice, pledges] = await Promise.all([
           supabaseQuery('players', 'GET', null, `?campaign_id=eq.${ch.campaign_id}&select=id,name&order=name.asc`),
-          supabaseQuery('challenge_runs', 'GET', null, `?challenge_id=eq.${challengeId}&select=player_id,level_reached,points`),
+          supabaseQuery('challenge_runs', 'GET', null, `?challenge_id=eq.${challengeId}&select=player_id,level_reached,points,attempts,threes,fouls`),
           supabaseQuery('challenge_practice', 'GET', null, `?challenge_id=eq.${challengeId}&select=player_id,best_level,runs`),
           supabaseQuery('pledges', 'GET', null, `?challenge_id=eq.${challengeId}&select=*&order=created_at.desc`)
         ]);
@@ -2259,10 +2283,46 @@
         // money.
         const teamCut = collected * (ch.team_share_pct / 100);
 
+        const manual = isManual(ch.game);
+
         const rosterRows = (players || []).map(p => {
           const run = runBy[p.id];
           const prac = pracBy[p.id];
           const pledgeCount = (pledges || []).filter(x => x.player_id === p.id).length;
+
+          // A score that has been invoiced is locked — a sponsor has
+          // already been billed on it, so changing it would make the
+          // invoice wrong.
+          const invoiced = (pledges || []).some(x => x.player_id === p.id && x.invoiced_at);
+
+          if (manual) {
+            const a = run ? run.attempts : '';
+            const th = run ? run.threes : '';
+            const ft = run ? run.fouls : '';
+            const locked = invoiced && run;
+            return `
+              <div style="padding:10px;background:#1a1420;border-radius:8px;margin:5px 0;font-size:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:${locked ? '0' : '8px'};">
+                  <span>
+                    <strong>${p.name}</strong>
+                    <span style="color:#888;"> · ${pledgeCount} ${pledgeCount === 1 ? t('pledgeOne') : t('pledgeMany')}</span>
+                  </span>
+                  <span style="flex-shrink:0;display:flex;align-items:center;gap:8px;">
+                    ${run ? `<strong style="color:var(--gold);">${run.points} ${t('pointsWord')}</strong>` : `<span style="color:#666;">${t('noScore')}</span>`}
+                    ${locked ? `<span style="color:#888;font-size:10px;">${t('lockedWord')}</span>` : ''}
+                    <button class="btn alt" onclick="copyPlayerChallengeLink('${challengeId}','${p.id}')" style="padding:4px 9px;font-size:10px;">${t('sponsorLink')}</button>
+                  </span>
+                </div>
+                ${locked ? '' : `
+                  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                    <input type="number" min="0" max="15" id="att-${p.id}" value="${a}" placeholder="${t('attShort')}" style="width:82px;padding:6px 8px;border-radius:7px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
+                    <input type="number" min="0" max="12" id="th-${p.id}" value="${th}" placeholder="${t('threeShort')}" style="width:82px;padding:6px 8px;border-radius:7px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
+                    <input type="number" min="0" max="3" id="ft-${p.id}" value="${ft}" placeholder="${t('foulShort')}" style="width:82px;padding:6px 8px;border-radius:7px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
+                    <button class="btn" onclick="saveCashRack('${challengeId}','${p.id}')" style="padding:6px 12px;font-size:11px;">${t('saveScore')}</button>
+                  </div>`}
+              </div>`;
+          }
+
           return `
             <div style="padding:9px 10px;background:#1a1420;border-radius:8px;margin:5px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;">
               <span>
@@ -2336,6 +2396,7 @@
           <p style="margin:0 0 6px 0;font-size:11px;color:#888;">${t('projectedNote')}</p>
 
           <p style="margin:14px 0 6px 0;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#888;">${t('rosterAndRuns')}</p>
+          ${manual ? `<p style="margin:0 0 8px 0;font-size:11px;color:#888;">${t('cashRackNote')}</p>` : ''}
           ${rosterRows || `<p style="color:#aaa;font-size:12px;">${t('noPlayers')}</p>`}
 
           <p style="margin:14px 0 6px 0;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#888;">${t('pledgesWord')}</p>
@@ -2383,6 +2444,46 @@
       } catch (error) {
         console.error('Invoicing:', error);
         alert(t('invoiceError') + ' ' + error.message);
+      }
+    }
+
+    // Writes a Cash Rack score. Editable until the pledges behind it
+    // have been invoiced — after that a sponsor has been billed on
+    // the number, so it is fixed.
+    async function saveCashRack(challengeId, playerId) {
+      const att = parseInt(document.getElementById('att-' + playerId).value, 10);
+      const threes = parseInt(document.getElementById('th-' + playerId).value, 10) || 0;
+      const fouls = parseInt(document.getElementById('ft-' + playerId).value, 10) || 0;
+
+      if (isNaN(att) || att < 0) { alert(t('needAttempts')); return; }
+      if (threes + fouls > att) { alert(t('moreMadeThanTaken')); return; }
+
+      const points = cashRackPoints(att, threes, fouls);
+
+      try {
+        const existing = await supabaseQuery('challenge_runs', 'GET', null,
+          `?challenge_id=eq.${challengeId}&player_id=eq.${playerId}&select=player_id`);
+
+        if (existing && existing.length) {
+          await supabaseQuery('challenge_runs',
+            'PATCH',
+            { attempts: att, threes, fouls, points, level_reached: 0 },
+            `?challenge_id=eq.${challengeId}&player_id=eq.${playerId}`);
+        } else {
+          await supabaseQuery('challenge_runs', 'POST', {
+            challenge_id: challengeId,
+            player_id: playerId,
+            game: 'cashrack',
+            level_reached: 0,
+            attempts: att, threes, fouls,
+            points
+          }, '?select=*');
+        }
+
+        loadChallengeDetail(challengeId);
+      } catch (error) {
+        console.error('Cash Rack score:', error);
+        alert('Error: ' + error.message);
       }
     }
 
