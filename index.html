@@ -249,8 +249,6 @@
             <label data-i18n="runDeadline">Runs Close</label>
             <input type="date" id="challengeRunDeadline">
 
-            <label data-i18n="teamSharePct">Team Share (%)</label>
-            <input type="number" id="challengeShare" value="50" min="0" max="100">
 
             <div style="display:flex;gap:10px;margin-top:12px;">
               <button class="btn" onclick="createChallenge()" data-i18n="createChallengeBtn">Create Challenge</button>
@@ -492,6 +490,7 @@
         moreMadeThanTaken:'More shots made than attempted — check the numbers.',
         scoringLink:'Scoring link', boardLink:'Board',
         scoringCopied:'Scoring link copied. Give this only to the scorekeeper — it records the scores that sponsors are billed on.',
+        allToTeam:'every pledge to the team',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
@@ -689,6 +688,7 @@
         moreMadeThanTaken:'M\u00e1s tiros anotados que intentados — revisa los n\u00fameros.',
         scoringLink:'Enlace de anotaci\u00f3n', boardLink:'Tablero',
         scoringCopied:'Enlace de anotaci\u00f3n copiado. D\u00e1selo solo al anotador — con \u00e9l se guardan las puntuaciones por las que se factura a los padrinos.',
+        allToTeam:'cada promesa al equipo',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
@@ -2129,7 +2129,7 @@
           game: document.getElementById('challengeGame').value,
           pledge_deadline: document.getElementById('challengePledgeDeadline').value || null,
           run_deadline: document.getElementById('challengeRunDeadline').value || null,
-          team_share_pct: parseInt(document.getElementById('challengeShare').value, 10) || 50
+          team_share_pct: 100
         }, '?select=*');
 
         document.getElementById('challengeName').value = '';
@@ -2172,7 +2172,7 @@
                 <p style="margin:4px 0 0 0;font-size:11px;color:#888;">
                   ${ch.pledge_deadline ? t('pledgesClose') + ' ' + ch.pledge_deadline : ''}
                   ${ch.run_deadline ? ' · ' + t('runsClose') + ' ' + ch.run_deadline : ''}
-                  · ${ch.team_share_pct}% ${t('toTeam')}
+                  · ${t('allToTeam')}
                 </p>
               </div>
               <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
@@ -2307,6 +2307,9 @@
 
         // What each pledge would come to, at the points actually scored
         // so far. A team pledge multiplies by the combined total.
+        // The pledge itself is the program's in full; our fee rides on
+        // top of the invoice. So "collected" here means what the
+        // program is owed, not what the sponsor was billed.
         let projected = 0, outstanding = 0, collected = 0;
         (pledges || []).forEach(p => {
           const pts = p.player_id
@@ -2314,16 +2317,18 @@
             : teamPoints;
           // Once invoiced, the frozen amount is the truth — not a fresh
           // calculation that could drift if a run changed.
-          const amount = p.amount != null ? Number(p.amount) : Number(p.rate_per_point) * pts;
-          projected += amount;
-          if (p.invoice_status === 'paid') collected += amount;
-          else if (p.invoiced_at) outstanding += amount;
+          const pledged = p.team_amount != null
+            ? Number(p.team_amount)
+            : Number(p.rate_per_point) * pts;
+          projected += pledged;
+          if (p.invoice_status === 'paid') collected += pledged;
+          else if (p.invoiced_at) outstanding += pledged;
         });
 
-        // The team is paid a share of what was actually collected, not
-        // of what was pledged — pledged money that never arrives is not
-        // money.
-        const teamCut = collected * (ch.team_share_pct / 100);
+        // The program keeps every dollar pledged, so its cut is simply
+        // what was collected. Our own fee was billed on top and never
+        // appears in these figures.
+        const teamCut = collected;
 
         const manual = isManual(ch.game);
 
@@ -2392,7 +2397,7 @@
               const pts = p.player_id
                 ? (runBy[p.player_id] ? runBy[p.player_id].points : 0)
                 : teamPoints;
-              const amount = Number(p.rate_per_point) * pts;
+              const amount = p.team_amount != null ? Number(p.team_amount) : Number(p.rate_per_point) * pts;
               return `
                 <div style="padding:9px 10px;background:#1a1420;border-radius:8px;margin:5px 0;font-size:12px;">
                   <div style="display:flex;justify-content:space-between;gap:8px;">
