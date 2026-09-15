@@ -2103,8 +2103,8 @@
     function isManual(game) { return game === 'cashrack'; }
 
     // Every attempt scores 1. A made three adds 3 more, a made foul
-    // shot adds 2 more. Fifteen shots, so 57 is the most anyone can
-    // score and 15 the least for a completed run.
+    // shot adds 2 more. Eighteen shots, so 69 is the most anyone can
+    // score and 18 the least for a completed run.
     function cashRackPoints(att, threes, fouls) {
       return (att || 0) + (threes || 0) * 3 + (fouls || 0) * 2;
     }
@@ -2362,8 +2362,8 @@
                 </div>
                 ${locked ? '' : `
                   <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                    <input type="number" min="0" max="15" id="att-${p.id}" value="${a}" placeholder="${t('attShort')}" style="width:82px;padding:6px 8px;border-radius:7px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
-                    <input type="number" min="0" max="12" id="th-${p.id}" value="${th}" placeholder="${t('threeShort')}" style="width:82px;padding:6px 8px;border-radius:7px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
+                    <input type="number" min="0" max="18" id="att-${p.id}" value="${a}" placeholder="${t('attShort')}" style="width:82px;padding:6px 8px;border-radius:7px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
+                    <input type="number" min="0" max="15" id="th-${p.id}" value="${th}" placeholder="${t('threeShort')}" style="width:82px;padding:6px 8px;border-radius:7px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
                     <input type="number" min="0" max="3" id="ft-${p.id}" value="${ft}" placeholder="${t('foulShort')}" style="width:82px;padding:6px 8px;border-radius:7px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
                     <button class="btn" onclick="saveCashRack('${challengeId}','${p.id}')" style="padding:6px 12px;font-size:11px;">${t('saveScore')}</button>
                   </div>`}
