@@ -492,6 +492,12 @@
         scoringLink:'Scoring link', boardLink:'Board',
         scoringCopied:'Scoring link copied. Give this only to the scorekeeper — it records the scores that sponsors are billed on.',
         allToTeam:'every pledge to the team',
+        gradeWord:'Grade', noGrade:'No grade', studentOne:'student', studentMany:'students',
+        addStudents:'Add students', addAll:'Add them all',
+        bulkPh:'One name per line —\nMaria Rivera\nJose Colón\nAna Torres',
+        bulkNote:'Paste a class list, one name per line. Numbering and bullets are stripped automatically.',
+        needNames:'Paste at least one name.',
+        confirmAdd:'Add {N} students to {G}?',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
@@ -690,6 +696,12 @@
         scoringLink:'Enlace de anotaci\u00f3n', boardLink:'Tablero',
         scoringCopied:'Enlace de anotaci\u00f3n copiado. D\u00e1selo solo al anotador — con \u00e9l se guardan las puntuaciones por las que se factura a los padrinos.',
         allToTeam:'cada promesa al equipo',
+        gradeWord:'Grado', noGrade:'Sin grado', studentOne:'estudiante', studentMany:'estudiantes',
+        addStudents:'A\u00f1adir estudiantes', addAll:'A\u00f1adirlos todos',
+        bulkPh:'Un nombre por l\u00ednea —\nMaria Rivera\nJose Col\u00f3n\nAna Torres',
+        bulkNote:'Pega una lista de clase, un nombre por l\u00ednea. La numeraci\u00f3n y las vi\u00f1etas se quitan solas.',
+        needNames:'Pega al menos un nombre.',
+        confirmAdd:'\u00bfA\u00f1adir {N} estudiantes a {G}?',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
@@ -1160,7 +1172,7 @@
     }
 
     function copyTryoutLink(campaignId) {
-      const link = CHALLENGE_SITE + '/?tryout=' + campaignId;
+      const link = SITES.school + '/?tryout=' + campaignId;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(link).then(() => alert(t('copied') + '\n\n' + link)).catch(() => prompt(t('copy'), link));
       } else {
@@ -1269,6 +1281,23 @@
       loadCampaignPlayers(campaignId);
     }
 
+    // Grades are a label on a student rather than a separate campaign:
+    // the school is one roster, one challenge and one payout, and the
+    // grade is what the boards group by.
+    const GRADES = ['PK','K','1','2','3','4','5','6','7','8','9','10','11','12'];
+
+    function gradeOptions(selected) {
+      return `<option value="">${t('noGrade')}</option>` +
+        GRADES.map(g => `<option value="${g}"${g === selected ? ' selected' : ''}>${t('gradeWord')} ${g}</option>`).join('');
+    }
+
+    // PK and K first, then numerically — so 2 does not sort after 11.
+    function gradeRank(g) {
+      if (!g) return 999;
+      const i = GRADES.indexOf(g);
+      return i === -1 ? 998 : i;
+    }
+
     async function loadCampaignPlayers(campaignId) {
       const box = document.getElementById('campaignPlayers-' + campaignId);
       if (!box) return;
@@ -1278,8 +1307,6 @@
         const players = await supabaseQuery('players', 'GET', null,
           `?campaign_id=eq.${campaignId}&order=name.asc`);
 
-        // what each player has raised, so the roster is useful rather
-        // than just a list of names
         const cards = await supabaseQuery('cards', 'GET', null,
           `?campaign_id=eq.${campaignId}&select=player_id,team_amount`);
         const raisedBy = {};
@@ -1288,26 +1315,56 @@
           raisedBy[c.player_id] = (raisedBy[c.player_id] || 0) + Number(c.team_amount || 0);
         });
 
-        const rows = (players || []).map(p => `
-          <div style="padding:9px 10px;background:#1a1420;border-radius:8px;margin:5px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;">
-            <span>
-              <strong>${p.name}</strong>
-              <span style="color:var(--gold);margin-left:8px;">${money(raisedBy[p.id] || 0)}</span>
-            </span>
-            <span style="display:flex;gap:6px;flex-shrink:0;">
-              <button class="btn" onclick="copyPlayerLink('${p.id}')" style="padding:4px 9px;font-size:10px;">${t('link')}</button>
-              <button class="btn red" onclick="adminRemovePlayer('${p.id}','${campaignId}')" style="padding:4px 9px;font-size:10px;">${t('remove')}</button>
-            </span>
-          </div>`).join('');
+        // group by grade, in school order
+        const groups = {};
+        (players || []).forEach(p => {
+          const g = p.grade || '';
+          (groups[g] = groups[g] || []).push(p);
+        });
+        const keys = Object.keys(groups).sort((a, b) => gradeRank(a) - gradeRank(b));
+
+        const rows = keys.map(g => {
+          const list = groups[g];
+          const head = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 4px;">
+              <span style="font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">
+                ${g ? t('gradeWord') + ' ' + g : t('noGrade')}
+              </span>
+              <span style="font-size:11px;color:#888;">${list.length} ${list.length === 1 ? t('studentOne') : t('studentMany')}</span>
+            </div>`;
+
+          const body = list.map(p => `
+            <div style="padding:8px 10px;background:#1a1420;border-radius:8px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;">
+              <span>
+                <strong>${p.name}</strong>
+                ${raisedBy[p.id] ? `<span style="color:var(--gold);margin-left:8px;">${money(raisedBy[p.id])}</span>` : ''}
+              </span>
+              <span style="display:flex;gap:6px;flex-shrink:0;align-items:center;">
+                <select onchange="setPlayerGrade('${p.id}','${campaignId}',this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:10px;">
+                  ${gradeOptions(p.grade || '')}
+                </select>
+                <button class="btn" onclick="copyPlayerLink('${p.id}')" style="padding:4px 9px;font-size:10px;">${t('link')}</button>
+                <button class="btn red" onclick="adminRemovePlayer('${p.id}','${campaignId}')" style="padding:4px 9px;font-size:10px;">${t('remove')}</button>
+              </span>
+            </div>`).join('');
+
+          return head + body;
+        }).join('');
 
         box.innerHTML = `
           <p style="margin:0 0 8px 0;font-size:11px;color:#888;">${t('rosterBody')}</p>
           ${rows || `<p style="color:#aaa;font-size:12px;">${t('noPlayers')}</p>`}
-          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
-            <input type="text" id="newPlayer-${campaignId}" placeholder="${t('playerNamePh')}"
-              onkeydown="if(event.key==='Enter')adminAddPlayer('${campaignId}')"
-              style="flex:1;min-width:150px;padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
-            <button class="btn" onclick="adminAddPlayer('${campaignId}')" style="padding:8px 14px;font-size:11px;">${t('addPlayerBtn')}</button>
+
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid #ffffff14;">
+            <p style="margin:0 0 8px 0;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#888;">${t('addStudents')}</p>
+            <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+              <select id="bulkGrade-${campaignId}" style="padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
+                ${gradeOptions('')}
+              </select>
+              <button class="btn" onclick="adminAddPlayers('${campaignId}')" style="padding:8px 14px;font-size:11px;">${t('addAll')}</button>
+            </div>
+            <textarea id="bulkNames-${campaignId}" placeholder="${t('bulkPh')}" style="width:100%;height:110px;padding:10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;resize:vertical;"></textarea>
+            <p style="margin:6px 0 0 0;font-size:11px;color:#888;">${t('bulkNote')}</p>
           </div>`;
       } catch (error) {
         console.error('Roster:', error);
@@ -1315,25 +1372,37 @@
       }
     }
 
-    async function adminAddPlayer(campaignId) {
-      const field = document.getElementById('newPlayer-' + campaignId);
-      const name = (field.value || '').trim();
-      if (!name) { alert(t('enterPlayerName')); return; }
+    // One paste, one grade. A school hands over a class list at a
+    // time, so that is the shape this takes.
+    async function adminAddPlayers(campaignId) {
+      const grade = document.getElementById('bulkGrade-' + campaignId).value || null;
+      const raw = document.getElementById('bulkNames-' + campaignId).value || '';
+
+      const names = raw.split('\n')
+        .map(n => n.replace(/^\s*[\d.)\-]+\s*/, '').trim())   // drop "1." or "- " if pasted from a list
+        .filter(n => n.length > 0 && n.length <= 60);
+
+      if (names.length === 0) { alert(t('needNames')); return; }
+      if (!confirm(t('confirmAdd').replace('{N}', names.length).replace('{G}', grade || t('noGrade')))) return;
 
       try {
-        // coach_id is left null — this campaign is run from admin, and
-        // a player does not need a coach record to have a link, a
-        // total, or a challenge run.
-        await supabaseQuery('players', 'POST', {
-          campaign_id: campaignId,
-          name,
-          status: 'active'
-        }, '?select=*');
+        await supabaseQuery('players', 'POST',
+          names.map(name => ({ campaign_id: campaignId, name, grade, status: 'active' })),
+          '?select=id');
 
-        field.value = '';
+        document.getElementById('bulkNames-' + campaignId).value = '';
         loadCampaignPlayers(campaignId);
       } catch (error) {
-        console.error('Add player:', error);
+        console.error('Bulk add:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    async function setPlayerGrade(playerId, campaignId, grade) {
+      try {
+        await supabaseQuery(`players?id=eq.${playerId}`, 'PATCH', { grade: grade || null });
+        loadCampaignPlayers(campaignId);
+      } catch (error) {
         alert('Error: ' + error.message);
       }
     }
@@ -2082,7 +2151,27 @@
     // point, a player takes one official run, and invoices follow.
     // Nothing here charges anyone — that happens at invoicing.
 
-    const CHALLENGE_SITE = 'https://hoops.money';
+    // Two brands, two homes. A challenge's game decides which site
+    // its links point at — Basketball Money for the court events,
+    // Every Point for the school challenges.
+    const SITES = {
+      basketball: 'https://hoops.cash',
+      school: 'https://cognitivo.digital'
+    };
+    const BASKETBALL_GAMES = ['cashrack', 'spots'];
+
+    function siteFor(game) {
+      return BASKETBALL_GAMES.indexOf(game) !== -1 ? SITES.basketball : SITES.school;
+    }
+
+    // The pledge pages sit at the root on the school site and at
+    // /pledge.html on the basketball one, where the root is the
+    // Cash Rack rules.
+    function pledgeBase(game) {
+      return BASKETBALL_GAMES.indexOf(game) !== -1
+        ? SITES.basketball + '/pledge.html'
+        : SITES.school + '/';
+    }
 
     function pointsFor(level) {
       return level > 0 ? (level * (level + 1)) / 2 : 0;
@@ -2178,7 +2267,7 @@
                 </p>
               </div>
               <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-                <button class="btn" onclick="copyChallengeLink('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('teamLink')}</button>
+                <button class="btn" onclick="copyChallengeLink('${ch.id}','${ch.game}')" style="padding:6px 10px;font-size:11px;">${t('teamLink')}</button>
                 <button class="btn alt" onclick="toggleChallengeDetail('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('detail')}</button>
                 ${isManual(ch.game) ? `
                   <button class="btn" onclick="copyScoringLink('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('scoringLink')}</button>
@@ -2195,8 +2284,8 @@
       }
     }
 
-    function copyChallengeLink(challengeId) {
-      const link = CHALLENGE_SITE + '/?c=' + challengeId;
+    function copyChallengeLink(challengeId, game) {
+      const link = pledgeBase(game) + '?c=' + challengeId;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(link).then(() => alert(t('copied') + '\n\n' + link)).catch(() => prompt(t('copy'), link));
       } else {
@@ -2204,8 +2293,8 @@
       }
     }
 
-    function copyPlayerChallengeLink(challengeId, playerId) {
-      const link = CHALLENGE_SITE + '/?c=' + challengeId + '&p=' + playerId;
+    function copyPlayerChallengeLink(challengeId, playerId, game) {
+      const link = pledgeBase(game) + '?c=' + challengeId + '&p=' + playerId;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(link).then(() => alert(t('copied') + '\n\n' + link)).catch(() => prompt(t('copy'), link));
       } else {
@@ -2216,7 +2305,7 @@
     // The player's own link carries their run key, so only they can
     // start the official run. Hand it to the player; hand the sponsor
     // link to everyone else.
-    async function copyPlayerRunLink(challengeId, playerId) {
+    async function copyPlayerRunLink(challengeId, playerId, game) {
       try {
         let rows = await supabaseQuery('player_run_keys', 'GET', null,
           `?player_id=eq.${playerId}&select=run_key`);
@@ -2229,7 +2318,7 @@
           rows = [{ run_key: key }];
         }
 
-        const link = CHALLENGE_SITE + '/?c=' + challengeId + '&p=' + playerId + '&k=' + rows[0].run_key;
+        const link = pledgeBase(game) + '?c=' + challengeId + '&p=' + playerId + '&k=' + rows[0].run_key;
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(link).then(() => alert(t('playerLinkCopied') + '\n\n' + link)).catch(() => prompt(t('copy'), link));
         } else {
@@ -2243,7 +2332,7 @@
 
     // Cash Rack lives on its own site, because it is an event rather
     // than a page on the platform.
-    const CASHRACK_SITE = 'https://hoops.cash';
+
 
     // The scoring link carries a key only the scorekeeper gets —
     // those numbers decide what sponsors are billed.
@@ -2259,7 +2348,7 @@
           rows = [{ scorer_key: key }];
         }
 
-        const link = `${CASHRACK_SITE}/score.html?c=${challengeId}&k=${rows[0].scorer_key}`;
+        const link = `${SITES.basketball}/score.html?c=${challengeId}&k=${rows[0].scorer_key}`;
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(link).then(() => alert(t('scoringCopied') + '\n\n' + link)).catch(() => prompt(t('copy'), link));
         } else {
@@ -2273,7 +2362,7 @@
 
     // The board reads only, so it needs no key — anyone can see it.
     function openBoard(challengeId) {
-      window.open(`${CASHRACK_SITE}/board.html?c=${challengeId}`, '_blank');
+      window.open(`${SITES.basketball}/board.html?c=${challengeId}`, '_blank');
     }
 
     async function toggleChallengeDetail(challengeId) {
@@ -2359,7 +2448,7 @@
                   <span style="flex-shrink:0;display:flex;align-items:center;gap:8px;">
                     ${run ? `<strong style="color:var(--gold);">${run.points} ${t('pointsWord')}</strong>` : `<span style="color:#666;">${t('noScore')}</span>`}
                     ${locked ? `<span style="color:#888;font-size:10px;">${t('lockedWord')}</span>` : ''}
-                    <button class="btn alt" onclick="copyPlayerChallengeLink('${challengeId}','${p.id}')" style="padding:4px 9px;font-size:10px;">${t('sponsorLink')}</button>
+                    <button class="btn alt" onclick="copyPlayerChallengeLink('${challengeId}','${p.id}','${ch.game}')" style="padding:4px 9px;font-size:10px;">${t('sponsorLink')}</button>
                   </span>
                 </div>
                 ${locked ? '' : `
@@ -2384,8 +2473,8 @@
                 </span>
               </span>
               <span style="display:flex;gap:6px;flex-shrink:0;">
-                <button class="btn alt" onclick="copyPlayerChallengeLink('${challengeId}','${p.id}')" style="padding:4px 9px;font-size:10px;">${t('sponsorLink')}</button>
-                <button class="btn" onclick="copyPlayerRunLink('${challengeId}','${p.id}')" style="padding:4px 9px;font-size:10px;">${t('playerLink')}</button>
+                <button class="btn alt" onclick="copyPlayerChallengeLink('${challengeId}','${p.id}','${ch.game}')" style="padding:4px 9px;font-size:10px;">${t('sponsorLink')}</button>
+                <button class="btn" onclick="copyPlayerRunLink('${challengeId}','${p.id}','${ch.game}')" style="padding:4px 9px;font-size:10px;">${t('playerLink')}</button>
               </span>
             </div>`;
         }).join('');
