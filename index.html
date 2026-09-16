@@ -498,6 +498,11 @@
         bulkNote:'Paste a class list, one name per line. Numbering and bullets are stripped automatically.',
         needNames:'Paste at least one name.',
         confirmAdd:'Add {N} students to {G}?',
+        oneRunTitle:'One run each',
+        oneRunOn:'On — each player gets a single attempt at each game. A competition.',
+        oneRunOff:'Off — players can replay and their best score counts. Good for choosing a game.',
+        modeChangedReset:'Scores are already on this board. Clear them so everyone competes under the same rule?',
+        runUsed:'run used',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
@@ -702,6 +707,11 @@
         bulkNote:'Pega una lista de clase, un nombre por l\u00ednea. La numeraci\u00f3n y las vi\u00f1etas se quitan solas.',
         needNames:'Pega al menos un nombre.',
         confirmAdd:'\u00bfA\u00f1adir {N} estudiantes a {G}?',
+        oneRunTitle:'Una corrida cada uno',
+        oneRunOn:'Activado — cada jugador tiene un solo intento en cada juego. Una competencia.',
+        oneRunOff:'Apagado — pueden repetir y cuenta su mejor puntuaci\u00f3n. Bueno para escoger juego.',
+        modeChangedReset:'Ya hay puntuaciones en este tablero. \u00bfBorrarlas para que todos compitan bajo la misma regla?',
+        runUsed:'corrida usada',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
@@ -1186,10 +1196,16 @@
       box.innerHTML = `<p style="color:#aaa;font-size:12px;">${t('loading')}</p>`;
 
       try {
-        const [players, rows] = await Promise.all([
-          supabaseQuery('players', 'GET', null, `?campaign_id=eq.${campaignId}&select=id,name&order=name.asc`),
-          supabaseQuery('campaign_tryouts', 'GET', null, `?campaign_id=eq.${campaignId}&select=player_id,game,best_level,runs`)
+        const [players, rows, camp] = await Promise.all([
+          supabaseQuery('players', 'GET', null, `?campaign_id=eq.${campaignId}&select=id,name,grade&order=name.asc`),
+          supabaseQuery('campaign_tryouts', 'GET', null, `?campaign_id=eq.${campaignId}&select=player_id,game,best_level,runs`),
+          supabaseQuery('campaigns', 'GET', null, `?id=eq.${campaignId}&select=tryout_one_run`)
         ]);
+
+        // Two shapes of competition. Best-of rewards persistence and
+        // suits choosing a game; one run is a single shot at it, which
+        // is what makes an event of it.
+        const oneRun = !!(camp && camp[0] && camp[0].tryout_one_run);
 
         const games = ['fortress', 'recall', 'recognition'];
         const totals = { fortress: 0, recall: 0, recognition: 0 };
@@ -1225,15 +1241,24 @@
             const r = mine[g];
             return `<span style="color:${r ? 'var(--gold)' : '#555'};">${r ? pointsFor(r.best_level) : '—'}</span>`;
           }).join(' · ');
+          const runsTaken = games.reduce((n, g) => n + (mine[g] ? (mine[g].runs || 0) : 0), 0);
           return `
             <div style="padding:8px 10px;background:#1a1420;border-radius:8px;margin:4px 0;display:flex;justify-content:space-between;gap:8px;font-size:12px;">
-              <span>${p.name}</span>
-              <span style="flex-shrink:0;font-weight:900;">${cells}</span>
+              <span>${p.name}${p.grade ? `<span style="color:#888;font-weight:400;"> · ${t('gradeWord')} ${p.grade}</span>` : ''}</span>
+              <span style="flex-shrink:0;font-weight:900;">${cells}${oneRun && runsTaken ? `<span style="color:#888;font-weight:400;font-size:10px;margin-left:8px;">${t('runUsed')}</span>` : ''}</span>
             </div>`;
         }).join('');
 
         box.innerHTML = `
           <p style="margin:0 0 8px 0;font-size:11px;color:#888;">${t('tryoutBody')}</p>
+
+          <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:${oneRun ? 'rgba(255,211,90,.09)' : '#1a1420'};border:1px solid ${oneRun ? 'rgba(255,211,90,.4)' : '#ffffff14'};border-radius:9px;margin-bottom:12px;cursor:pointer;font-size:12px;">
+            <input type="checkbox" ${oneRun ? 'checked' : ''} onchange="setTryoutMode('${campaignId}',this.checked)" style="width:18px;height:18px;flex-shrink:0;">
+            <span>
+              <strong>${t('oneRunTitle')}</strong>
+              <span style="display:block;color:#888;margin-top:2px;">${oneRun ? t('oneRunOn') : t('oneRunOff')}</span>
+            </span>
+          </label>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
             <button class="btn" onclick="copyTryoutLink('${campaignId}')" style="padding:8px 14px;font-size:11px;">${t('tryoutLink')}</button>
             ${played ? `<button class="btn red" onclick="resetTryout('${campaignId}')" style="padding:8px 14px;font-size:11px;">${t('resetTryout')}</button>` : ''}
@@ -1255,6 +1280,26 @@
     // Clears the board so a team can run another competition without
     // last month's scores still in it. Players keep their links —
     // only the scores go.
+    // Switching mode mid-competition would be unfair to whoever has
+    // already played, so this offers to clear the board with it.
+    async function setTryoutMode(campaignId, oneRun) {
+      try {
+        await supabaseQuery(`campaigns?id=eq.${campaignId}`, 'PATCH', { tryout_one_run: oneRun });
+
+        const existing = await supabaseQuery('campaign_tryouts', 'GET', null,
+          `?campaign_id=eq.${campaignId}&select=player_id&limit=1`);
+
+        if (existing && existing.length && confirm(t('modeChangedReset'))) {
+          await supabaseQuery('campaign_tryouts', 'DELETE', null, `?campaign_id=eq.${campaignId}`);
+        }
+
+        loadTryout(campaignId);
+      } catch (error) {
+        console.error('Tryout mode:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
     async function resetTryout(campaignId) {
       if (!confirm(t('confirmResetTryout'))) return;
       try {
