@@ -1182,7 +1182,7 @@
     }
 
     function copyTryoutLink(campaignId) {
-      const link = SITES.school + '/?tryout=' + campaignId;
+      const link = SITES.school + '/challenges.html?tryout=' + campaignId;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(link).then(() => alert(t('copied') + '\n\n' + link)).catch(() => prompt(t('copy'), link));
       } else {
@@ -2213,9 +2213,11 @@
     // /pledge.html on the basketball one, where the root is the
     // Cash Rack rules.
     function pledgeBase(game) {
+      // Neither site serves pledges from its root now — both roots are
+      // the pitch, and the challenges live on their own page.
       return BASKETBALL_GAMES.indexOf(game) !== -1
         ? SITES.basketball + '/pledge.html'
-        : SITES.school + '/';
+        : SITES.school + '/challenges.html';
     }
 
     function pointsFor(level) {
