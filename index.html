@@ -467,8 +467,8 @@
         officialRun:'official', practising:'practising', notStarted:'not started',
         pointsWord:'pts', runsWord:'runs', perPoint:'per point', wholeTeam:'Whole team',
         pledgeOne:'pledge', pledgeMany:'pledges', link:'Link',
-        sendInvoices:'Invoice', confirmInvoices:'Send invoices for this challenge? Each sponsor is billed their rate times the points scored, payable in 30 days. Sponsors already invoiced are skipped.',
-        invoicesSent:'Invoices sent', alreadyInvoiced:'Already invoiced', nothingOwed:'Nothing owed',
+        sendInvoices:'Invoice', confirmInvoices:'Send a payment link to every padrino on this challenge? Each one gets an email with their score, their amount and a button. Anyone already sent a link is skipped.',
+        invoicesSent:'Invoices sent', linksSent:'Links sent', alreadyInvoiced:'Already invoiced', nothingOwed:'Nothing owed',
         invoicesFailed:'Failed', invoiceError:'Could not send invoices:', signInFirst:'Sign in again first',
         awaitingPayment:'Awaiting payment', collectedWord:'Collected', teamGets:'Team gets',
         st_sent:'invoiced', st_paid:'paid', st_failed:'payment failed',
@@ -503,6 +503,10 @@
         oneRunOff:'Off — players can replay and their best score counts. Good for choosing a game.',
         modeChangedReset:'Scores are already on this board. Clear them so everyone competes under the same rule?',
         runUsed:'run used',
+        sendLinks:'Send links', remind:'Remind',
+        confirmRemind:'Send a reminder to anyone who has not paid yet? One goes out at seven days and one at twenty-one — nobody is nudged twice in the same week, and nothing is sent after thirty days.',
+        remindersSent:'Reminders sent', notDueYet:'Not due yet', remindDone:'Done being chased',
+        linkCopied:'Payment link copied.', copyLink:'Copy link', remindedOnce:'reminded once', remindedTwice:'reminded twice',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
@@ -676,8 +680,8 @@
         officialRun:'oficial', practising:'practicando', notStarted:'sin empezar',
         pointsWord:'pts', runsWord:'corridas', perPoint:'por punto', wholeTeam:'Todo el equipo',
         pledgeOne:'promesa', pledgeMany:'promesas', link:'Enlace',
-        sendInvoices:'Facturar', confirmInvoices:'\u00bfEnviar facturas de este reto? Cada patrocinador recibe su tarifa por los puntos anotados, con 30 d\u00edas para pagar. Los ya facturados se omiten.',
-        invoicesSent:'Facturas enviadas', alreadyInvoiced:'Ya facturados', nothingOwed:'Sin nada que cobrar',
+        sendInvoices:'Facturar', confirmInvoices:'\u00bfEnviar un enlace de pago a cada padrino de este reto? Cada uno recibe un correo con su puntuaci\u00f3n, su cantidad y un bot\u00f3n. A quien ya se le envi\u00f3 se omite.',
+        invoicesSent:'Facturas enviadas', linksSent:'Enlaces enviados', alreadyInvoiced:'Ya facturados', nothingOwed:'Sin nada que cobrar',
         invoicesFailed:'Fallaron', invoiceError:'No se pudieron enviar las facturas:', signInFirst:'Vuelve a iniciar sesi\u00f3n',
         awaitingPayment:'Por cobrar', collectedWord:'Cobrado', teamGets:'El equipo recibe',
         st_sent:'facturado', st_paid:'pagado', st_failed:'pago fallido',
@@ -712,6 +716,10 @@
         oneRunOff:'Apagado — pueden repetir y cuenta su mejor puntuaci\u00f3n. Bueno para escoger juego.',
         modeChangedReset:'Ya hay puntuaciones en este tablero. \u00bfBorrarlas para que todos compitan bajo la misma regla?',
         runUsed:'corrida usada',
+        sendLinks:'Enviar enlaces', remind:'Recordar',
+        confirmRemind:'\u00bfEnviar recordatorio a quien no ha pagado? Uno sale a los siete d\u00edas y otro a los veintiuno — nadie recibe dos en la misma semana, y no se manda nada despu\u00e9s de treinta d\u00edas.',
+        remindersSent:'Recordatorios enviados', notDueYet:'Todav\u00eda no toca', remindDone:'Ya no se persigue',
+        linkCopied:'Enlace de pago copiado.', copyLink:'Copiar enlace', remindedOnce:'recordado una vez', remindedTwice:'recordado dos veces',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
@@ -2319,7 +2327,8 @@
                 ${isManual(ch.game) ? `
                   <button class="btn" onclick="copyScoringLink('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('scoringLink')}</button>
                   <button class="btn alt" onclick="openBoard('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('boardLink')}</button>` : ''}
-                <button class="btn" onclick="sendChallengeInvoices('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('sendInvoices')}</button>
+                <button class="btn" onclick="sendChallengeInvoices('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('sendLinks')}</button>
+                <button class="btn alt" onclick="sendReminders('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('remind')}</button>
                 <button class="btn red" onclick="deleteChallenge('${ch.id}','${String(ch.name).replace(/'/g, "\\'")}')" style="padding:6px 10px;font-size:11px;">${t('delete')}</button>
               </div>
             </div>
@@ -2546,7 +2555,10 @@
                     ${money(p.rate_per_point)} ${t('perPoint')} × ${pts} ${t('pointsWord')}
                     · ${p.sponsor_email}
                     ${p.invoice_status && p.invoice_status !== 'pending' ? ' · ' + t('st_' + p.invoice_status, p.invoice_status) : ''}
+                    ${p.reminder_count === 1 ? ' · ' + t('remindedOnce') : p.reminder_count >= 2 ? ' · ' + t('remindedTwice') : ''}
                   </div>
+                  ${p.pay_link_url && p.invoice_status !== 'paid' ? `
+                    <button class="btn alt" onclick="copyPayLink('${p.pay_link_url}')" style="padding:3px 9px;font-size:10px;margin-top:6px;">${t('copyLink')}</button>` : ''}
                 </div>`;
             }).join('');
 
@@ -2595,6 +2607,48 @@
     // Invoicing runs on the payment server, which holds the Stripe key.
     // The admin's own sign-in token goes with the request so the server
     // can verify who is asking — the browser never gets to decide.
+    // Invoicing chased people for us; links do not. This does — one
+    // nudge at seven days, one at twenty-one, then the books close.
+    async function sendReminders(challengeId) {
+      if (!confirm(t('confirmRemind'))) return;
+
+      const token = await currentToken();
+      if (!token) { alert(t('signInFirst')); return; }
+
+      try {
+        const res = await fetch(`${PAYMENT_SERVER}/send-reminders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ challenge_id: challengeId })
+        });
+
+        const data = await res.json();
+        if (!res.ok) { alert(t('invoiceError') + ' ' + (data.error || res.status)); return; }
+
+        let summary = `${t('remindersSent')}: ${data.sent}`;
+        if (data.notDue) summary += `\n${t('notDueYet')}: ${data.notDue}`;
+        if (data.done) summary += `\n${t('remindDone')}: ${data.done}`;
+        if (data.failed) summary += `\n${t('invoicesFailed')}: ${data.failed}`;
+        if (data.errors && data.errors.length) summary += '\n\n' + data.errors.join('\n');
+
+        alert(summary);
+        loadChallengeDetail(challengeId);
+      } catch (error) {
+        console.error('Reminders:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // Half of these get paid because a coach sent the link on WhatsApp
+    // rather than because an email arrived.
+    function copyPayLink(url) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => alert(t('linkCopied'))).catch(() => prompt(t('copy'), url));
+      } else {
+        prompt(t('copy'), url);
+      }
+    }
+
     async function sendChallengeInvoices(challengeId) {
       if (!confirm(t('confirmInvoices'))) return;
 
@@ -2618,7 +2672,7 @@
           return;
         }
 
-        let summary = `${t('invoicesSent')}: ${data.sent}`;
+        let summary = `${t('linksSent')}: ${data.sent}`;
         if (data.skipped) summary += `\n${t('alreadyInvoiced')}: ${data.skipped}`;
         if (data.zero) summary += `\n${t('nothingOwed')}: ${data.zero}`;
         if (data.failed) summary += `\n${t('invoicesFailed')}: ${data.failed}`;
