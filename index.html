@@ -143,12 +143,12 @@
           </div>
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-            <h3 style="margin:0;" data-i18n="bogoCards">BOGO Cards</h3>
+            <h3 style="margin:0;" data-i18n="bogoCards">Products for sale</h3>
             <button class="btn" onclick="toggleForm('createDesignForm')" data-i18n="newCard">+ New Card</button>
           </div>
 
           <div id="createDesignForm" class="panel" style="display:none;margin-bottom:20px;">
-            <h3 data-i18n="createBogoCard">Create BOGO Card</h3>
+            <h3 data-i18n="createBogoCard">Create a product</h3>
 
             <label data-i18n="merchant">Merchant</label>
             <select id="designMerchant" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;margin-top:6px;font-family:inherit;">
@@ -334,7 +334,7 @@
         logoUrl:'Logo URL (optional)', contactName:'Contact Name (optional)', contactNamePh:'Contact person',
         contactEmail:'Contact Email (optional)', saveMerchant:'Save Merchant', cancel:'Cancel',
 
-        bogoCards:'BOGO Cards', newCard:'+ New Card', createBogoCard:'Create BOGO Card',
+        bogoCards:'Products for sale', newCard:'+ New product', createBogoCard:'Create a product',
         merchant:'Merchant', selectMerchantOpt:'Select a merchant...',
         cardName:'Card Name', cardNamePh:"e.g. Domino's 16-Tab BOGO",
         numTabs:'Number of Coupon Tabs', tabs8:'8 tabs', tabs16:'16 tabs', tabs32:'32 tabs',
@@ -547,7 +547,7 @@
         logoUrl:'URL del logo (opcional)', contactName:'Nombre de contacto (opcional)', contactNamePh:'Persona de contacto',
         contactEmail:'Correo de contacto (opcional)', saveMerchant:'Guardar comercio', cancel:'Cancelar',
 
-        bogoCards:'Tarjetas BOGO', newCard:'+ Nueva tarjeta', createBogoCard:'Crear tarjeta BOGO',
+        bogoCards:'Productos a la venta', newCard:'+ Nuevo producto', createBogoCard:'Crear un producto',
         merchant:'Comercio', selectMerchantOpt:'Selecciona un comercio...',
         cardName:'Nombre de la tarjeta', cardNamePh:'ej. Domino\u2019s BOGO de 16 cupones',
         numTabs:'Cantidad de cupones', tabs8:'8 cupones', tabs16:'16 cupones', tabs32:'32 cupones',
@@ -1116,7 +1116,6 @@
               </div>
               <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
                 <button class="btn alt" onclick="editMerchant('${m.id}')" style="padding:6px 10px;font-size:11px;">${t('edit')}</button>
-                <button class="btn alt" onclick="toggleLocations('${m.id}')" style="padding:6px 10px;font-size:11px;">${t('locations')}</button>
                 <button class="btn red" onclick="deleteMerchant('${m.id}')" style="padding:6px 10px;font-size:11px;">${t('delete')}</button>
               </div>
             </div>
@@ -1160,7 +1159,9 @@
         const total = sealed + peeled + redeemed;
         const rate = total ? Math.round((redeemed / total) * 100) : 0;
 
-        box.innerHTML = `${list.length} ${t('cardsPlural')} · ${redeemed} ${t('couponsRedeemed').toLowerCase()} · ${rate}% ${t('redemptionRate').toLowerCase()}`;
+        box.innerHTML = redeemed || peeled
+          ? `${list.length} ${t('cardsPlural')} · ${redeemed} ${t('couponsRedeemed').toLowerCase()} · ${rate}% ${t('redemptionRate').toLowerCase()}`
+          : `${list.length} ${t('cardsPlural')}`;
       } catch (error) {
         box.textContent = '—';
       }
@@ -1992,8 +1993,6 @@
                   <button class="btn alt" onclick="editCampaign('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('edit')}</button>
                   <button class="btn alt" onclick="toggleCampaignPlayers('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('players')}</button>
                   <button class="btn alt" onclick="toggleTryout('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('tryout')}</button>
-                  <button class="btn alt" onclick="toggleCampaignCards('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('chooseCards')}</button>
-                  <button class="btn alt" onclick="toggleCampaignLocations('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('locations')}</button>
                   <button class="btn red" onclick="deleteCampaign('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('delete')}</button>
                 </div>
               </div>
