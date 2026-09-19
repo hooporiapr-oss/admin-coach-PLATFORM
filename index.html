@@ -105,6 +105,86 @@
           <p id="adminWhoami" style="margin:0 0 16px 0;font-size:12px;color:#888;"></p>
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="margin:0;" data-i18n="campaigns">Campaigns</h3>
+            <button class="btn" onclick="toggleForm('createCampaignForm')" data-i18n="newCampaign">+ New Campaign</button>
+          </div>
+
+          <div id="createCampaignForm" class="panel" style="display:none;margin-bottom:20px;">
+            <h3 data-i18n="createCampaignTitle">Create New Campaign</h3>
+
+            <label data-i18n="campaignName">Campaign Name</label>
+            <input type="text" id="campaignName" data-i18n-ph="campaignNamePh" placeholder="Enter campaign name">
+
+            <label data-i18n="teamLogo">Team Logo URL (optional)</label>
+            <input type="text" id="campaignLogo" placeholder="https://...">
+
+            <label data-i18n="campaignGoal">Campaign Goal ($)</label>
+            <input type="number" id="campaignGoal" data-i18n-ph="campaignGoalPh" placeholder="Enter goal amount">
+
+            <label data-i18n="description">Description</label>
+            <textarea id="campaignDesc" data-i18n-ph="descriptionPh" placeholder="Campaign description" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;margin-top:6px;font-family:inherit;height:80px;"></textarea>
+
+            <div style="display:flex;gap:10px;margin-top:12px;">
+              <button class="btn" onclick="createCampaign()" data-i18n="createCampaignBtn">Create Campaign</button>
+              <button class="btn alt" onclick="toggleForm('createCampaignForm')" data-i18n="cancel">Cancel</button>
+            </div>
+          </div>
+
+          <div id="campaignsList" class="panel">
+            <div id="campaignsContainer" style="margin-top:4px;">—</div>
+          </div>
+
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="margin:0;" data-i18n="challenges">Challenges</h3>
+            <button class="btn" onclick="toggleForm('createChallengeForm')" data-i18n="newChallenge">+ New Challenge</button>
+          </div>
+
+          <div id="createChallengeForm" class="panel" style="display:none;margin-bottom:20px;">
+            <h3 data-i18n="createChallenge">Create a Challenge</h3>
+
+            <label data-i18n="challengeCampaign">Campaign</label>
+            <select id="challengeCampaign" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;margin-top:6px;font-family:inherit;">
+              <option value="" data-i18n="selectCampaign">Select a campaign...</option>
+            </select>
+
+            <label data-i18n="challengeGame">Game</label>
+            <select id="challengeGame" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;margin-top:6px;font-family:inherit;">
+              <option value="fortress">The Fortress</option>
+              <option value="recall">The Recall</option>
+              <option value="recognition">Recognition</option>
+              <option value="spots">The Spots (Cash Rack floor)</option>
+              <option value="cashrack">Cash Rack (in person)</option>
+            </select>
+
+            <label data-i18n="challengeName">Challenge Name</label>
+            <input type="text" id="challengeName" data-i18n-ph="challengeNamePh" placeholder="e.g. Fall Fortress Challenge">
+
+            <label data-i18n="pledgeDeadline">Pledges Close</label>
+            <input type="date" id="challengePledgeDeadline">
+
+            <label data-i18n="runDeadline">Runs Close</label>
+            <input type="date" id="challengeRunDeadline">
+
+
+            <div style="display:flex;gap:10px;margin-top:12px;">
+              <button class="btn" onclick="createChallenge()" data-i18n="createChallengeBtn">Create Challenge</button>
+              <button class="btn alt" onclick="toggleForm('createChallengeForm')" data-i18n="cancel">Cancel</button>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-bottom:26px;">
+            <div id="challengesContainer">—</div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="margin:0;" data-i18n="payouts">Payouts</h3>
+          </div>
+
+          <div class="panel" style="margin-bottom:26px;">
+            <div id="payoutsContainer">—</div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h3 style="margin:0;" data-i18n="merchants">Merchants</h3>
             <button class="btn" onclick="toggleForm('createMerchantForm')" data-i18n="newMerchant">+ New Merchant</button>
           </div>
@@ -136,10 +216,6 @@
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h3 style="margin:0;" data-i18n="expiryTitle">Card Expiry</h3>
-          </div>
-
-          <div class="panel" style="margin-bottom:26px;">
-            <div id="expiryContainer">—</div>
           </div>
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
@@ -211,87 +287,11 @@
             <div id="designsContainer">—</div>
           </div>
 
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-            <h3 style="margin:0;" data-i18n="payouts">Payouts</h3>
-          </div>
-
           <div class="panel" style="margin-bottom:26px;">
-            <div id="payoutsContainer">—</div>
+            <div id="expiryContainer">—</div>
           </div>
 
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-            <h3 style="margin:0;" data-i18n="challenges">Fortress Challenges</h3>
-            <button class="btn" onclick="toggleForm('createChallengeForm')" data-i18n="newChallenge">+ New Challenge</button>
-          </div>
-
-          <div id="createChallengeForm" class="panel" style="display:none;margin-bottom:20px;">
-            <h3 data-i18n="createChallenge">Create a Challenge</h3>
-
-            <label data-i18n="challengeCampaign">Campaign</label>
-            <select id="challengeCampaign" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;margin-top:6px;font-family:inherit;">
-              <option value="" data-i18n="selectCampaign">Select a campaign...</option>
-            </select>
-
-            <label data-i18n="challengeGame">Game</label>
-            <select id="challengeGame" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;margin-top:6px;font-family:inherit;">
-              <option value="fortress">The Fortress</option>
-              <option value="recall">The Recall</option>
-              <option value="recognition">Recognition</option>
-              <option value="spots">The Spots (Cash Rack floor)</option>
-              <option value="cashrack">Cash Rack (in person)</option>
-            </select>
-
-            <label data-i18n="challengeName">Challenge Name</label>
-            <input type="text" id="challengeName" data-i18n-ph="challengeNamePh" placeholder="e.g. Fall Fortress Challenge">
-
-            <label data-i18n="pledgeDeadline">Pledges Close</label>
-            <input type="date" id="challengePledgeDeadline">
-
-            <label data-i18n="runDeadline">Runs Close</label>
-            <input type="date" id="challengeRunDeadline">
-
-
-            <div style="display:flex;gap:10px;margin-top:12px;">
-              <button class="btn" onclick="createChallenge()" data-i18n="createChallengeBtn">Create Challenge</button>
-              <button class="btn alt" onclick="toggleForm('createChallengeForm')" data-i18n="cancel">Cancel</button>
-            </div>
-          </div>
-
-          <div class="panel" style="margin-bottom:26px;">
-            <div id="challengesContainer">—</div>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-            <h3 style="margin:0;" data-i18n="campaigns">Campaigns</h3>
-            <button class="btn" onclick="toggleForm('createCampaignForm')" data-i18n="newCampaign">+ New Campaign</button>
-          </div>
-
-          <div id="createCampaignForm" class="panel" style="display:none;margin-bottom:20px;">
-            <h3 data-i18n="createCampaignTitle">Create New Campaign</h3>
-
-            <label data-i18n="campaignName">Campaign Name</label>
-            <input type="text" id="campaignName" data-i18n-ph="campaignNamePh" placeholder="Enter campaign name">
-
-            <label data-i18n="teamLogo">Team Logo URL (optional)</label>
-            <input type="text" id="campaignLogo" placeholder="https://...">
-
-            <label data-i18n="campaignGoal">Campaign Goal ($)</label>
-            <input type="number" id="campaignGoal" data-i18n-ph="campaignGoalPh" placeholder="Enter goal amount">
-
-            <label data-i18n="description">Description</label>
-            <textarea id="campaignDesc" data-i18n-ph="descriptionPh" placeholder="Campaign description" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;margin-top:6px;font-family:inherit;height:80px;"></textarea>
-
-            <div style="display:flex;gap:10px;margin-top:12px;">
-              <button class="btn" onclick="createCampaign()" data-i18n="createCampaignBtn">Create Campaign</button>
-              <button class="btn alt" onclick="toggleForm('createCampaignForm')" data-i18n="cancel">Cancel</button>
-            </div>
-          </div>
-
-          <div id="campaignsList" class="panel">
-            <div id="campaignsContainer" style="margin-top:4px;">—</div>
-          </div>
-
-          <button class="btn red" onclick="adminLogout()" style="margin-top:20px;width:100%;" data-i18n="logout">Logout</button>
+<button class="btn red" onclick="adminLogout()" style="margin-top:20px;width:100%;" data-i18n="logout">Logout</button>
         </div>
       </div>
     </section>
