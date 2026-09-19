@@ -215,10 +215,6 @@
           </div>
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-            <h3 style="margin:0;" data-i18n="expiryTitle">Card Expiry</h3>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h3 style="margin:0;" data-i18n="bogoCards">Products for sale</h3>
             <button class="btn" onclick="toggleForm('createDesignForm')" data-i18n="newCard">+ New Card</button>
           </div>
@@ -287,7 +283,12 @@
             <div id="designsContainer">—</div>
           </div>
 
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="margin:0;" data-i18n="expiryTitle">What is still live</h3>
+          </div>
+
           <div class="panel" style="margin-bottom:26px;">
+            <p style="margin:0 0 10px 0;font-size:11px;color:#888;" data-i18n="expiryBody">Everything sold, grouped by what it was. Nothing to set up — a card takes its expiry date when it is bought.</p>
             <div id="expiryContainer">—</div>
           </div>
 
@@ -507,6 +508,8 @@
         confirmRemind:'Send a reminder to anyone who has not paid yet? One goes out at seven days and one at twenty-one — nobody is nudged twice in the same week, and nothing is sent after thirty days.',
         remindersSent:'Reminders sent', notDueYet:'Not due yet', remindDone:'Done being chased',
         linkCopied:'Payment link copied.', copyLink:'Copy link', remindedOnce:'reminded once', remindedTwice:'reminded twice',
+        expiryTitle:'What is still live',
+        expiryBody:'Everything sold, grouped by what it was. Nothing to set up — a card takes its expiry date when it is bought.',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
@@ -720,6 +723,8 @@
         confirmRemind:'\u00bfEnviar recordatorio a quien no ha pagado? Uno sale a los siete d\u00edas y otro a los veintiuno — nadie recibe dos en la misma semana, y no se manda nada despu\u00e9s de treinta d\u00edas.',
         remindersSent:'Recordatorios enviados', notDueYet:'Todav\u00eda no toca', remindDone:'Ya no se persigue',
         linkCopied:'Enlace de pago copiado.', copyLink:'Copiar enlace', remindedOnce:'recordado una vez', remindedTwice:'recordado dos veces',
+        expiryTitle:'Lo que sigue activo',
+        expiryBody:'Todo lo vendido, agrupado por lo que era. Nada que configurar — una tarjeta toma su fecha de vencimiento al comprarse.',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
