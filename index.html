@@ -555,6 +555,7 @@
         lPadrino:'Padrino', lOn:'Backed', lRate:'Rate', lPoints:'Points',
         lPledged:'Pledged', lFee:'Fee', lBilled:'Billed', lStatus:'Status',
         lWholeTeam:'whole program',
+        cannotRemove:'This player already has padrinos backing them, so they cannot be removed. Ask us if you need this sorted out.',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
@@ -799,6 +800,7 @@
         lPadrino:'Padrino', lOn:'Apoya a', lRate:'Tarifa', lPoints:'Puntos',
         lPledged:'Prometido', lFee:'Cargo', lBilled:'Facturado', lStatus:'Estado',
         lWholeTeam:'todo el programa',
+        cannotRemove:'Este jugador ya tiene padrinos apoy\u00e1ndolo, as\u00ed que no se puede quitar. Av\u00edsanos si hay que resolverlo.',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
@@ -3477,7 +3479,23 @@
           </div>
         `).join('');
 
-        playersList.innerHTML = teamPageRow + rosterRows;
+        // A coach knows the names and we do not. Adding is theirs;
+        // adding is also safe, because a new player has no padrinos
+        // attached to lose.
+        const addBox = `
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid #ffffff14;">
+            <p style="margin:0 0 8px 0;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#888;">${t('addStudents')}</p>
+            <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+              <select id="coachBulkGrade" style="padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
+                ${gradeOptions('')}
+              </select>
+              <button class="btn" onclick="coachAddPlayers()" style="padding:8px 14px;font-size:11px;">${t('addAll')}</button>
+            </div>
+            <textarea id="coachBulkNames" placeholder="${t('bulkPh')}" style="width:100%;height:100px;padding:10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;resize:vertical;"></textarea>
+            <p style="margin:6px 0 0 0;font-size:11px;color:#888;">${t('bulkNote')}</p>
+          </div>`;
+
+        playersList.innerHTML = teamPageRow + rosterRows + addBox;
       } catch (error) {
         console.error('Error:', error);
       }
@@ -3518,7 +3536,43 @@
       }
     }
 
+    async function coachAddPlayers() {
+      const campaignId = sessionStorage.getItem('currentCampaignId');
+      if (!campaignId) return;
+
+      const grade = document.getElementById('coachBulkGrade').value || null;
+      const raw = document.getElementById('coachBulkNames').value || '';
+
+      const names = raw.split('\n')
+        .map(n => n.replace(/^\s*[\d.)\-]+\s*/, '').trim())
+        .filter(n => n.length > 0 && n.length <= 60);
+
+      if (names.length === 0) { alert(t('needNames')); return; }
+      if (!confirm(t('confirmAdd').replace('{N}', names.length).replace('{G}', grade || t('noGrade')))) return;
+
+      try {
+        await supabaseQuery('players', 'POST',
+          names.map(name => ({ campaign_id: campaignId, name, grade, status: 'active' })),
+          '?select=id');
+        document.getElementById('coachBulkNames').value = '';
+        loadCoachDashboard();
+      } catch (error) {
+        console.error('Coach add:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
     async function removePlayer(playerId) {
+      // A player with padrinos behind them cannot simply vanish —
+      // their pledges would be left pointing at nobody.
+      try {
+        const held = await supabaseQuery('pledges', 'GET', null,
+          `?player_id=eq.${playerId}&select=id&limit=1`);
+        if (held && held.length) { alert(t('cannotRemove')); return; }
+      } catch (e) {
+        console.error('Pledge check:', e);
+      }
+
       if (!confirm(t('confirmRemovePlayer'))) return;
       try {
         await supabaseQuery(`players?id=eq.${playerId}`, 'DELETE');
