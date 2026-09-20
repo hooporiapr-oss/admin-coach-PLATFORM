@@ -102,7 +102,10 @@
         </div>
 
         <div id="adminDashboard" style="display:none;">
-          <p id="adminWhoami" style="margin:0 0 16px 0;font-size:12px;color:#888;"></p>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 16px 0;">
+            <p id="adminWhoami" style="margin:0;font-size:12px;color:#888;"></p>
+            <button class="btn alt" onclick="refreshAll()" id="refreshAllBtn" style="padding:6px 14px;font-size:11px;flex-shrink:0;"><span data-i18n="refreshAll">↻ Refresh all</span></button>
+          </div>
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h3 style="margin:0;" data-i18n="reports">Reports</h3>
@@ -531,6 +534,7 @@
         rMoney:'Money', rCampaigns:'Campaigns', rChallenges:'Challenges',
         rProducts:'Products', rLedger:'Ledger',
         rNothing:'Nothing here yet.', refresh:'Refresh', exportCsv:'Export CSV',
+        refreshAll:'\u21bb Refresh all', refreshing:'Refreshing\u2026',
 
         mCollected:'Collected', mProgramShare:"Programs' share", mOurFees:'Our fees',
         mPaidOut:'Paid out', mOwed:'Still owed to programs',
@@ -791,6 +795,7 @@
         rMoney:'Dinero', rCampaigns:'Campa\u00f1as', rChallenges:'Retos',
         rProducts:'Productos', rLedger:'Registro',
         rNothing:'Todav\u00eda no hay nada.', refresh:'Actualizar', exportCsv:'Exportar CSV',
+        refreshAll:'\u21bb Actualizar todo', refreshing:'Actualizando\u2026',
 
         mCollected:'Cobrado', mProgramShare:'Parte de los programas', mOurFees:'Nuestros cargos',
         mPaidOut:'Pagado', mOwed:'Pendiente a los programas',
@@ -1151,6 +1156,28 @@
     function showAdminDashboard() {
       document.getElementById('adminLoginScreen').style.display='none';
       document.getElementById('adminDashboard').style.display='block';
+    }
+
+    // Everything at once. A coach may have added students, another
+    // tab may have taken a payment — this pulls the lot in without
+    // reloading the page and closing every panel you had open.
+    async function refreshAll() {
+      const btn = document.getElementById('refreshAllBtn');
+      const label = btn ? btn.querySelector('span') : null;
+      const was = label ? label.textContent : '';
+      if (label) label.textContent = t('refreshing');
+      if (btn) btn.disabled = true;
+
+      try {
+        REPORT_DATA = null;
+        loadAdminData();
+        if (document.getElementById('reportsPanel').style.display === 'block') {
+          await renderReport();
+        }
+      } finally {
+        if (label) label.textContent = was || t('refreshAll');
+        if (btn) btn.disabled = false;
+      }
     }
 
     function loadAdminData() {
