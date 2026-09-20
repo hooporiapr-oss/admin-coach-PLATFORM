@@ -558,6 +558,7 @@
         cannotRemove:'This player already has padrinos backing them, so they cannot be removed. Ask us if you need this sorted out.',
         cdLinksFor:'Links for this fundraiser',
         cdLinksBody:'Give each student their own player link — that is the one that takes their official run. The sponsor link is the one they share with padrinos.',
+        addedBy:'added by', cByCoach:'added by the coach',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
@@ -805,6 +806,7 @@
         cannotRemove:'Este jugador ya tiene padrinos apoy\u00e1ndolo, as\u00ed que no se puede quitar. Av\u00edsanos si hay que resolverlo.',
         cdLinksFor:'Enlaces de esta recaudaci\u00f3n',
         cdLinksBody:'Dale a cada estudiante su enlace de jugador — ese es el de la corrida oficial. El enlace de padrinos es el que ellos comparten.',
+        addedBy:'a\u00f1adido por', cByCoach:'a\u00f1adidos por el coach',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
@@ -1300,7 +1302,7 @@
         await Promise.all([
           supabaseQuery('campaigns', 'GET', null, '?select=id,name,created_at&order=created_at.desc'),
           supabaseQuery('challenges', 'GET', null, '?select=id,name,game,campaign_id,created_at&order=created_at.desc'),
-          supabaseQuery('players', 'GET', null, '?select=id,name,grade,campaign_id'),
+          supabaseQuery('players', 'GET', null, '?select=id,name,grade,campaign_id,added_by'),
           supabaseQuery('pledges', 'GET', null, '?select=*'),
           supabaseQuery('challenge_runs', 'GET', null, '?select=challenge_id,player_id,points,level_reached'),
           supabaseQuery('payouts', 'GET', null, '?select=campaign_id,amount,paid_on,method,reference'),
@@ -1443,7 +1445,11 @@
             </div>
             <div style="font-size:11px;color:#888;line-height:1.8;">
               ${chs.length} ${chs.length === 1 ? t('cFundraiser') : t('cFundraisers')}
-              · ${roster.length} ${t('playersWord')}
+              · ${roster.length} ${t('playersWord')}${(() => {
+                  const byCoach = roster.filter(p => p.added_by && p.added_by.indexOf('@') !== -1 &&
+                                                     p.added_by !== signedInEmail()).length;
+                  return byCoach ? ` (${byCoach} ${t('cByCoach')})` : '';
+                })()}
               · ${withPadrinos} ${t('cFoundPadrinos')}
               · ${ran} ${t('cTookRun')}<br>
               ${t('mOutstanding')}: ${money(sums.outstanding)}
@@ -1912,6 +1918,7 @@
               <span>
                 <strong>${p.name}</strong>
                 ${raisedBy[p.id] ? `<span style="color:var(--gold);margin-left:8px;">${money(raisedBy[p.id])}</span>` : ''}
+                ${p.added_by ? `<span style="display:block;color:#666;font-size:10px;margin-top:2px;">${t('addedBy')} ${p.added_by}</span>` : ''}
               </span>
               <span style="display:flex;gap:6px;flex-shrink:0;align-items:center;">
                 <select onchange="setPlayerGrade('${p.id}','${campaignId}',this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:10px;">
@@ -1960,8 +1967,12 @@
       if (!confirm(t('confirmAdd').replace('{N}', names.length).replace('{G}', grade || t('noGrade')))) return;
 
       try {
+        // Who put a name on the roster, so a later question has an
+        // answer rather than a guess.
+        const by = signedInEmail() || 'admin';
         await supabaseQuery('players', 'POST',
-          names.map(name => ({ campaign_id: campaignId, name, grade, status: 'active' })),
+          names.map(name => ({ campaign_id: campaignId, name, grade,
+                               status: 'active', added_by: by })),
           '?select=id');
 
         document.getElementById('bulkNames-' + campaignId).value = '';
@@ -3589,8 +3600,10 @@
       if (!confirm(t('confirmAdd').replace('{N}', names.length).replace('{G}', grade || t('noGrade')))) return;
 
       try {
+        const by = signedInEmail() || 'coach';
         await supabaseQuery('players', 'POST',
-          names.map(name => ({ campaign_id: campaignId, name, grade, status: 'active' })),
+          names.map(name => ({ campaign_id: campaignId, name, grade,
+                               status: 'active', added_by: by })),
           '?select=id');
         document.getElementById('coachBulkNames').value = '';
         loadCoachDashboard();
