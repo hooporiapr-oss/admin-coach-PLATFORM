@@ -559,8 +559,13 @@
         cdLinksFor:'Links for this fundraiser',
         cdLinksBody:'Give each student their own player link — that is the one that takes their official run. The sponsor link is the one they share with padrinos.',
         addedBy:'added by', cByCoach:'added by the coach',
-        cdYouLookAfter:'You look after', cdOnlyYours:'Only your students are shown here.',
-        cdYouLookAfter:'Te encargas de', cdOnlyYours:'Aqu\u00ed solo aparecen tus estudiantes.',
+        cdTeachers:'Who helps you run this',
+        cdNoTeachers:'Nobody else yet — you are looking after the whole roster.',
+        cdTeachersBody:'Each person you add signs in with their own email and sees only the students you gave them.',
+        cdScopePrompt:'Which students do they look after? Type a grade (5, K, PK), or a team name.',
+        cdScopeNeeded:'Give them a grade or a team name, so they see only their own students.',
+        cdYouLookAfter:'You look after',
+        cdOnlyYours:'Only your students are shown here.',
         coachesWord:'Coaches', addCoach:'+ Add', wholeRoster:'whole roster',
         coachEmailPrompt:'Coach email address:',
         coachScopePrompt:'Which students do they look after? Type a grade (5, K, PK), or a group name for a league team, or leave blank for the whole roster.',
@@ -814,7 +819,13 @@
         cdLinksFor:'Enlaces de esta recaudaci\u00f3n',
         cdLinksBody:'Dale a cada estudiante su enlace de jugador — ese es el de la corrida oficial. El enlace de padrinos es el que ellos comparten.',
         addedBy:'a\u00f1adido por', cByCoach:'a\u00f1adidos por el coach',
-        cdYouLookAfter:'Te encargas de', cdOnlyYours:'Aqu\u00ed solo aparecen tus estudiantes.',
+        cdTeachers:'Qui\u00e9n te ayuda con esto',
+        cdNoTeachers:'Nadie m\u00e1s todav\u00eda — t\u00fa llevas toda la lista.',
+        cdTeachersBody:'Cada persona que a\u00f1adas entra con su propio correo y ve solo los estudiantes que le diste.',
+        cdScopePrompt:'\u00bfDe cu\u00e1les estudiantes se encarga? Escribe un grado (5, K, PK), o el nombre de un equipo.',
+        cdScopeNeeded:'Dale un grado o el nombre de un equipo, para que vea solo a sus estudiantes.',
+        cdYouLookAfter:'Te encargas de',
+        cdOnlyYours:'Aqu\u00ed solo aparecen tus estudiantes.',
         coachesWord:'Coaches', addCoach:'+ A\u00f1adir', wholeRoster:'toda la lista',
         coachEmailPrompt:'Correo del coach:',
         coachScopePrompt:'\u00bfDe cu\u00e1les estudiantes se encarga? Escribe un grado (5, K, PK), o el nombre de un equipo, o d\u00e9jalo en blanco para toda la lista.',
@@ -3633,12 +3644,40 @@
             <p style="margin:6px 0 0 0;font-size:11px;color:#888;">${t('bulkNote')}</p>
           </div>`;
 
+        // A director — a coach with no grade — runs their own program,
+        // which includes deciding who teaches which grade. A teacher
+        // scoped to one grade sees none of this.
+        let teacherPanel = '';
+        if (!myGrade && !myLabel) {
+          try {
+            const mates = await supabaseQuery('coaches', 'GET', null,
+              `?campaign_id=eq.${campaignId}&select=id,email,grade,label&order=grade.asc`);
+            const teachers = (mates || []).filter(x => x.email && (x.grade || x.label));
+
+            teacherPanel = `
+              <div style="padding:12px 14px;background:#1a1420;border:1px solid #ffffff14;border-radius:10px;margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:${teachers.length ? '8px' : '0'};">
+                  <span style="font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#888;">${t('cdTeachers')}</span>
+                  <button class="btn alt" onclick="coachAddTeacher()" style="padding:5px 10px;font-size:11px;">${t('addCoach')}</button>
+                </div>
+                ${teachers.length ? teachers.map(x => `
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #ffffff10;font-size:12px;">
+                    <span>${x.email}
+                      <span style="color:#888;"> · ${x.grade ? t('gradeWord') + ' ' + x.grade : x.label}</span></span>
+                    <button onclick="coachRemoveTeacher('${x.id}')" style="padding:2px 8px;background:#6b2131;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:10px;flex-shrink:0;">${t('remove')}</button>
+                  </div>`).join('')
+                  : `<p style="margin:6px 0 0 0;font-size:11px;color:#888;">${t('cdNoTeachers')}</p>`}
+                <p style="margin:8px 0 0 0;font-size:11px;color:#666;">${t('cdTeachersBody')}</p>
+              </div>`;
+          } catch (e) { console.error('Teachers:', e); }
+        }
+
         const scopeNote = (myGrade || myLabel)
           ? `<p style="margin:0 0 10px 0;padding:9px 12px;background:#1a1420;border-radius:8px;font-size:11px;color:#888;border:1px solid #ffffff14;">
                ${t('cdYouLookAfter')} <strong style="color:var(--gold);">${myGrade ? t('gradeWord') + ' ' + myGrade : myLabel}</strong>. ${t('cdOnlyYours')}
              </p>` : '';
 
-        playersList.innerHTML = scopeNote + challengeBar + teamPageRow + rosterRows + addBox;
+        playersList.innerHTML = teacherPanel + scopeNote + challengeBar + teamPageRow + rosterRows + addBox;
       } catch (error) {
         console.error('Error:', error);
       }
@@ -3675,6 +3714,43 @@
         alert(t('playerAdded'));
       } catch (error) {
         console.error('Error:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    async function coachAddTeacher() {
+      const campaignId = sessionStorage.getItem('currentCampaignId');
+      if (!campaignId) return;
+
+      const email = prompt(t('coachEmailPrompt'));
+      if (!email || !email.trim()) return;
+
+      const scope = prompt(t('cdScopePrompt'));
+      const v = (scope || '').trim();
+      if (!v) { alert(t('cdScopeNeeded')); return; }
+
+      const isGrade = GRADES.indexOf(v.toUpperCase()) !== -1;
+
+      try {
+        await supabaseQuery('coaches', 'POST', {
+          campaign_id: campaignId,
+          email: email.trim().toLowerCase(),
+          grade: isGrade ? v.toUpperCase() : null,
+          label: isGrade ? null : v,
+        }, '?select=id');
+        loadCoachDashboard();
+      } catch (error) {
+        console.error('Add teacher:', error);
+        alert(/duplicate|unique/i.test(error.message) ? t('coachAlready') : 'Error: ' + error.message);
+      }
+    }
+
+    async function coachRemoveTeacher(coachId) {
+      if (!confirm(t('confirmRemoveCoach'))) return;
+      try {
+        await supabaseQuery(`coaches?id=eq.${coachId}`, 'DELETE');
+        loadCoachDashboard();
+      } catch (error) {
         alert('Error: ' + error.message);
       }
     }
