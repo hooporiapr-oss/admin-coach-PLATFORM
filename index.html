@@ -122,7 +122,7 @@
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h3 style="margin:0;" data-i18n="campaigns">Campaigns</h3>
-            <button class="btn" onclick="toggleForm('createCampaignForm')" data-i18n="newCampaign">+ New Campaign</button>
+            <span style="display:flex;gap:6px;"><button class="btn alt" onclick="loadCampaigns()" title="Refresh" style="padding:5px 9px;font-size:11px;">↻</button><button class="btn" onclick="toggleForm('createCampaignForm')" data-i18n="newCampaign">+ New Campaign</button></span>
           </div>
 
           <div id="createCampaignForm" class="panel" style="display:none;margin-bottom:20px;">
@@ -152,7 +152,7 @@
 
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h3 style="margin:0;" data-i18n="challenges">Challenges</h3>
-            <button class="btn" onclick="toggleForm('createChallengeForm')" data-i18n="newChallenge">+ New Challenge</button>
+            <span style="display:flex;gap:6px;"><button class="btn alt" onclick="loadChallenges()" title="Refresh" style="padding:5px 9px;font-size:11px;">↻</button><button class="btn" onclick="toggleForm('createChallengeForm')" data-i18n="newChallenge">+ New Challenge</button></span>
           </div>
 
           <div id="createChallengeForm" class="panel" style="display:none;margin-bottom:20px;">
@@ -194,6 +194,7 @@
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h3 style="margin:0;" data-i18n="payouts">Payouts</h3>
+            <button class="btn alt" onclick="loadPayouts()" title="Refresh" style="padding:5px 9px;font-size:11px;">↻</button>
           </div>
 
           <div class="panel" style="margin-bottom:26px;">
@@ -202,7 +203,7 @@
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h3 style="margin:0;" data-i18n="merchants">Merchants</h3>
-            <button class="btn" onclick="toggleForm('createMerchantForm')" data-i18n="newMerchant">+ New Merchant</button>
+            <span style="display:flex;gap:6px;"><button class="btn alt" onclick="loadMerchants()" title="Refresh" style="padding:5px 9px;font-size:11px;">↻</button><button class="btn" onclick="toggleForm('createMerchantForm')" data-i18n="newMerchant">+ New Merchant</button></span>
           </div>
 
           <div id="createMerchantForm" class="panel" style="display:none;margin-bottom:20px;">
@@ -232,7 +233,7 @@
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h3 style="margin:0;" data-i18n="bogoCards">Products for sale</h3>
-            <button class="btn" onclick="toggleForm('createDesignForm')" data-i18n="newCard">+ New Card</button>
+            <span style="display:flex;gap:6px;"><button class="btn alt" onclick="loadDesigns()" title="Refresh" style="padding:5px 9px;font-size:11px;">↻</button><button class="btn" onclick="toggleForm('createDesignForm')" data-i18n="newCard">+ New product</button></span>
           </div>
 
           <div id="createDesignForm" class="panel" style="display:none;margin-bottom:20px;">
@@ -3511,6 +3512,7 @@
             <span style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
               ${teamMark(campaigns[0], 42)}
               <span style="flex:1;min-width:0;">${campaigns[0].name}</span>
+              <button class="btn alt" onclick="loadCoachDashboard()" title="Refresh" style="padding:6px 11px;font-size:11px;flex-shrink:0;">↻</button>
               ${MY_COACH_ROWS.length > 1
                 ? `<button class="btn alt" onclick="switchTeam()" style="padding:6px 12px;font-size:11px;flex-shrink:0;">${t('switchTeam')}</button>`
                 : ''}
