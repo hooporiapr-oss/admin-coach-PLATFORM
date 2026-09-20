@@ -559,6 +559,13 @@
         cdLinksFor:'Links for this fundraiser',
         cdLinksBody:'Give each student their own player link — that is the one that takes their official run. The sponsor link is the one they share with padrinos.',
         addedBy:'added by', cByCoach:'added by the coach',
+        cdYouLookAfter:'You look after', cdOnlyYours:'Only your students are shown here.',
+        cdYouLookAfter:'Te encargas de', cdOnlyYours:'Aqu\u00ed solo aparecen tus estudiantes.',
+        coachesWord:'Coaches', addCoach:'+ Add', wholeRoster:'whole roster',
+        coachEmailPrompt:'Coach email address:',
+        coachScopePrompt:'Which students do they look after? Type a grade (5, K, PK), or a group name for a league team, or leave blank for the whole roster.',
+        coachAlready:'That email is already a coach on this program.',
+        confirmRemoveCoach:'Remove this coach? Their students stay on the roster — only their access goes.',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
@@ -807,6 +814,12 @@
         cdLinksFor:'Enlaces de esta recaudaci\u00f3n',
         cdLinksBody:'Dale a cada estudiante su enlace de jugador — ese es el de la corrida oficial. El enlace de padrinos es el que ellos comparten.',
         addedBy:'a\u00f1adido por', cByCoach:'a\u00f1adidos por el coach',
+        cdYouLookAfter:'Te encargas de', cdOnlyYours:'Aqu\u00ed solo aparecen tus estudiantes.',
+        coachesWord:'Coaches', addCoach:'+ A\u00f1adir', wholeRoster:'toda la lista',
+        coachEmailPrompt:'Correo del coach:',
+        coachScopePrompt:'\u00bfDe cu\u00e1les estudiantes se encarga? Escribe un grado (5, K, PK), o el nombre de un equipo, o d\u00e9jalo en blanco para toda la lista.',
+        coachAlready:'Ese correo ya es coach de este programa.',
+        confirmRemoveCoach:'\u00bfQuitar este coach? Sus estudiantes se quedan en la lista — solo se va su acceso.',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
@@ -2503,9 +2516,9 @@
         
         let html = '';
         for (let c of campaigns) {
-          const coaches = await supabaseQuery('coaches', 'GET', null, `?campaign_id=eq.${c.id}&limit=1`);
-          const coachEmail = coaches && coaches.length > 0 ? (coaches[0].email || '') : '';
-          const coachId = coaches && coaches.length > 0 ? coaches[0].id : '';
+          const coaches = await supabaseQuery('coaches', 'GET', null,
+            `?campaign_id=eq.${c.id}&select=id,email,grade,label&order=grade.asc`);
+          const named = (coaches || []).filter(x => x.email);
           
           html += `
             <div style="padding:14px;background:#0e0a11;border-radius:9px;margin:10px 0;border:1px solid #ffffff14;">
@@ -2514,10 +2527,24 @@
                   <p style="margin:0;font-weight:950;font-size:16px;">${c.name}</p>
                   <p style="margin:4px 0 0 0;font-size:12px;color:#aaa;">${t('goal')}: $${c.goal}</p>
                   <p style="margin:4px 0 0 0;font-size:12px;color:#888;">${c.description || t('noDescription')}</p>
-                  <p style="margin:8px 0 0 0;padding:8px;background:#1a1420;border-radius:6px;font-size:11px;color:var(--gold);border:1px solid #ffffff1a;">
-                    ${t('coachEmail')}: <strong>${coachEmail || t('noCoachYet')}</strong>
-                    <button onclick="setCoachEmail('${coachId}', '${coachEmail || ''}')" style="margin-left:8px;padding:2px 6px;background:#5b2377;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:10px;">${coachEmail ? t('change') : t('invite')}</button>
-                  </p>
+                  <div style="margin:8px 0 0 0;padding:10px;background:#1a1420;border-radius:6px;font-size:11px;border:1px solid #ffffff1a;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:${named.length ? '8px' : '0'};">
+                      <span style="color:var(--gold);font-weight:900;letter-spacing:.06em;text-transform:uppercase;font-size:10px;">${t('coachesWord')}</span>
+                      <button onclick="addCoach('${c.id}')" style="padding:3px 8px;background:#5b2377;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:10px;">${t('addCoach')}</button>
+                    </div>
+                    ${named.length ? named.map(x => `
+                      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-top:1px solid #ffffff10;">
+                        <span>${x.email}
+                          <span style="color:#888;">${x.grade ? ' · ' + t('gradeWord') + ' ' + x.grade
+                                                     : x.label ? ' · ' + x.label
+                                                     : ' · ' + t('wholeRoster')}</span></span>
+                        <span style="flex-shrink:0;">
+                          <button onclick="editCoach('${x.id}','${x.email}','${x.grade || ''}','${(x.label || '').replace(/'/g, "\\'")}')" style="padding:2px 6px;background:#3a2647;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:10px;">${t('edit')}</button>
+                          <button onclick="removeCoach('${x.id}')" style="padding:2px 6px;background:#6b2131;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:10px;margin-left:4px;">${t('remove')}</button>
+                        </span>
+                      </div>`).join('')
+                      : `<p style="margin:6px 0 0 0;color:#888;">${t('noCoachYet')}</p>`}
+                  </div>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
                   <button class="btn" onclick="copyTeamLink('${c.slug}')" style="padding:6px 10px;font-size:11px;">${t('teamLink')}</button>
@@ -2539,6 +2566,57 @@
       } catch (error) {
         console.error('Error:', error);
         document.getElementById('campaignsContainer').innerHTML = '<p style="color:#f66;">Error loading campaigns</p>';
+      }
+    }
+
+    // A teacher per grade, or a coach per team. Each one sees only
+    // the students they are responsible for.
+    async function addCoach(campaignId) {
+      const email = prompt(t('coachEmailPrompt'));
+      if (!email || !email.trim()) return;
+
+      const scope = prompt(t('coachScopePrompt'));
+      const grade = (scope || '').trim();
+      const isGrade = grade && GRADES.indexOf(grade.toUpperCase()) !== -1;
+
+      try {
+        await supabaseQuery('coaches', 'POST', {
+          campaign_id: campaignId,
+          email: email.trim().toLowerCase(),
+          grade: isGrade ? grade.toUpperCase() : null,
+          label: (!isGrade && grade) ? grade : null,
+        }, '?select=id');
+        loadCampaigns();
+      } catch (error) {
+        console.error('Add coach:', error);
+        alert(/duplicate|unique/i.test(error.message) ? t('coachAlready') : 'Error: ' + error.message);
+      }
+    }
+
+    async function editCoach(coachId, email, grade, label) {
+      const scope = prompt(t('coachScopePrompt'), grade || label || '');
+      if (scope === null) return;
+      const v = scope.trim();
+      const isGrade = v && GRADES.indexOf(v.toUpperCase()) !== -1;
+
+      try {
+        await supabaseQuery(`coaches?id=eq.${coachId}`, 'PATCH', {
+          grade: isGrade ? v.toUpperCase() : null,
+          label: (!isGrade && v) ? v : null,
+        });
+        loadCampaigns();
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+
+    async function removeCoach(coachId) {
+      if (!confirm(t('confirmRemoveCoach'))) return;
+      try {
+        await supabaseQuery(`coaches?id=eq.${coachId}`, 'DELETE');
+        loadCampaigns();
+      } catch (error) {
+        alert('Error: ' + error.message);
       }
     }
 
@@ -3335,7 +3413,7 @@
       whenReady('coachLocked', async () => {
         try {
           const coaches = await supabaseQuery('coaches', 'GET', null,
-            '?select=id,campaign_id,name,email,campaigns(name,logo_url)');
+            '?select=id,campaign_id,name,email,grade,label,campaigns(name,logo_url)');
           const mine = (coaches || []).filter(c => c.email);
           MY_COACH_ROWS = mine;
 
@@ -3376,6 +3454,10 @@
       showSignedInAs('coachWhoami');
       sessionStorage.setItem('currentCampaignId', coach.campaign_id);
       sessionStorage.setItem('currentCoachId', coach.id);
+      // A teacher who looks after one grade sees one grade. Blank
+      // means the whole roster, which is what a director gets.
+      sessionStorage.setItem('coachGrade', coach.grade || '');
+      sessionStorage.setItem('coachLabel', coach.label || '');
       document.getElementById('coachLocked').style.display = 'none';
       const picker = document.getElementById('coachPicker');
       if (picker) picker.style.display = 'none';
@@ -3424,7 +3506,11 @@
             </span>`;
         }
         
-        const players = await supabaseQuery('players', 'GET', null, `?campaign_id=eq.${campaignId}&order=created_at.desc`);
+        const myGradeEarly = sessionStorage.getItem('coachGrade') || '';
+        const players = await supabaseQuery('players', 'GET', null,
+          `?campaign_id=eq.${campaignId}` +
+          (myGradeEarly ? `&grade=eq.${encodeURIComponent(myGradeEarly)}` : '') +
+          '&order=created_at.desc');
         
         const playersList = document.getElementById('playersList');
 
@@ -3500,6 +3586,9 @@
           </div>
         `).join('');
 
+        const myGrade = sessionStorage.getItem('coachGrade') || '';
+        const myLabel = sessionStorage.getItem('coachLabel') || '';
+
         // A coach hands these out, so they need them in front of them
         // rather than having to ring us for every student.
         let challengeBar = '';
@@ -3535,8 +3624,8 @@
           <div style="margin-top:16px;padding-top:14px;border-top:1px solid #ffffff14;">
             <p style="margin:0 0 8px 0;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#888;">${t('addStudents')}</p>
             <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
-              <select id="coachBulkGrade" style="padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
-                ${gradeOptions('')}
+              <select id="coachBulkGrade" ${myGrade ? 'disabled' : ''} style="padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:${myGrade ? '#888' : '#fff'};font-family:inherit;font-size:12px;">
+                ${gradeOptions(myGrade)}
               </select>
               <button class="btn" onclick="coachAddPlayers()" style="padding:8px 14px;font-size:11px;">${t('addAll')}</button>
             </div>
@@ -3544,7 +3633,12 @@
             <p style="margin:6px 0 0 0;font-size:11px;color:#888;">${t('bulkNote')}</p>
           </div>`;
 
-        playersList.innerHTML = challengeBar + teamPageRow + rosterRows + addBox;
+        const scopeNote = (myGrade || myLabel)
+          ? `<p style="margin:0 0 10px 0;padding:9px 12px;background:#1a1420;border-radius:8px;font-size:11px;color:#888;border:1px solid #ffffff14;">
+               ${t('cdYouLookAfter')} <strong style="color:var(--gold);">${myGrade ? t('gradeWord') + ' ' + myGrade : myLabel}</strong>. ${t('cdOnlyYours')}
+             </p>` : '';
+
+        playersList.innerHTML = scopeNote + challengeBar + teamPageRow + rosterRows + addBox;
       } catch (error) {
         console.error('Error:', error);
       }
@@ -3589,7 +3683,9 @@
       const campaignId = sessionStorage.getItem('currentCampaignId');
       if (!campaignId) return;
 
-      const grade = document.getElementById('coachBulkGrade').value || null;
+      // A scoped coach adds into their own grade, whatever the box says.
+      const myGrade = sessionStorage.getItem('coachGrade') || '';
+      const grade = myGrade || document.getElementById('coachBulkGrade').value || null;
       const raw = document.getElementById('coachBulkNames').value || '';
 
       const names = raw.split('\n')
