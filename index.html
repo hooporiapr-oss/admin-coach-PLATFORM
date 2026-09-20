@@ -105,6 +105,22 @@
           <p id="adminWhoami" style="margin:0 0 16px 0;font-size:12px;color:#888;"></p>
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="margin:0;" data-i18n="reports">Reports</h3>
+            <button class="btn alt" onclick="toggleReports()" id="reportsToggle" data-i18n="openReports">Open</button>
+          </div>
+
+          <div id="reportsPanel" style="display:none;margin-bottom:26px;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+              <button class="btn alt" onclick="showReport('money')" id="rTabMoney" data-i18n="rMoney">Money</button>
+              <button class="btn alt" onclick="showReport('campaigns')" id="rTabCampaigns" data-i18n="rCampaigns">Campaigns</button>
+              <button class="btn alt" onclick="showReport('challenges')" id="rTabChallenges" data-i18n="rChallenges">Challenges</button>
+              <button class="btn alt" onclick="showReport('products')" id="rTabProducts" data-i18n="rProducts">Products</button>
+              <button class="btn alt" onclick="showReport('ledger')" id="rTabLedger" data-i18n="rLedger">Ledger</button>
+            </div>
+            <div id="reportBody" class="panel">—</div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h3 style="margin:0;" data-i18n="campaigns">Campaigns</h3>
             <button class="btn" onclick="toggleForm('createCampaignForm')" data-i18n="newCampaign">+ New Campaign</button>
           </div>
@@ -510,6 +526,35 @@
         linkCopied:'Payment link copied.', copyLink:'Copy link', remindedOnce:'reminded once', remindedTwice:'reminded twice',
         expiryTitle:'What is still live',
         expiryBody:'Everything sold, grouped by what it was. Nothing to set up — a card takes its expiry date when it is bought.',
+        reports:'Reports', openReports:'Open', closeReports:'Close',
+        rMoney:'Money', rCampaigns:'Campaigns', rChallenges:'Challenges',
+        rProducts:'Products', rLedger:'Ledger',
+        rNothing:'Nothing here yet.', refresh:'Refresh', exportCsv:'Export CSV',
+
+        mCollected:'Collected', mProgramShare:"Programs' share", mOurFees:'Our fees',
+        mPaidOut:'Paid out', mOwed:'Still owed to programs',
+        mPledgeBreak:'Pledges', mPledged:'Pledged', mPledgedSub:'What padrinos promised',
+        mInvoiced:'Billed', mInvoicedSub:'Links sent, against real scores',
+        mCollectedRow:'Collected', mOfInvoiced:'of what was billed',
+        mOutstanding:'Outstanding', mOutstandingSub:'Sent, not yet paid',
+        mFromProducts:'From products', mProductSales:'Product sales',
+        mPayoutsMade:'Payouts made', mNoPayouts:'No payouts recorded yet.',
+
+        cFundraiser:'fundraiser', cFundraisers:'fundraisers',
+        cFoundPadrinos:'found padrinos', cTookRun:'took their run', cStillOwed:'Still owed',
+
+        chPadrinos:'padrinos', chPerParticipant:'per participant',
+        chAvgPPV:'avg point value', chAvgPoints:'avg points',
+        chCollectionRate:'collected', chUnpaid:'unpaid', chAllSettled:'All settled.',
+
+        pUnitsSold:'Units sold', pGross:'Gross', pProducts:'Products',
+        pSold:'Sold', pNoneSold:'Nothing sold yet.', pNotSold:'Not sold yet',
+        pUnits:'units', pActive:'Active', pInactive:'Inactive',
+
+        lBody:'Every pledge, from the promise to the payment.',
+        lPadrino:'Padrino', lOn:'Backed', lRate:'Rate', lPoints:'Points',
+        lPledged:'Pledged', lFee:'Fee', lBilled:'Billed', lStatus:'Status',
+        lWholeTeam:'whole program',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
@@ -725,6 +770,35 @@
         linkCopied:'Enlace de pago copiado.', copyLink:'Copiar enlace', remindedOnce:'recordado una vez', remindedTwice:'recordado dos veces',
         expiryTitle:'Lo que sigue activo',
         expiryBody:'Todo lo vendido, agrupado por lo que era. Nada que configurar — una tarjeta toma su fecha de vencimiento al comprarse.',
+        reports:'Informes', openReports:'Abrir', closeReports:'Cerrar',
+        rMoney:'Dinero', rCampaigns:'Campa\u00f1as', rChallenges:'Retos',
+        rProducts:'Productos', rLedger:'Registro',
+        rNothing:'Todav\u00eda no hay nada.', refresh:'Actualizar', exportCsv:'Exportar CSV',
+
+        mCollected:'Cobrado', mProgramShare:'Parte de los programas', mOurFees:'Nuestros cargos',
+        mPaidOut:'Pagado', mOwed:'Pendiente a los programas',
+        mPledgeBreak:'Promesas', mPledged:'Prometido', mPledgedSub:'Lo que prometieron los padrinos',
+        mInvoiced:'Facturado', mInvoicedSub:'Enlaces enviados, sobre puntuaciones reales',
+        mCollectedRow:'Cobrado', mOfInvoiced:'de lo facturado',
+        mOutstanding:'Pendiente', mOutstandingSub:'Enviado, sin pagar',
+        mFromProducts:'De productos', mProductSales:'Ventas de productos',
+        mPayoutsMade:'Pagos hechos', mNoPayouts:'Todav\u00eda no hay pagos registrados.',
+
+        cFundraiser:'recaudaci\u00f3n', cFundraisers:'recaudaciones',
+        cFoundPadrinos:'consiguieron padrinos', cTookRun:'hicieron su corrida', cStillOwed:'Pendiente',
+
+        chPadrinos:'padrinos', chPerParticipant:'por participante',
+        chAvgPPV:'valor por punto prom.', chAvgPoints:'puntos prom.',
+        chCollectionRate:'cobrado', chUnpaid:'sin pagar', chAllSettled:'Todo saldado.',
+
+        pUnitsSold:'Unidades vendidas', pGross:'Bruto', pProducts:'Productos',
+        pSold:'Vendido', pNoneSold:'Todav\u00eda no se ha vendido nada.', pNotSold:'Sin vender',
+        pUnits:'unidades', pActive:'Activo', pInactive:'Inactivo',
+
+        lBody:'Cada promesa, desde el compromiso hasta el pago.',
+        lPadrino:'Padrino', lOn:'Apoya a', lRate:'Tarifa', lPoints:'Puntos',
+        lPledged:'Prometido', lFee:'Cargo', lBilled:'Facturado', lStatus:'Estado',
+        lWholeTeam:'todo el programa',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
@@ -1180,6 +1254,441 @@
       } catch (error) {
         alert(t('merchantHasCards'));
       }
+    }
+
+
+    // ══════════════════════════════════════════════════════
+    //  REPORTS
+    //
+    //  Everything here is read-only and computed from what is already
+    //  in the database. Money figures follow the same rule as
+    //  everywhere else: a pledge is the program's, the fee is ours,
+    //  and nothing counts until it has actually been collected.
+    // ══════════════════════════════════════════════════════
+    let REPORT_DATA = null;
+    let REPORT_VIEW = 'money';
+
+    function toggleReports() {
+      const panel = document.getElementById('reportsPanel');
+      const open = panel.style.display === 'block';
+      panel.style.display = open ? 'none' : 'block';
+      document.getElementById('reportsToggle').textContent = open ? t('openReports') : t('closeReports');
+      if (!open) showReport(REPORT_VIEW);
+    }
+
+    function showReport(view) {
+      REPORT_VIEW = view;
+      ['money','campaigns','challenges','products','ledger'].forEach(v => {
+        const b = document.getElementById('rTab' + v.charAt(0).toUpperCase() + v.slice(1));
+        if (b) b.className = v === view ? 'btn' : 'btn alt';
+      });
+      renderReport();
+    }
+
+    // Everything the reports need, fetched once and reused between
+    // views — five tabs should not mean five round trips each time.
+    async function loadReportData(force) {
+      if (REPORT_DATA && !force) return REPORT_DATA;
+
+      const [campaigns, challenges, players, pledges, runs, payouts, cards, designs, merchants] =
+        await Promise.all([
+          supabaseQuery('campaigns', 'GET', null, '?select=id,name,created_at&order=created_at.desc'),
+          supabaseQuery('challenges', 'GET', null, '?select=id,name,game,campaign_id,created_at&order=created_at.desc'),
+          supabaseQuery('players', 'GET', null, '?select=id,name,grade,campaign_id'),
+          supabaseQuery('pledges', 'GET', null, '?select=*'),
+          supabaseQuery('challenge_runs', 'GET', null, '?select=challenge_id,player_id,points,level_reached'),
+          supabaseQuery('payouts', 'GET', null, '?select=campaign_id,amount,paid_on,method,reference'),
+          supabaseQuery('cards', 'GET', null, '?select=design_id,campaign_id,price_paid,team_amount,platform_amount,payment_status,created_at'),
+          supabaseQuery('card_designs', 'GET', null, '?select=id,name,kind,price,merchant_id,active'),
+          supabaseQuery('merchants', 'GET', null, '?select=id,name,active'),
+        ]);
+
+      REPORT_DATA = {
+        campaigns: campaigns || [], challenges: challenges || [], players: players || [],
+        pledges: pledges || [], runs: runs || [], payouts: payouts || [],
+        cards: (cards || []).filter(c => c.payment_status === 'paid'),
+        designs: designs || [], merchants: merchants || [],
+      };
+      return REPORT_DATA;
+    }
+
+    async function renderReport() {
+      const box = document.getElementById('reportBody');
+      box.innerHTML = `<p style="color:#aaa;font-size:12px;">${t('loading')}</p>`;
+      try {
+        const d = await loadReportData();
+        const fn = { money: reportMoney, campaigns: reportCampaigns, challenges: reportChallenges,
+                     products: reportProducts, ledger: reportLedger }[REPORT_VIEW];
+        box.innerHTML = fn(d) +
+          `<div style="margin-top:16px;padding-top:12px;border-top:1px solid #ffffff14;display:flex;gap:6px;flex-wrap:wrap;">
+             <button class="btn alt" onclick="REPORT_DATA=null;renderReport()" style="padding:6px 12px;font-size:11px;">${t('refresh')}</button>
+             <button class="btn alt" onclick="exportReport()" style="padding:6px 12px;font-size:11px;">${t('exportCsv')}</button>
+           </div>`;
+      } catch (e) {
+        console.error('Report:', e);
+        box.innerHTML = `<p style="color:#f66;font-size:12px;">Error: ${e.message}</p>`;
+      }
+    }
+
+    // ---- shared bits ----
+    function rStat(label, value, gold) {
+      return `<div style="background:#1a1420;border:1px solid ${gold ? 'rgba(255,211,90,.4)' : '#ffffff14'};
+                          border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:1.5rem;font-weight:950;${gold ? 'color:var(--gold);' : ''}">${value}</div>
+        <div style="font-size:10px;color:#888;letter-spacing:.06em;text-transform:uppercase;margin-top:4px;">${label}</div>
+      </div>`;
+    }
+    function rGrid(cells) {
+      return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px;">${cells.join('')}</div>`;
+    }
+    function rHead(text) {
+      return `<p style="margin:18px 0 8px 0;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#888;">${text}</p>`;
+    }
+    function rRow(left, right, sub) {
+      return `<div style="padding:9px 10px;background:#1a1420;border-radius:8px;margin:4px 0;display:flex;justify-content:space-between;gap:10px;font-size:12px;">
+        <span>${left}${sub ? `<span style="display:block;color:#888;margin-top:2px;">${sub}</span>` : ''}</span>
+        <span style="flex-shrink:0;text-align:right;">${right}</span>
+      </div>`;
+    }
+    function pct(a, b) { return b ? Math.round((a / b) * 100) + '%' : '—'; }
+
+    // A pledge is only money once it has been collected. Everything
+    // else is a hope.
+    function pledgeSums(list) {
+      let pledged = 0, invoiced = 0, collected = 0, fees = 0, outstanding = 0;
+      list.forEach(p => {
+        const team = Number(p.team_amount || 0);
+        const fee = Number(p.platform_amount || 0);
+        if (p.invoice_status === 'paid') { collected += team; fees += fee; }
+        else if (p.invoiced_at) { outstanding += team; }
+        if (p.invoiced_at) invoiced += team;
+        pledged += team || (Number(p.rate_per_point || 0) * Number(p.points_at_invoice || 0));
+      });
+      return { pledged, invoiced, collected, fees, outstanding };
+    }
+
+
+    // ---- 1 · Money ----
+    // Where every dollar is, right now. The one you would open if a
+    // program rang asking where their money was.
+    function reportMoney(d) {
+      const sums = pledgeSums(d.pledges);
+
+      let cardTeam = 0, cardFee = 0;
+      d.cards.forEach(c => { cardTeam += Number(c.team_amount || 0); cardFee += Number(c.platform_amount || 0); });
+
+      const paidOut = d.payouts.reduce((n, p) => n + Number(p.amount || 0), 0);
+      const owedToPrograms = (sums.collected + cardTeam) - paidOut;
+
+      return `
+        ${rGrid([
+          rStat(t('mCollected'), money(sums.collected + cardTeam), true),
+          rStat(t('mProgramShare'), money(sums.collected + cardTeam)),
+          rStat(t('mOurFees'), money(sums.fees + cardFee)),
+          rStat(t('mPaidOut'), money(paidOut)),
+          rStat(t('mOwed'), money(owedToPrograms), owedToPrograms > 0),
+        ])}
+
+        ${rHead(t('mPledgeBreak'))}
+        ${rRow(t('mPledged'), money(sums.pledged), t('mPledgedSub'))}
+        ${rRow(t('mInvoiced'), money(sums.invoiced), t('mInvoicedSub'))}
+        ${rRow(t('mCollectedRow'), money(sums.collected), pct(sums.collected, sums.invoiced) + ' ' + t('mOfInvoiced'))}
+        ${rRow(t('mOutstanding'), money(sums.outstanding), t('mOutstandingSub'))}
+
+        ${cardTeam ? rHead(t('mFromProducts')) + rRow(t('mProductSales'), money(cardTeam), `${d.cards.length} ${t('cardsPlural')}`) : ''}
+
+        ${rHead(t('mPayoutsMade'))}
+        ${d.payouts.length
+          ? d.payouts.slice(0, 12).map(p => {
+              const c = d.campaigns.find(x => x.id === p.campaign_id);
+              return rRow(c ? c.name : '—', money(p.amount), `${p.paid_on || ''} ${p.method ? '· ' + p.method : ''}`);
+            }).join('')
+          : `<p style="color:#888;font-size:12px;">${t('mNoPayouts')}</p>`}
+      `;
+    }
+
+    // ---- 2 · Campaigns ----
+    // What each program has raised, and what is still theirs.
+    function reportCampaigns(d) {
+      if (!d.campaigns.length) return `<p style="color:#888;font-size:12px;">${t('rNothing')}</p>`;
+
+      return d.campaigns.map(c => {
+        const chs = d.challenges.filter(x => x.campaign_id === c.id);
+        const chIds = chs.map(x => x.id);
+        const pl = d.pledges.filter(p => chIds.indexOf(p.challenge_id) !== -1);
+        const sums = pledgeSums(pl);
+
+        const roster = d.players.filter(p => p.campaign_id === c.id);
+        const withPadrinos = new Set(pl.filter(p => p.player_id).map(p => p.player_id)).size;
+        const ran = new Set(d.runs.filter(r => chIds.indexOf(r.challenge_id) !== -1).map(r => r.player_id)).size;
+
+        const cards = d.cards.filter(x => x.campaign_id === c.id);
+        const cardTeam = cards.reduce((n, x) => n + Number(x.team_amount || 0), 0);
+
+        const paid = d.payouts.filter(p => p.campaign_id === c.id)
+                              .reduce((n, p) => n + Number(p.amount || 0), 0);
+        const owed = (sums.collected + cardTeam) - paid;
+
+        return `
+          <div style="padding:14px;background:#1a1420;border-radius:10px;margin:8px 0;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px;">
+              <strong style="font-size:14px;">${c.name}</strong>
+              <span style="color:var(--gold);font-weight:950;">${money(sums.collected + cardTeam)}</span>
+            </div>
+            <div style="font-size:11px;color:#888;line-height:1.8;">
+              ${chs.length} ${chs.length === 1 ? t('cFundraiser') : t('cFundraisers')}
+              · ${roster.length} ${t('playersWord')}
+              · ${withPadrinos} ${t('cFoundPadrinos')}
+              · ${ran} ${t('cTookRun')}<br>
+              ${t('mOutstanding')}: ${money(sums.outstanding)}
+              · ${t('mPaidOut')}: ${money(paid)}
+              · <strong style="color:${owed > 0.005 ? 'var(--gold)' : '#888'};">${t('cStillOwed')}: ${money(owed)}</strong>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ---- 3 · Challenges ----
+    // The funnel. The only report that tells you what to fix.
+    function reportChallenges(d) {
+      if (!d.challenges.length) return `<p style="color:#888;font-size:12px;">${t('rNothing')}</p>`;
+
+      return d.challenges.map(ch => {
+        const camp = d.campaigns.find(c => c.id === ch.campaign_id);
+        const roster = d.players.filter(p => p.campaign_id === ch.campaign_id);
+        const pl = d.pledges.filter(p => p.challenge_id === ch.id);
+        const runs = d.runs.filter(r => r.challenge_id === ch.id);
+        const sums = pledgeSums(pl);
+
+        const withPadrinos = new Set(pl.filter(p => p.player_id).map(p => p.player_id));
+        const perParticipant = withPadrinos.size ? (pl.length / withPadrinos.size) : 0;
+        const avgPoints = runs.length
+          ? Math.round(runs.reduce((n, r) => n + Number(r.points || 0), 0) / runs.length) : 0;
+
+        // What one point was worth, averaged across those who found
+        // anyone — the Padrino Point Value, reported back.
+        let ppv = 0;
+        if (withPadrinos.size) {
+          let total = 0;
+          withPadrinos.forEach(id => {
+            total += pl.filter(p => p.player_id === id)
+                       .reduce((n, p) => n + Number(p.rate_per_point || 0), 0);
+          });
+          ppv = total / withPadrinos.size;
+        }
+
+        const unpaid = pl.filter(p => p.invoiced_at && p.invoice_status !== 'paid');
+        const unpaidValue = unpaid.reduce((n, p) => n + Number(p.amount || 0), 0);
+
+        // grades, where a school uses them
+        const grades = {};
+        roster.forEach(p => {
+          const g = p.grade || '';
+          if (!grades[g]) grades[g] = { n: 0, points: 0 };
+          grades[g].n++;
+          const r = runs.find(x => x.player_id === p.id);
+          if (r) grades[g].points += Number(r.points || 0);
+        });
+        const gradeKeys = Object.keys(grades).filter(g => g);
+
+        return `
+          <div style="padding:14px;background:#1a1420;border-radius:10px;margin:8px 0;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px;">
+              <span><strong style="font-size:14px;">${ch.name}</strong>
+                <span style="color:#888;font-size:11px;"> · ${camp ? camp.name : ''} · ${gameLabel(ch.game)}</span></span>
+              <span style="color:var(--gold);font-weight:950;">${money(sums.collected)}</span>
+            </div>
+
+            <div style="font-size:11px;color:#ccc;line-height:1.9;">
+              ${roster.length} ${t('playersWord')}
+              → <strong>${withPadrinos.size}</strong> ${t('cFoundPadrinos')} (${pct(withPadrinos.size, roster.length)})
+              → <strong>${runs.length}</strong> ${t('cTookRun')} (${pct(runs.length, roster.length)})<br>
+              <strong>${pl.length}</strong> ${t('chPadrinos')}
+              · ${perParticipant.toFixed(1)} ${t('chPerParticipant')}
+              · ${money(ppv)} ${t('chAvgPPV')}
+              · ${avgPoints} ${t('chAvgPoints')}<br>
+              ${t('mInvoiced')}: ${money(sums.invoiced)}
+              · ${t('mCollectedRow')}: ${money(sums.collected)}
+              · <strong>${pct(sums.collected, sums.invoiced)} ${t('chCollectionRate')}</strong><br>
+              ${unpaid.length
+                ? `<span style="color:var(--gold);">${unpaid.length} ${t('chUnpaid')} · ${money(unpaidValue)}</span>`
+                : `<span style="color:#888;">${t('chAllSettled')}</span>`}
+            </div>
+
+            ${gradeKeys.length > 1 ? `
+              <div style="margin-top:10px;padding-top:8px;border-top:1px solid #ffffff14;font-size:11px;color:#888;">
+                ${gradeKeys.sort((a,b) => gradeRank(a) - gradeRank(b)).map(g =>
+                  `${t('gradeWord')} ${g}: <strong style="color:var(--gold);">${grades[g].points}</strong> (${grades[g].n})`
+                ).join(' · ')}
+              </div>` : ''}
+          </div>`;
+      }).join('');
+    }
+
+    // ---- 4 · Products ----
+    function reportProducts(d) {
+      const byDesign = {};
+      d.cards.forEach(c => {
+        if (!byDesign[c.design_id]) byDesign[c.design_id] = { n: 0, gross: 0, team: 0, fee: 0 };
+        byDesign[c.design_id].n++;
+        byDesign[c.design_id].gross += Number(c.price_paid || 0);
+        byDesign[c.design_id].team += Number(c.team_amount || 0);
+        byDesign[c.design_id].fee += Number(c.platform_amount || 0);
+      });
+
+      const sold = d.designs.filter(x => byDesign[x.id]);
+      const unsold = d.designs.filter(x => !byDesign[x.id]);
+
+      return `
+        ${rGrid([
+          rStat(t('pUnitsSold'), d.cards.length, true),
+          rStat(t('pGross'), money(d.cards.reduce((n,c) => n + Number(c.price_paid||0), 0))),
+          rStat(t('pProducts'), d.designs.length),
+          rStat(t('merchants'), d.merchants.length),
+        ])}
+
+        ${rHead(t('pSold'))}
+        ${sold.length ? sold.map(x => {
+          const b = byDesign[x.id];
+          const m = d.merchants.find(y => y.id === x.merchant_id);
+          return rRow(
+            `${x.name} <span style="color:#888;">· ${x.kind || 'coupon'}</span>`,
+            `<strong>${money(b.team)}</strong>`,
+            `${m ? m.name + ' · ' : ''}${b.n} ${t('pUnits')} · ${t('mOurFees')}: ${money(b.fee)}`
+          );
+        }).join('') : `<p style="color:#888;font-size:12px;">${t('pNoneSold')}</p>`}
+
+        ${unsold.length ? rHead(t('pNotSold')) + unsold.map(x => {
+          const m = d.merchants.find(y => y.id === x.merchant_id);
+          return rRow(`${x.name} <span style="color:#888;">· ${x.kind || 'coupon'}</span>`,
+                      x.active ? t('pActive') : t('pInactive'),
+                      m ? m.name : '');
+        }).join('') : ''}
+      `;
+    }
+
+    // ---- 5 · Ledger ----
+    // Every pledge, whole life. The row is the audit trail.
+    function reportLedger(d) {
+      if (!d.pledges.length) return `<p style="color:#888;font-size:12px;">${t('rNothing')}</p>`;
+
+      const rows = d.pledges.slice().sort((a,b) =>
+        new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+      return `
+        <p style="margin:0 0 10px 0;font-size:11px;color:#888;">${t('lBody')}</p>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap;">
+            <thead><tr style="color:#888;text-align:left;">
+              <th style="padding:6px 10px 6px 0;">${t('lPadrino')}</th>
+              <th style="padding:6px 10px 6px 0;">${t('lOn')}</th>
+              <th style="padding:6px 10px 6px 0;text-align:right;">${t('lRate')}</th>
+              <th style="padding:6px 10px 6px 0;text-align:right;">${t('lPoints')}</th>
+              <th style="padding:6px 10px 6px 0;text-align:right;">${t('lPledged')}</th>
+              <th style="padding:6px 10px 6px 0;text-align:right;">${t('lFee')}</th>
+              <th style="padding:6px 10px 6px 0;text-align:right;">${t('lBilled')}</th>
+              <th style="padding:6px 10px 6px 0;">${t('lStatus')}</th>
+            </tr></thead>
+            <tbody>
+              ${rows.map(p => {
+                const pl = d.players.find(x => x.id === p.player_id);
+                const ch = d.challenges.find(x => x.id === p.challenge_id);
+                return `<tr style="border-top:1px solid #ffffff10;">
+                  <td style="padding:7px 10px 7px 0;">${p.sponsor_name || '—'}</td>
+                  <td style="padding:7px 10px 7px 0;">${pl ? pl.name : t('lWholeTeam')}
+                      <span style="color:#666;">${ch ? '· ' + ch.name : ''}</span></td>
+                  <td style="padding:7px 10px 7px 0;text-align:right;">${money(p.rate_per_point)}</td>
+                  <td style="padding:7px 10px 7px 0;text-align:right;">${p.points_at_invoice ?? '—'}</td>
+                  <td style="padding:7px 10px 7px 0;text-align:right;">${p.team_amount != null ? money(p.team_amount) : '—'}</td>
+                  <td style="padding:7px 10px 7px 0;text-align:right;color:#888;">${p.platform_amount != null ? money(p.platform_amount) : '—'}</td>
+                  <td style="padding:7px 10px 7px 0;text-align:right;">${p.amount != null ? money(p.amount) : '—'}</td>
+                  <td style="padding:7px 10px 7px 0;${p.invoice_status === 'paid' ? 'color:var(--gold);' : ''}">
+                    ${t('st_' + (p.invoice_status || 'pending'), p.invoice_status || 'pending')}
+                    ${p.reminder_count ? `<span style="color:#666;"> ·${p.reminder_count}</span>` : ''}
+                  </td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    // ---- export ----
+    // Eventually somebody wants it in a spreadsheet.
+    function exportReport() {
+      const d = REPORT_DATA;
+      if (!d) return;
+
+      const esc = (v) => {
+        const str = String(v == null ? '' : v);
+        return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+      };
+
+      let rows, name;
+
+      if (REPORT_VIEW === 'ledger' || REPORT_VIEW === 'money') {
+        name = 'pledges';
+        rows = [['padrino','email','participant','challenge','program','rate','points',
+                 'pledged','fee','billed','status','reminders','pledged_on','invoiced_on','paid_on']];
+        d.pledges.forEach(p => {
+          const pl = d.players.find(x => x.id === p.player_id);
+          const ch = d.challenges.find(x => x.id === p.challenge_id);
+          const camp = ch && d.campaigns.find(x => x.id === ch.campaign_id);
+          rows.push([p.sponsor_name, p.sponsor_email, pl ? pl.name : 'whole team',
+                     ch ? ch.name : '', camp ? camp.name : '',
+                     p.rate_per_point, p.points_at_invoice, p.team_amount,
+                     p.platform_amount, p.amount, p.invoice_status,
+                     p.reminder_count || 0, p.created_at, p.invoiced_at, p.paid_at]);
+        });
+      } else if (REPORT_VIEW === 'campaigns') {
+        name = 'campaigns';
+        rows = [['program','fundraisers','participants','collected','outstanding','paid_out','still_owed']];
+        d.campaigns.forEach(c => {
+          const chIds = d.challenges.filter(x => x.campaign_id === c.id).map(x => x.id);
+          const sums = pledgeSums(d.pledges.filter(p => chIds.indexOf(p.challenge_id) !== -1));
+          const cardTeam = d.cards.filter(x => x.campaign_id === c.id)
+                                  .reduce((n,x) => n + Number(x.team_amount||0), 0);
+          const paid = d.payouts.filter(p => p.campaign_id === c.id)
+                                .reduce((n,p) => n + Number(p.amount||0), 0);
+          rows.push([c.name, chIds.length, d.players.filter(p => p.campaign_id === c.id).length,
+                     (sums.collected + cardTeam).toFixed(2), sums.outstanding.toFixed(2),
+                     paid.toFixed(2), ((sums.collected + cardTeam) - paid).toFixed(2)]);
+        });
+      } else if (REPORT_VIEW === 'challenges') {
+        name = 'challenges';
+        rows = [['challenge','program','game','participants','found_padrinos','took_run',
+                 'padrinos','invoiced','collected','collection_rate']];
+        d.challenges.forEach(ch => {
+          const camp = d.campaigns.find(c => c.id === ch.campaign_id);
+          const roster = d.players.filter(p => p.campaign_id === ch.campaign_id);
+          const pl = d.pledges.filter(p => p.challenge_id === ch.id);
+          const runs = d.runs.filter(r => r.challenge_id === ch.id);
+          const sums = pledgeSums(pl);
+          rows.push([ch.name, camp ? camp.name : '', ch.game, roster.length,
+                     new Set(pl.filter(p => p.player_id).map(p => p.player_id)).size,
+                     runs.length, pl.length, sums.invoiced.toFixed(2),
+                     sums.collected.toFixed(2), pct(sums.collected, sums.invoiced)]);
+        });
+      } else {
+        name = 'products';
+        rows = [['product','kind','merchant','units','gross','program_share','our_fee']];
+        d.designs.forEach(x => {
+          const cs = d.cards.filter(c => c.design_id === x.id);
+          const m = d.merchants.find(y => y.id === x.merchant_id);
+          rows.push([x.name, x.kind || 'coupon', m ? m.name : '', cs.length,
+                     cs.reduce((n,c) => n + Number(c.price_paid||0), 0).toFixed(2),
+                     cs.reduce((n,c) => n + Number(c.team_amount||0), 0).toFixed(2),
+                     cs.reduce((n,c) => n + Number(c.platform_amount||0), 0).toFixed(2)]);
+        });
+      }
+
+      const csv = rows.map(r => r.map(esc).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${name}-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
     }
 
     // ===== TEAM TRYOUT =====
