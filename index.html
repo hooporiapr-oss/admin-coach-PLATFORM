@@ -556,6 +556,8 @@
         lPledged:'Pledged', lFee:'Fee', lBilled:'Billed', lStatus:'Status',
         lWholeTeam:'whole program',
         cannotRemove:'This player already has padrinos backing them, so they cannot be removed. Ask us if you need this sorted out.',
+        cdLinksFor:'Links for this fundraiser',
+        cdLinksBody:'Give each student their own player link — that is the one that takes their official run. The sponsor link is the one they share with padrinos.',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
@@ -801,6 +803,8 @@
         lPledged:'Prometido', lFee:'Cargo', lBilled:'Facturado', lStatus:'Estado',
         lWholeTeam:'todo el programa',
         cannotRemove:'Este jugador ya tiene padrinos apoy\u00e1ndolo, as\u00ed que no se puede quitar. Av\u00edsanos si hay que resolverlo.',
+        cdLinksFor:'Enlaces de esta recaudaci\u00f3n',
+        cdLinksBody:'Dale a cada estudiante su enlace de jugador — ese es el de la corrida oficial. El enlace de padrinos es el que ellos comparten.',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
@@ -3353,6 +3357,10 @@
       });
     }
 
+    // Which fundraiser a coach is handing links out for.
+    let COACH_CHALLENGES = [];
+    let COACH_CHALLENGE_ID = null;
+
     function openCoachCampaign(coach) {
       showSignedInAs('coachWhoami');
       sessionStorage.setItem('currentCampaignId', coach.campaign_id);
@@ -3472,12 +3480,42 @@
               <span>${p.name}</span>
               <span style="color:var(--gold);font-weight:950;margin-left:8px;">${money(raisedBy[p.id] || 0)}</span>
             </div>
-            <span style="display:flex;gap:6px;flex-shrink:0;">
-              <button class="btn" onclick="copyPlayerLink('${p.id}')" style="padding:5px 10px;font-size:11px;">${t('copyLink')}</button>
+            <span style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
+              ${COACH_CHALLENGE_ID ? `
+                <button class="btn" onclick="copyPlayerChallengeLink('${COACH_CHALLENGE_ID}','${p.id}','${(COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID) || {}).game || 'fortress'}')" style="padding:5px 10px;font-size:11px;">${t('sponsorLink')}</button>
+                <button class="btn alt" onclick="copyPlayerRunLink('${COACH_CHALLENGE_ID}','${p.id}','${(COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID) || {}).game || 'fortress'}')" style="padding:5px 10px;font-size:11px;">${t('playerLink')}</button>` : ''}
               <button class="btn alt" onclick="removePlayer('${p.id}')" style="padding:5px 10px;font-size:11px;">${t('remove')}</button>
             </span>
           </div>
         `).join('');
+
+        // A coach hands these out, so they need them in front of them
+        // rather than having to ring us for every student.
+        let challengeBar = '';
+        try {
+          const chs = await supabaseQuery('challenges', 'GET', null,
+            `?campaign_id=eq.${campaignId}&select=id,name,game&order=created_at.desc`);
+          COACH_CHALLENGES = chs || [];
+
+          if (COACH_CHALLENGES.length) {
+            if (!COACH_CHALLENGE_ID ||
+                !COACH_CHALLENGES.some(c => c.id === COACH_CHALLENGE_ID)) {
+              COACH_CHALLENGE_ID = COACH_CHALLENGES[0].id;
+            }
+            const cur = COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID);
+
+            challengeBar = `
+              <div style="padding:12px 14px;background:rgba(255,211,90,.07);border:1px solid rgba(255,211,90,.3);border-radius:10px;margin-bottom:12px;">
+                <p style="margin:0 0 8px 0;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">${t('cdLinksFor')}</p>
+                ${COACH_CHALLENGES.length > 1 ? `
+                  <select onchange="COACH_CHALLENGE_ID=this.value;loadCoachDashboard()" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;margin-bottom:8px;">
+                    ${COACH_CHALLENGES.map(c => `<option value="${c.id}"${c.id === COACH_CHALLENGE_ID ? ' selected' : ''}>${c.name}</option>`).join('')}
+                  </select>` : `<p style="margin:0 0 8px 0;font-size:13px;"><strong>${cur.name}</strong></p>`}
+                <button class="btn alt" onclick="copyChallengeLink('${COACH_CHALLENGE_ID}','${cur.game}')" style="padding:6px 12px;font-size:11px;">${t('teamLink')}</button>
+                <p style="margin:8px 0 0 0;font-size:11px;color:#888;">${t('cdLinksBody')}</p>
+              </div>`;
+          }
+        } catch (e) { console.error('Coach challenges:', e); }
 
         // A coach knows the names and we do not. Adding is theirs;
         // adding is also safe, because a new player has no padrinos
@@ -3495,7 +3533,7 @@
             <p style="margin:6px 0 0 0;font-size:11px;color:#888;">${t('bulkNote')}</p>
           </div>`;
 
-        playersList.innerHTML = teamPageRow + rosterRows + addBox;
+        playersList.innerHTML = challengeBar + teamPageRow + rosterRows + addBox;
       } catch (error) {
         console.error('Error:', error);
       }
