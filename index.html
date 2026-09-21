@@ -572,6 +572,7 @@
         cdYouLookAfter:'You look after',
         cdOnlyYours:'Only your students are shown here.',
         coachesWord:'Coaches', addCoach:'+ Add', wholeRoster:'whole roster',
+        editRefused:'That change was not saved — you may not have permission to edit this student. Ask the director or us.',
         notYourPlayer:'That student is not in the group you look after, so their run link has to come from the director.',
         editNamePrompt:'Name:',
         editGradePrompt:'Grade (PK, K, 1–12), or leave blank for none:',
@@ -839,6 +840,7 @@
         cdYouLookAfter:'Te encargas de',
         cdOnlyYours:'Aqu\u00ed solo aparecen tus estudiantes.',
         coachesWord:'Coaches', addCoach:'+ A\u00f1adir', wholeRoster:'toda la lista',
+        editRefused:'Ese cambio no se guard\u00f3 — puede que no tengas permiso para editar este estudiante. Pregúntale al director o a nosotros.',
         notYourPlayer:'Ese estudiante no est\u00e1 en tu grupo, as\u00ed que su enlace de corrida lo tiene que dar el director.',
         editNamePrompt:'Nombre:',
         editGradePrompt:'Grado (PK, K, 1–12), o d\u00e9jalo en blanco:',
@@ -3816,7 +3818,14 @@
       }
 
       try {
-        await supabaseQuery(`players?id=eq.${id}`, 'PATCH', update);
+        // The database answers a refused update with nothing rather than
+        // an error, so an empty answer has to be treated as a refusal —
+        // otherwise the edit looks saved when it was not.
+        const saved = await supabaseQuery(`players?id=eq.${id}`, 'PATCH', update);
+        if (!saved || (Array.isArray(saved) && saved.length === 0)) {
+          alert(t('editRefused'));
+          return;
+        }
         if (where === 'coach') loadCoachDashboard();
         else loadCampaignPlayers(btn.dataset.campaign);
       } catch (error) {
