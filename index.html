@@ -572,7 +572,8 @@
         cdYouLookAfter:'You look after',
         cdOnlyYours:'Only your students are shown here.',
         coachesWord:'Coaches', addCoach:'+ Add', wholeRoster:'whole roster',
-        coachEmailPrompt:'Coach email address:',
+        coachNamePrompt:'Their name (as it should appear to you):',
+        coachEmailPrompt:'Their email — this is what they sign in with:',
         coachScopePrompt:'Which students do they look after? Type a grade (5, K, PK), or a group name for a league team, or leave blank for the whole roster.',
         coachAlready:'That email is already a coach on this program.',
         confirmRemoveCoach:'Remove this coach? Their students stay on the roster — only their access goes.',
@@ -833,7 +834,8 @@
         cdYouLookAfter:'Te encargas de',
         cdOnlyYours:'Aqu\u00ed solo aparecen tus estudiantes.',
         coachesWord:'Coaches', addCoach:'+ A\u00f1adir', wholeRoster:'toda la lista',
-        coachEmailPrompt:'Correo del coach:',
+        coachNamePrompt:'Su nombre (como quieres verlo):',
+        coachEmailPrompt:'Su correo — con este entra:',
         coachScopePrompt:'\u00bfDe cu\u00e1les estudiantes se encarga? Escribe un grado (5, K, PK), o el nombre de un equipo, o d\u00e9jalo en blanco para toda la lista.',
         coachAlready:'Ese correo ya es coach de este programa.',
         confirmRemoveCoach:'\u00bfQuitar este coach? Sus estudiantes se quedan en la lista — solo se va su acceso.',
@@ -2556,7 +2558,7 @@
         let html = '';
         for (let c of campaigns) {
           const coaches = await supabaseQuery('coaches', 'GET', null,
-            `?campaign_id=eq.${c.id}&select=id,email,grade,label&order=grade.asc`);
+            `?campaign_id=eq.${c.id}&select=id,name,email,grade,label&order=grade.asc`);
           const named = (coaches || []).filter(x => x.email);
           
           html += `
@@ -2573,7 +2575,7 @@
                     </div>
                     ${named.length ? named.map(x => `
                       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-top:1px solid #ffffff10;">
-                        <span>${x.email}
+                        <span>${x.name && x.name !== x.email.split('@')[0] ? `<strong>${x.name}</strong> · ` : ''}${x.email}
                           <span style="color:#888;">${x.grade ? ' · ' + t('gradeWord') + ' ' + x.grade
                                                      : x.label ? ' · ' + x.label
                                                      : ' · ' + t('wholeRoster')}</span></span>
@@ -2611,6 +2613,9 @@
     // A teacher per grade, or a coach per team. Each one sees only
     // the students they are responsible for.
     async function addCoach(campaignId) {
+      const fullName = prompt(t('coachNamePrompt'));
+      if (fullName === null) return;
+
       const email = prompt(t('coachEmailPrompt'));
       if (!email || !email.trim()) return;
 
@@ -2626,7 +2631,7 @@
           // the table requires a name; the email is what identifies
           // them, so the part before the @ stands in until they have
           // one of their own
-          name: cleanEmail.split('@')[0],
+          name: (fullName || '').trim() || cleanEmail.split('@')[0],
           access_code: 'COACH-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
           grade: isGrade ? grade.toUpperCase() : null,
           label: (!isGrade && grade) ? grade : null,
@@ -3686,7 +3691,7 @@
         if (!myGrade && !myLabel) {
           try {
             const mates = await supabaseQuery('coaches', 'GET', null,
-              `?campaign_id=eq.${campaignId}&select=id,email,grade,label&order=grade.asc`);
+              `?campaign_id=eq.${campaignId}&select=id,name,email,grade,label&order=grade.asc`);
             const teachers = (mates || []).filter(x => x.email && (x.grade || x.label));
 
             teacherPanel = `
@@ -3697,7 +3702,7 @@
                 </div>
                 ${teachers.length ? teachers.map(x => `
                   <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #ffffff10;font-size:12px;">
-                    <span>${x.email}
+                    <span>${x.name && x.name !== x.email.split('@')[0] ? `<strong>${x.name}</strong> · ` : ''}${x.email}
                       <span style="color:#888;"> · ${x.grade ? t('gradeWord') + ' ' + x.grade : x.label}</span></span>
                     <button onclick="coachRemoveTeacher('${x.id}')" style="padding:2px 8px;background:#6b2131;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:10px;flex-shrink:0;">${t('remove')}</button>
                   </div>`).join('')
@@ -3757,6 +3762,9 @@
       const campaignId = sessionStorage.getItem('currentCampaignId');
       if (!campaignId) return;
 
+      const fullName = prompt(t('coachNamePrompt'));
+      if (fullName === null) return;
+
       const email = prompt(t('coachEmailPrompt'));
       if (!email || !email.trim()) return;
 
@@ -3771,7 +3779,7 @@
         await supabaseQuery('coaches', 'POST', {
           campaign_id: campaignId,
           email: cleanEmail,
-          name: cleanEmail.split('@')[0],
+          name: (fullName || '').trim() || cleanEmail.split('@')[0],
           access_code: 'COACH-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
           grade: isGrade ? v.toUpperCase() : null,
           label: isGrade ? null : v,
