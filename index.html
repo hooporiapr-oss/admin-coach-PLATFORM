@@ -1925,6 +1925,13 @@
         GRADES.map(g => `<option value="${g}"${g === selected ? ' selected' : ''}>${t('gradeWord')} ${g}</option>`).join('');
     }
 
+    // The grade, shown beside a name wherever a roster is listed.
+    function gradeTag(p) {
+      return p && p.grade
+        ? ` <span style="font-size:10px;font-weight:800;color:var(--gold);background:rgba(255,211,90,.1);border:1px solid rgba(255,211,90,.3);border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1px;">${t('gradeWord')} ${p.grade}</span>`
+        : '';
+    }
+
     // PK and K first, then numerically — so 2 does not sort after 11.
     function gradeRank(g) {
       if (!g) return 999;
@@ -3099,7 +3106,7 @@
         const ch = chRows[0];
 
         const [players, runs, practice, pledges] = await Promise.all([
-          supabaseQuery('players', 'GET', null, `?campaign_id=eq.${ch.campaign_id}&select=id,name&order=name.asc`),
+          supabaseQuery('players', 'GET', null, `?campaign_id=eq.${ch.campaign_id}&select=id,name,grade&order=name.asc`),
           supabaseQuery('challenge_runs', 'GET', null, `?challenge_id=eq.${challengeId}&select=player_id,level_reached,points,attempts,threes,fouls`),
           supabaseQuery('challenge_practice', 'GET', null, `?challenge_id=eq.${challengeId}&select=player_id,best_level,runs`),
           supabaseQuery('pledges', 'GET', null, `?challenge_id=eq.${challengeId}&select=*&order=created_at.desc`)
@@ -3156,7 +3163,7 @@
               <div style="padding:10px;background:#1a1420;border-radius:8px;margin:5px 0;font-size:12px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:${locked ? '0' : '8px'};">
                   <span>
-                    <strong>${p.name}</strong>
+                    <strong>${p.name}</strong>${gradeTag(p)}
                     <span style="color:#888;"> · ${pledgeCount} ${pledgeCount === 1 ? t('pledgeOne') : t('pledgeMany')}</span>
                   </span>
                   <span style="flex-shrink:0;display:flex;align-items:center;gap:8px;">
@@ -3178,7 +3185,7 @@
           return `
             <div style="padding:9px 10px;background:#1a1420;border-radius:8px;margin:5px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;">
               <span>
-                <strong>${p.name}</strong>
+                <strong>${p.name}</strong>${gradeTag(p)}
                 <span style="color:#888;">
                   · ${pledgeCount} ${pledgeCount === 1 ? t('pledgeOne') : t('pledgeMany')}
                   ${run
@@ -3625,7 +3632,7 @@
           : players.map((p) => `
           <div style="padding:10px;background:#0e0a11;border-radius:9px;margin:5px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;">
             <div>
-              <span>${p.name}</span>
+              <span>${p.name}${gradeTag(p)}</span>
               <span style="color:var(--gold);font-weight:950;margin-left:8px;">${money(raisedBy[p.id] || 0)}</span>
             </div>
             <span style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
