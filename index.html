@@ -2619,9 +2619,14 @@
       const isGrade = grade && GRADES.indexOf(grade.toUpperCase()) !== -1;
 
       try {
+        const cleanEmail = email.trim().toLowerCase();
         await supabaseQuery('coaches', 'POST', {
           campaign_id: campaignId,
-          email: email.trim().toLowerCase(),
+          email: cleanEmail,
+          // the table requires a name; the email is what identifies
+          // them, so the part before the @ stands in until they have
+          // one of their own
+          name: cleanEmail.split('@')[0],
           grade: isGrade ? grade.toUpperCase() : null,
           label: (!isGrade && grade) ? grade : null,
         }, '?select=id');
@@ -3761,9 +3766,11 @@
       const isGrade = GRADES.indexOf(v.toUpperCase()) !== -1;
 
       try {
+        const cleanEmail = email.trim().toLowerCase();
         await supabaseQuery('coaches', 'POST', {
           campaign_id: campaignId,
-          email: email.trim().toLowerCase(),
+          email: cleanEmail,
+          name: cleanEmail.split('@')[0],
           grade: isGrade ? v.toUpperCase() : null,
           label: isGrade ? null : v,
         }, '?select=id');
