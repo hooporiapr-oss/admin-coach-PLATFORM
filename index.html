@@ -572,6 +572,7 @@
         cdYouLookAfter:'You look after',
         cdOnlyYours:'Only your students are shown here.',
         coachesWord:'Coaches', addCoach:'+ Add', wholeRoster:'whole roster',
+        notYourPlayer:'That student is not in the group you look after, so their run link has to come from the director.',
         editNamePrompt:'Name:',
         editGradePrompt:'Grade (PK, K, 1–12), or leave blank for none:',
         badGrade:'That is not a grade we use — try PK, K or 1 to 12.',
@@ -838,6 +839,7 @@
         cdYouLookAfter:'Te encargas de',
         cdOnlyYours:'Aqu\u00ed solo aparecen tus estudiantes.',
         coachesWord:'Coaches', addCoach:'+ A\u00f1adir', wholeRoster:'toda la lista',
+        notYourPlayer:'Ese estudiante no est\u00e1 en tu grupo, as\u00ed que su enlace de corrida lo tiene que dar el director.',
         editNamePrompt:'Nombre:',
         editGradePrompt:'Grado (PK, K, 1–12), o d\u00e9jalo en blanco:',
         badGrade:'Ese no es un grado que usemos — prueba PK, K o del 1 al 12.',
@@ -3037,18 +3039,31 @@
     // link to everyone else.
     async function copyPlayerRunLink(challengeId, playerId, game) {
       try {
-        let rows = await supabaseQuery('player_run_keys', 'GET', null,
-          `?player_id=eq.${playerId}&select=run_key`);
+        // The key comes from the database, which decides whether the
+        // person asking looks after this player. A coach never reads
+        // the key table directly — every key in it is a ticket to
+        // somebody's one official run.
+        const token = await currentToken();
+        if (!token) { alert(t('signInFirst')); return; }
 
-        // Players added before run keys existed, or added by a coach,
-        // get one the first time their link is needed.
-        if (!rows || rows.length === 0) {
-          const key = (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '') : String(Math.random()).slice(2)).slice(0, 18);
-          await supabaseQuery('player_run_keys', 'POST', { player_id: playerId, run_key: key }, '?select=*');
-          rows = [{ run_key: key }];
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_run_key`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ p_player: playerId })
+        });
+
+        if (!res.ok) {
+          const detail = await res.text();
+          if (/not your player/i.test(detail)) { alert(t('notYourPlayer')); return; }
+          throw new Error(detail);
         }
 
-        const link = pledgeBase(game) + '?c=' + challengeId + '&p=' + playerId + '&k=' + rows[0].run_key;
+        const key = await res.json();
+        const link = pledgeBase(game) + '?c=' + challengeId + '&p=' + playerId + '&k=' + key;
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(link).then(() => alert(t('playerLinkCopied') + '\n\n' + link)).catch(() => prompt(t('copy'), link));
         } else {
@@ -3646,8 +3661,8 @@
             </div>
             <span style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
               ${COACH_CHALLENGE_ID ? `
-                <button class="btn" onclick="copyPlayerChallengeLink('${COACH_CHALLENGE_ID}','${p.id}','${(COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID) || {}).game || 'fortress'}')" style="padding:5px 10px;font-size:11px;">${t('sponsorLink')}</button>
-                <button class="btn alt" onclick="copyPlayerRunLink('${COACH_CHALLENGE_ID}','${p.id}','${(COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID) || {}).game || 'fortress'}')" style="padding:5px 10px;font-size:11px;">${t('playerLink')}</button>` : ''}
+                <button class="btn alt" onclick="copyPlayerChallengeLink('${COACH_CHALLENGE_ID}','${p.id}','${(COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID) || {}).game || 'fortress'}')" style="padding:5px 10px;font-size:11px;">${t('sponsorLink')}</button>
+                <button class="btn" onclick="copyPlayerRunLink('${COACH_CHALLENGE_ID}','${p.id}','${(COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID) || {}).game || 'fortress'}')" style="padding:5px 10px;font-size:11px;">${t('playerLink')}</button>` : ''}
               <button class="btn alt" data-id="${p.id}" data-name="${encodeURIComponent(p.name)}" data-grade="${p.grade || ''}"
                       onclick="editPlayer(this,'coach')" style="padding:5px 10px;font-size:11px;">${t('edit')}</button>
               <button class="btn alt" onclick="removePlayer('${p.id}')" style="padding:5px 10px;font-size:11px;">${t('remove')}</button>
