@@ -2627,6 +2627,7 @@
           // them, so the part before the @ stands in until they have
           // one of their own
           name: cleanEmail.split('@')[0],
+          access_code: 'COACH-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
           grade: isGrade ? grade.toUpperCase() : null,
           label: (!isGrade && grade) ? grade : null,
         }, '?select=id');
@@ -3771,6 +3772,7 @@
           campaign_id: campaignId,
           email: cleanEmail,
           name: cleanEmail.split('@')[0],
+          access_code: 'COACH-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
           grade: isGrade ? v.toUpperCase() : null,
           label: isGrade ? null : v,
         }, '?select=id');
