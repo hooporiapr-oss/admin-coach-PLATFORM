@@ -572,6 +572,10 @@
         cdYouLookAfter:'You look after',
         cdOnlyYours:'Only your students are shown here.',
         coachesWord:'Coaches', addCoach:'+ Add', wholeRoster:'whole roster',
+        editNamePrompt:'Name:',
+        editGradePrompt:'Grade (PK, K, 1–12), or leave blank for none:',
+        badGrade:'That is not a grade we use — try PK, K or 1 to 12.',
+        nameTooLong:'Keep names under 60 characters.',
         coachNamePrompt:'Their name (as it should appear to you):',
         coachEmailPrompt:'Their email — this is what they sign in with:',
         coachScopePrompt:'Which students do they look after? Type a grade (5, K, PK), or a group name for a league team, or leave blank for the whole roster.',
@@ -834,6 +838,10 @@
         cdYouLookAfter:'Te encargas de',
         cdOnlyYours:'Aqu\u00ed solo aparecen tus estudiantes.',
         coachesWord:'Coaches', addCoach:'+ A\u00f1adir', wholeRoster:'toda la lista',
+        editNamePrompt:'Nombre:',
+        editGradePrompt:'Grado (PK, K, 1–12), o d\u00e9jalo en blanco:',
+        badGrade:'Ese no es un grado que usemos — prueba PK, K o del 1 al 12.',
+        nameTooLong:'Los nombres deben tener menos de 60 caracteres.',
         coachNamePrompt:'Su nombre (como quieres verlo):',
         coachEmailPrompt:'Su correo — con este entra:',
         coachScopePrompt:'\u00bfDe cu\u00e1les estudiantes se encarga? Escribe un grado (5, K, PK), o el nombre de un equipo, o d\u00e9jalo en blanco para toda la lista.',
@@ -1985,7 +1993,8 @@
                 <select onchange="setPlayerGrade('${p.id}','${campaignId}',this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:10px;">
                   ${gradeOptions(p.grade || '')}
                 </select>
-                <button class="btn" onclick="copyPlayerLink('${p.id}')" style="padding:4px 9px;font-size:10px;">${t('link')}</button>
+                <button class="btn alt" data-id="${p.id}" data-name="${encodeURIComponent(p.name)}" data-grade="${p.grade || ''}" data-campaign="${campaignId}"
+                        onclick="editPlayer(this,'admin')" style="padding:4px 9px;font-size:10px;">${t('edit')}</button>
                 <button class="btn red" onclick="adminRemovePlayer('${p.id}','${campaignId}')" style="padding:4px 9px;font-size:10px;">${t('remove')}</button>
               </span>
             </div>`).join('');
@@ -3639,6 +3648,8 @@
               ${COACH_CHALLENGE_ID ? `
                 <button class="btn" onclick="copyPlayerChallengeLink('${COACH_CHALLENGE_ID}','${p.id}','${(COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID) || {}).game || 'fortress'}')" style="padding:5px 10px;font-size:11px;">${t('sponsorLink')}</button>
                 <button class="btn alt" onclick="copyPlayerRunLink('${COACH_CHALLENGE_ID}','${p.id}','${(COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID) || {}).game || 'fortress'}')" style="padding:5px 10px;font-size:11px;">${t('playerLink')}</button>` : ''}
+              <button class="btn alt" data-id="${p.id}" data-name="${encodeURIComponent(p.name)}" data-grade="${p.grade || ''}"
+                      onclick="editPlayer(this,'coach')" style="padding:5px 10px;font-size:11px;">${t('edit')}</button>
               <button class="btn alt" onclick="removePlayer('${p.id}')" style="padding:5px 10px;font-size:11px;">${t('remove')}</button>
             </span>
           </div>
@@ -3761,6 +3772,40 @@
         alert(t('playerAdded'));
       } catch (error) {
         console.error('Error:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    async function editPlayer(btn, where) {
+      const id = btn.dataset.id;
+      const current = decodeURIComponent(btn.dataset.name || '');
+      const currentGrade = btn.dataset.grade || '';
+
+      const name = prompt(t('editNamePrompt'), current);
+      if (name === null) return;
+      const clean = name.trim();
+      if (!clean) { alert(t('needNames')); return; }
+      if (clean.length > 60) { alert(t('nameTooLong')); return; }
+
+      const update = { name: clean };
+
+      // A teacher looks after one grade, so their students stay in it.
+      // A director, or you, can move a student between grades.
+      const scoped = where === 'coach' && (sessionStorage.getItem('coachGrade') || sessionStorage.getItem('coachLabel'));
+      if (!scoped) {
+        const g = prompt(t('editGradePrompt'), currentGrade);
+        if (g === null) return;
+        const gv = g.trim().toUpperCase();
+        if (gv && GRADES.indexOf(gv) === -1) { alert(t('badGrade')); return; }
+        update.grade = gv || null;
+      }
+
+      try {
+        await supabaseQuery(`players?id=eq.${id}`, 'PATCH', update);
+        if (where === 'coach') loadCoachDashboard();
+        else loadCampaignPlayers(btn.dataset.campaign);
+      } catch (error) {
+        console.error('Edit player:', error);
         alert('Error: ' + error.message);
       }
     }
