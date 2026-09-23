@@ -502,6 +502,9 @@
         resetTryout:'Clear the board',
         confirmResetTryout:'Clear every score in this competition? Everyone keeps their link — only the scores go. This cannot be undone.',
         playersWord:'players',
+        practiceFirst:'Practice before the official run', noPractice:'No practice needed',
+        practiceRuns:'practice runs', 
+        practiceNote:'Nobody takes their one official attempt cold. Practice is unlimited either way — this is only how much is needed before the official run unlocks.',
         whichGame:'Which game counts', allThree:'All three games',
         allThreeNote:'Everyone plays all three, and each one is scored separately.',
         oneGameOn:'Only this game is shown, and only this game is scored.',
@@ -773,6 +776,9 @@
         resetTryout:'Borrar el tablero',
         confirmResetTryout:'\u00bfBorrar todos los puntos de esta competencia? Cada quien conserva su enlace — solo se van los puntos. No se puede deshacer.',
         playersWord:'jugadores',
+        practiceFirst:'Práctica antes de la corrida oficial', noPractice:'Sin práctica requerida',
+        practiceRuns:'prácticas',
+        practiceNote:'Nadie hace su único intento oficial en frío. La práctica es ilimitada de todos modos — esto es solo cuánta hace falta para desbloquear la corrida oficial.',
         whichGame:'Qué juego cuenta', allThree:'Los tres juegos',
         allThreeNote:'Todos juegan los tres, y cada uno se punt\u00faa por separado.',
         oneGameOn:'Solo se muestra este juego, y solo este se punt\u00faa.',
@@ -1806,7 +1812,7 @@
         const [players, rows, camp] = await Promise.all([
           supabaseQuery('players', 'GET', null, `?campaign_id=eq.${campaignId}&select=id,name,grade&order=name.asc`),
           supabaseQuery('campaign_tryouts', 'GET', null, `?campaign_id=eq.${campaignId}&select=player_id,game,best_level,runs`),
-          supabaseQuery('campaigns', 'GET', null, `?id=eq.${campaignId}&select=tryout_one_run,tryout_game`)
+          supabaseQuery('campaigns', 'GET', null, `?id=eq.${campaignId}&select=tryout_one_run,tryout_game,practice_required`)
         ]);
 
         // Two shapes of competition. Best-of rewards persistence and
@@ -1816,6 +1822,8 @@
         // Which game this competition is being run on. Blank means all
         // three, which is how it worked before.
         const onlyGame = (camp && camp[0] && camp[0].tryout_game) || '';
+        const pr = camp && camp[0] ? camp[0].practice_required : 3;
+        const practiceNeed = (pr === 0 || pr) ? pr : 3;
 
         // Only the game this competition is being run on, unless it
         // is running on all of them.
@@ -1865,6 +1873,14 @@
           <p style="margin:0 0 8px 0;font-size:11px;color:#888;">${t('tryoutBody')}</p>
 
           <div style="padding:10px 12px;background:#1a1420;border:1px solid #ffffff14;border-radius:9px;margin-bottom:10px;font-size:12px;">
+            <div style="font-weight:900;margin-bottom:6px;">${t('practiceFirst')}</div>
+            <select onchange="setPracticeRequired('${campaignId}',this.value)" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
+              ${[0,1,2,3,5,10].map(n => `<option value="${n}"${n === practiceNeed ? ' selected' : ''}>${n === 0 ? t('noPractice') : n + ' ' + t('practiceRuns')}</option>`).join('')}
+            </select>
+            <div style="color:#888;margin-top:6px;">${t('practiceNote')}</div>
+          </div>
+
+          <div style="padding:10px 12px;background:#1a1420;border:1px solid #ffffff14;border-radius:9px;margin-bottom:10px;font-size:12px;">
             <div style="font-weight:900;margin-bottom:6px;">${t('whichGame')}</div>
             <select onchange="setTryoutGame('${campaignId}',this.value)" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
               <option value=""${!onlyGame ? ' selected' : ''}>${t('allThree')}</option>
@@ -1906,6 +1922,17 @@
     // only the scores go.
     // Switching mode mid-competition would be unfair to whoever has
     // already played, so this offers to clear the board with it.
+    async function setPracticeRequired(campaignId, n) {
+      try {
+        await supabaseQuery(`campaigns?id=eq.${campaignId}`, 'PATCH',
+          { practice_required: parseInt(n, 10) || 0 });
+        loadTryout(campaignId);
+      } catch (error) {
+        console.error('Practice requirement:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
     async function setTryoutGame(campaignId, game) {
       try {
         await supabaseQuery(`campaigns?id=eq.${campaignId}`, 'PATCH', { tryout_game: game || null });
