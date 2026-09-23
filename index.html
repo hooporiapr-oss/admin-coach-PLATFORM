@@ -502,6 +502,9 @@
         resetTryout:'Clear the board',
         confirmResetTryout:'Clear every score in this competition? Everyone keeps their link — only the scores go. This cannot be undone.',
         playersWord:'players',
+        whichGame:'Which game counts', allThree:'All three games',
+        allThreeNote:'Everyone plays all three, and each one is scored separately.',
+        oneGameOn:'Only this game is shown, and only this game is scored.',
         tryout:'Competition', tryoutLink:'Copy competition link',
         tryoutBody:'One link for everyone. Each person opens it, picks their name and plays. Practice is free and unlimited — only the official attempt is recorded.',
         noTryouts:'Nobody has played yet.', bestFit:'Best fit', perPlayer:'Per player',
@@ -770,6 +773,9 @@
         resetTryout:'Borrar el tablero',
         confirmResetTryout:'\u00bfBorrar todos los puntos de esta competencia? Cada quien conserva su enlace — solo se van los puntos. No se puede deshacer.',
         playersWord:'jugadores',
+        whichGame:'Qué juego cuenta', allThree:'Los tres juegos',
+        allThreeNote:'Todos juegan los tres, y cada uno se punt\u00faa por separado.',
+        oneGameOn:'Solo se muestra este juego, y solo este se punt\u00faa.',
         tryout:'Competencia', tryoutLink:'Copiar enlace de competencia',
         tryoutBody:'Un solo enlace para todos. Cada quien lo abre, escoge su nombre y juega. La práctica es gratis e ilimitada — solo se guarda el intento oficial.',
         noTryouts:'Todav\u00eda no ha jugado nadie.', bestFit:'Mejor opci\u00f3n', perPlayer:'Por jugador',
@@ -1800,15 +1806,20 @@
         const [players, rows, camp] = await Promise.all([
           supabaseQuery('players', 'GET', null, `?campaign_id=eq.${campaignId}&select=id,name,grade&order=name.asc`),
           supabaseQuery('campaign_tryouts', 'GET', null, `?campaign_id=eq.${campaignId}&select=player_id,game,best_level,runs`),
-          supabaseQuery('campaigns', 'GET', null, `?id=eq.${campaignId}&select=tryout_one_run`)
+          supabaseQuery('campaigns', 'GET', null, `?id=eq.${campaignId}&select=tryout_one_run,tryout_game`)
         ]);
 
         // Two shapes of competition. Best-of rewards persistence and
         // suits choosing a game; one run is a single shot at it, which
         // is what makes an event of it.
         const oneRun = !!(camp && camp[0] && camp[0].tryout_one_run);
+        // Which game this competition is being run on. Blank means all
+        // three, which is how it worked before.
+        const onlyGame = (camp && camp[0] && camp[0].tryout_game) || '';
 
-        const games = ['fortress', 'recall', 'recognition'];
+        // Only the game this competition is being run on, unless it
+        // is running on all of them.
+        const games = onlyGame ? [onlyGame] : ['fortress', 'recall', 'recognition'];
         const totals = { fortress: 0, recall: 0, recognition: 0 };
         const counts = { fortress: 0, recall: 0, recognition: 0 };
         const byPlayer = {};
@@ -1853,6 +1864,18 @@
         box.innerHTML = `
           <p style="margin:0 0 8px 0;font-size:11px;color:#888;">${t('tryoutBody')}</p>
 
+          <div style="padding:10px 12px;background:#1a1420;border:1px solid #ffffff14;border-radius:9px;margin-bottom:10px;font-size:12px;">
+            <div style="font-weight:900;margin-bottom:6px;">${t('whichGame')}</div>
+            <select onchange="setTryoutGame('${campaignId}',this.value)" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
+              <option value=""${!onlyGame ? ' selected' : ''}>${t('allThree')}</option>
+              <option value="fortress"${onlyGame === 'fortress' ? ' selected' : ''}>${GAME_LABELS.fortress}</option>
+              <option value="recall"${onlyGame === 'recall' ? ' selected' : ''}>${GAME_LABELS.recall}</option>
+              <option value="recognition"${onlyGame === 'recognition' ? ' selected' : ''}>${GAME_LABELS.recognition}</option>
+              <option value="spots"${onlyGame === 'spots' ? ' selected' : ''}>${GAME_LABELS.spots}</option>
+            </select>
+            <div style="color:#888;margin-top:6px;">${onlyGame ? t('oneGameOn') : t('allThreeNote')}</div>
+          </div>
+
           <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:${oneRun ? 'rgba(255,211,90,.09)' : '#1a1420'};border:1px solid ${oneRun ? 'rgba(255,211,90,.4)' : '#ffffff14'};border-radius:9px;margin-bottom:12px;cursor:pointer;font-size:12px;">
             <input type="checkbox" ${oneRun ? 'checked' : ''} onchange="setTryoutMode('${campaignId}',this.checked)" style="width:18px;height:18px;flex-shrink:0;">
             <span>
@@ -1883,6 +1906,16 @@
     // only the scores go.
     // Switching mode mid-competition would be unfair to whoever has
     // already played, so this offers to clear the board with it.
+    async function setTryoutGame(campaignId, game) {
+      try {
+        await supabaseQuery(`campaigns?id=eq.${campaignId}`, 'PATCH', { tryout_game: game || null });
+        loadTryout(campaignId);
+      } catch (error) {
+        console.error('Competition game:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
     async function setTryoutMode(campaignId, oneRun) {
       try {
         await supabaseQuery(`campaigns?id=eq.${campaignId}`, 'PATCH', { tryout_one_run: oneRun });
