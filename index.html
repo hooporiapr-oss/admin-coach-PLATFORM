@@ -505,6 +505,7 @@
         practiceFirst:'Practice before the official run', noPractice:'No practice needed',
         practiceRuns:'practice runs', 
         practiceNote:'Nobody takes their one official attempt cold. Practice is unlimited either way — this is only how much is needed before the official run unlocks.',
+        liveOn:'Live — students can see their links', liveOff:'Not live — students see no links yet',
         whichGame:'Which game counts', allThree:'All three games',
         allThreeNote:'Everyone plays all three, and each one is scored separately.',
         oneGameOn:'Only this game is shown, and only this game is scored.',
@@ -779,6 +780,7 @@
         practiceFirst:'Práctica antes de la corrida oficial', noPractice:'Sin práctica requerida',
         practiceRuns:'prácticas',
         practiceNote:'Nadie hace su único intento oficial en frío. La práctica es ilimitada de todos modos — esto es solo cuánta hace falta para desbloquear la corrida oficial.',
+        liveOn:'En vivo — los estudiantes ven sus enlaces', liveOff:'No en vivo — todav\u00eda no ven enlaces',
         whichGame:'Qué juego cuenta', allThree:'Los tres juegos',
         allThreeNote:'Todos juegan los tres, y cada uno se punt\u00faa por separado.',
         oneGameOn:'Solo se muestra este juego, y solo este se punt\u00faa.',
@@ -3026,6 +3028,18 @@
       }
     }
 
+    // Whether students can see their own padrino links yet. Off until
+    // you say so, so nothing goes out before pledging opens.
+    async function setChallengeLive(challengeId, live) {
+      try {
+        await supabaseQuery(`challenges?id=eq.${challengeId}`, 'PATCH', { live });
+        loadChallenges();
+      } catch (error) {
+        console.error('Live:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
     async function loadChallenges() {
       const box = document.getElementById('challengesContainer');
       if (!box) return;
@@ -3058,6 +3072,11 @@
                   ${ch.run_deadline ? ' · ' + t('runsClose') + ' ' + ch.run_deadline : ''}
                   · ${t('allToTeam')}
                 </p>
+                <label style="display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:11px;
+                              background:${ch.live ? 'rgba(255,211,90,.1)' : '#1a1420'};border:1px solid ${ch.live ? 'rgba(255,211,90,.45)' : '#ffffff14'};">
+                  <input type="checkbox" ${ch.live ? 'checked' : ''} onchange="setChallengeLive('${ch.id}',this.checked)" style="width:16px;height:16px;">
+                  <span>${ch.live ? t('liveOn') : t('liveOff')}</span>
+                </label>
               </div>
               <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
                 <button class="btn" onclick="copyChallengeLink('${ch.id}','${ch.game}')" style="padding:6px 10px;font-size:11px;">${t('teamLink')}</button>
