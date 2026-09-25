@@ -499,18 +499,18 @@
         sponsorLink:'Sponsor', playerLink:'Player',
         playerLinkCopied:'Player link copied. Give this only to the player — it lets them start their official run.',
         challengeGame:'Game',
-        resetTryout:'Clear the board',
-        confirmResetTryout:'Clear every score in this competition? Everyone keeps their link — only the scores go. This cannot be undone.',
+        resetTryout:'Clear all scores',
+        confirmResetTryout:'Clear every practice and run score on this campaign? Students keep their names and PINs — only the scores go. This cannot be undone.',
         playersWord:'players',
         practiceFirst:'Practice before the official run', noPractice:'No practice needed',
         practiceRuns:'practice runs', 
         practiceNote:'Nobody takes their one official attempt cold. Practice is unlimited either way — this is only how much is needed before the official run unlocks.',
         liveOn:'Live — students can see their links', liveOff:'Not live — students see no links yet',
-        whichGame:'Which game counts', allThree:'All three games',
-        allThreeNote:'Everyone plays all three, and each one is scored separately.',
-        oneGameOn:'Only this game is shown, and only this game is scored.',
-        tryout:'Competition', tryoutLink:'Copy competition link',
-        tryoutBody:'One link for everyone. Each person opens it, picks their name and plays. Practice is free and unlimited — only the official attempt is recorded.',
+        whichGame:'Which challenge they play', allThree:'All three challenges',
+        allThreeNote:'Students see all three and can play any of them.',
+        oneGameOn:'Students see only this challenge.',
+        tryout:'Student sign-up', tryoutLink:'Copy student link',
+        tryoutBody:'One link for the whole school. A student opens it, adds their name, grade and a PIN, then practises as much as they like. When a challenge is live they get their own padrino link from the same page.',
         noTryouts:'Nobody has played yet.', bestFit:'Best fit', perPlayer:'Per player',
         noScore:'No score yet', lockedWord:'locked', saveScore:'Save',
         attShort:'Shots', threeShort:'3s made', foulShort:'FTs made',
@@ -777,18 +777,18 @@
         sponsorLink:'Padrino', playerLink:'Jugador',
         playerLinkCopied:'Enlace del jugador copiado. D\u00e1selo solo al jugador — con \u00e9l empieza su corrida oficial.',
         challengeGame:'Juego',
-        resetTryout:'Borrar el tablero',
-        confirmResetTryout:'\u00bfBorrar todos los puntos de esta competencia? Cada quien conserva su enlace — solo se van los puntos. No se puede deshacer.',
+        resetTryout:'Borrar las puntuaciones',
+        confirmResetTryout:'\u00bfBorrar todas las pr\u00e1cticas y corridas de esta campa\u00f1a? Los estudiantes conservan su nombre y su PIN — solo se van los puntos. No se puede deshacer.',
         playersWord:'jugadores',
         practiceFirst:'Práctica antes de la corrida oficial', noPractice:'Sin práctica requerida',
         practiceRuns:'prácticas',
         practiceNote:'Nadie hace su único intento oficial en frío. La práctica es ilimitada de todos modos — esto es solo cuánta hace falta para desbloquear la corrida oficial.',
         liveOn:'En vivo — los estudiantes ven sus enlaces', liveOff:'No en vivo — todav\u00eda no ven enlaces',
-        whichGame:'Qué juego cuenta', allThree:'Los tres juegos',
-        allThreeNote:'Todos juegan los tres, y cada uno se punt\u00faa por separado.',
-        oneGameOn:'Solo se muestra este juego, y solo este se punt\u00faa.',
-        tryout:'Competencia', tryoutLink:'Copiar enlace de competencia',
-        tryoutBody:'Un solo enlace para todos. Cada quien lo abre, escoge su nombre y juega. La práctica es gratis e ilimitada — solo se guarda el intento oficial.',
+        whichGame:'Qué reto juegan', allThree:'Los tres retos',
+        allThreeNote:'Los estudiantes ven los tres y pueden jugar cualquiera.',
+        oneGameOn:'Los estudiantes solo ven este reto.',
+        tryout:'Registro de estudiantes', tryoutLink:'Copiar enlace de estudiantes',
+        tryoutBody:'Un solo enlace para toda la escuela. El estudiante lo abre, pone su nombre, grado y un PIN, y practica todo lo que quiera. Cuando un reto está en vivo, recibe su enlace de padrinos en esa misma página.',
         noTryouts:'Todav\u00eda no ha jugado nadie.', bestFit:'Mejor opci\u00f3n', perPlayer:'Por jugador',
         noScore:'Sin puntuaci\u00f3n', lockedWord:'fijo', saveScore:'Guardar',
         attShort:'Tiros', threeShort:'Triples', foulShort:'Libres',
@@ -1900,13 +1900,7 @@
             <div style="color:#888;margin-top:6px;">${onlyGame ? t('oneGameOn') : t('allThreeNote')}</div>
           </div>
 
-          <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:${oneRun ? 'rgba(255,211,90,.09)' : '#1a1420'};border:1px solid ${oneRun ? 'rgba(255,211,90,.4)' : '#ffffff14'};border-radius:9px;margin-bottom:12px;cursor:pointer;font-size:12px;">
-            <input type="checkbox" ${oneRun ? 'checked' : ''} onchange="setTryoutMode('${campaignId}',this.checked)" style="width:18px;height:18px;flex-shrink:0;">
-            <span>
-              <strong>${t('oneRunTitle')}</strong>
-              <span style="display:block;color:#888;margin-top:2px;">${oneRun ? t('oneRunOn') : t('oneRunOff')}</span>
-            </span>
-          </label>
+
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
             <button class="btn" onclick="copyTryoutLink('${campaignId}')" style="padding:8px 14px;font-size:11px;">${t('tryoutLink')}</button>
             ${played ? `<button class="btn red" onclick="resetTryout('${campaignId}')" style="padding:8px 14px;font-size:11px;">${t('resetTryout')}</button>` : ''}
