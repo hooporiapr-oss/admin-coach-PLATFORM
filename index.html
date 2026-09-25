@@ -570,6 +570,9 @@
         cannotRemove:'This player already has padrinos backing them, so they cannot be removed. Ask us if you need this sorted out.',
         cdLinksFor:'Links for this fundraiser',
         cdLinksBody:'Give each student their own player link — that is the one that takes their official run. The sponsor link is the one they share with padrinos.',
+        resetPin:'Reset PIN',
+        confirmResetPin:'Clear this student\u2019s PIN? They will set a new one the next time they open their page. Their score and padrinos are untouched.',
+        pinCleared:'PIN cleared. The student sets a new one next time they open their page.',
         addedBy:'added by', cByCoach:'added by the coach',
         cdTeachers:'Who helps you run this',
         cdNoTeachers:'Nobody else yet — you are looking after the whole roster.',
@@ -845,6 +848,9 @@
         cannotRemove:'Este jugador ya tiene padrinos apoy\u00e1ndolo, as\u00ed que no se puede quitar. Av\u00edsanos si hay que resolverlo.',
         cdLinksFor:'Enlaces de esta recaudaci\u00f3n',
         cdLinksBody:'Dale a cada estudiante su enlace de jugador — ese es el de la corrida oficial. El enlace de padrinos es el que ellos comparten.',
+        resetPin:'Reiniciar PIN',
+        confirmResetPin:'\u00bfBorrar el PIN de este estudiante? Pondr\u00e1 uno nuevo la pr\u00f3xima vez que abra su p\u00e1gina. Su puntuaci\u00f3n y sus padrinos no se tocan.',
+        pinCleared:'PIN borrado. El estudiante pondr\u00e1 uno nuevo la pr\u00f3xima vez.',
         addedBy:'a\u00f1adido por', cByCoach:'a\u00f1adidos por el coach',
         cdTeachers:'Qui\u00e9n te ayuda con esto',
         cdNoTeachers:'Nadie m\u00e1s todav\u00eda — t\u00fa llevas toda la lista.',
@@ -2061,6 +2067,7 @@
                 </select>
                 <button class="btn alt" data-id="${p.id}" data-name="${encodeURIComponent(p.name)}" data-grade="${p.grade || ''}" data-campaign="${campaignId}"
                         onclick="editPlayer(this,'admin')" style="padding:4px 9px;font-size:10px;">${t('edit')}</button>
+                ${p.pin_hash ? `<button class="btn alt" onclick="resetPin('${p.id}','admin','${campaignId}')" style="padding:4px 9px;font-size:10px;">${t('resetPin')}</button>` : ''}
                 <button class="btn red" onclick="adminRemovePlayer('${p.id}','${campaignId}')" style="padding:4px 9px;font-size:10px;">${t('remove')}</button>
               </span>
             </div>`).join('');
@@ -3746,6 +3753,7 @@
                 <button class="btn" onclick="copyPlayerRunLink('${COACH_CHALLENGE_ID}','${p.id}','${(COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID) || {}).game || 'fortress'}')" style="padding:5px 10px;font-size:11px;">${t('playerLink')}</button>` : ''}
               <button class="btn alt" data-id="${p.id}" data-name="${encodeURIComponent(p.name)}" data-grade="${p.grade || ''}"
                       onclick="editPlayer(this,'coach')" style="padding:5px 10px;font-size:11px;">${t('edit')}</button>
+              ${p.pin_hash ? `<button class="btn alt" onclick="resetPin('${p.id}','coach')" style="padding:5px 10px;font-size:11px;">${t('resetPin')}</button>` : ''}
               <button class="btn alt" onclick="removePlayer('${p.id}')" style="padding:5px 10px;font-size:11px;">${t('remove')}</button>
             </span>
           </div>
@@ -3868,6 +3876,23 @@
         alert(t('playerAdded'));
       } catch (error) {
         console.error('Error:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // A forgotten PIN. Nobody can read one back — they are stored
+    // hashed — so the only remedy is to clear it and let the student
+    // set a new one next time they sign in.
+    async function resetPin(playerId, where, campaignId) {
+      if (!confirm(t('confirmResetPin'))) return;
+      try {
+        const saved = await supabaseQuery(`players?id=eq.${playerId}`, 'PATCH', { pin_hash: null });
+        if (!saved || (Array.isArray(saved) && saved.length === 0)) { alert(t('editRefused')); return; }
+        alert(t('pinCleared'));
+        if (where === 'coach') loadCoachDashboard();
+        else loadCampaignPlayers(campaignId);
+      } catch (error) {
+        console.error('Reset PIN:', error);
         alert('Error: ' + error.message);
       }
     }
