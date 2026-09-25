@@ -573,6 +573,7 @@
         resetPin:'Reset PIN',
         confirmResetPin:'Clear this student\u2019s PIN? They will set a new one the next time they open their page. Their score and padrinos are untouched.',
         pinCleared:'PIN cleared. The student sets a new one next time they open their page.',
+        startedWord:'started', practicesWord:'practices', notStarted:'not started yet',
         addedBy:'added by', cByCoach:'added by the coach',
         cdTeachers:'Who helps you run this',
         cdNoTeachers:'Nobody else yet — you are looking after the whole roster.',
@@ -851,6 +852,7 @@
         resetPin:'Reiniciar PIN',
         confirmResetPin:'\u00bfBorrar el PIN de este estudiante? Pondr\u00e1 uno nuevo la pr\u00f3xima vez que abra su p\u00e1gina. Su puntuaci\u00f3n y sus padrinos no se tocan.',
         pinCleared:'PIN borrado. El estudiante pondr\u00e1 uno nuevo la pr\u00f3xima vez.',
+        startedWord:'empezaron', practicesWord:'pr\u00e1cticas', notStarted:'todav\u00eda no empieza',
         addedBy:'a\u00f1adido por', cByCoach:'a\u00f1adidos por el coach',
         cdTeachers:'Qui\u00e9n te ayuda con esto',
         cdNoTeachers:'Nadie m\u00e1s todav\u00eda — t\u00fa llevas toda la lista.',
@@ -2010,6 +2012,35 @@
         : '';
     }
 
+    // A roster in collapsible grade tabs, with the summary on the tab
+    // so a director can see where a grade stands without opening it.
+    function groupedRoster(players, practiceBy, row) {
+      const groups = {};
+      players.forEach(p => { const g = p.grade || ''; (groups[g] = groups[g] || []).push(p); });
+      const keys = Object.keys(groups).sort((a, b) => gradeRank(a) - gradeRank(b));
+
+      // one grade only: no point hiding it behind a tab
+      if (keys.length === 1) return groups[keys[0]].map(row).join('');
+
+      return keys.map(g => {
+        const list = groups[g];
+        const started = list.filter(p => (practiceBy[p.id] || 0) > 0).length;
+        return `
+          <details style="margin:8px 0;background:#150f1b;border:1px solid #ffffff14;border-radius:10px;overflow:hidden;">
+            <summary style="cursor:pointer;padding:11px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;list-style:none;">
+              <span style="font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);">
+                ${g ? t('gradeWord') + ' ' + g : t('noGrade')}
+              </span>
+              <span style="font-size:11px;color:#888;text-align:right;">
+                ${list.length} ${list.length === 1 ? t('studentOne') : t('studentMany')}
+                · <span style="color:${started ? 'var(--gold)' : '#888'};">${started} ${t('startedWord')}</span>
+              </span>
+            </summary>
+            <div style="padding:0 10px 10px;">${list.map(row).join('')}</div>
+          </details>`;
+      }).join('');
+    }
+
     // PK and K first, then numerically — so 2 does not sort after 11.
     function gradeRank(g) {
       if (!g) return 999;
@@ -2028,6 +2059,15 @@
 
         const cards = await supabaseQuery('cards', 'GET', null,
           `?campaign_id=eq.${campaignId}&select=player_id,team_amount`);
+
+        // How much each student has practised — the thing a teacher
+        // actually looks for when chasing the ones who have not begun.
+        const practice = await supabaseQuery('campaign_practice', 'GET', null,
+          `?campaign_id=eq.${campaignId}&select=player_id,runs`);
+        const practiceBy = {};
+        (practice || []).forEach(r => {
+          practiceBy[r.player_id] = (practiceBy[r.player_id] || 0) + Number(r.runs || 0);
+        });
         const raisedBy = {};
         (cards || []).forEach(c => {
           if (!c.player_id) return;
@@ -2044,20 +2084,17 @@
 
         const rows = keys.map(g => {
           const list = groups[g];
-          const head = `
-            <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 4px;">
-              <span style="font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">
-                ${g ? t('gradeWord') + ' ' + g : t('noGrade')}
-              </span>
-              <span style="font-size:11px;color:#888;">${list.length} ${list.length === 1 ? t('studentOne') : t('studentMany')}</span>
-            </div>`;
+          const started = list.filter(p => (practiceBy[p.id] || 0) > 0).length;
 
           const body = list.map(p => `
             <div style="padding:8px 10px;background:#1a1420;border-radius:8px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;">
               <span>
                 <strong>${p.name}</strong>
                 ${raisedBy[p.id] ? `<span style="color:var(--gold);margin-left:8px;">${money(raisedBy[p.id])}</span>` : ''}
-                ${p.added_by ? `<span style="display:block;color:#666;font-size:10px;margin-top:2px;">${t('addedBy')} ${p.added_by}</span>` : ''}
+                <span style="display:block;color:${practiceBy[p.id] ? '#8AA4BD' : '#666'};font-size:10px;margin-top:2px;">
+                  ${practiceBy[p.id] ? practiceBy[p.id] + ' ' + t('practicesWord') : t('notStarted')}
+                  ${p.added_by ? ' · ' + t('addedBy') + ' ' + p.added_by : ''}
+                </span>
               </span>
               <span style="display:flex;gap:6px;flex-shrink:0;align-items:center;">
                 <select onchange="setPlayerGrade('${p.id}','${campaignId}',this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:10px;">
@@ -2070,7 +2107,21 @@
               </span>
             </div>`).join('');
 
-          return head + body;
+          // One tab per grade: the summary is what you read at a
+          // glance, the names are there when you want them.
+          return `
+            <details style="margin:8px 0;background:#150f1b;border:1px solid #ffffff14;border-radius:10px;overflow:hidden;">
+              <summary style="cursor:pointer;padding:11px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px;list-style:none;">
+                <span style="font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);">
+                  ${g ? t('gradeWord') + ' ' + g : t('noGrade')}
+                </span>
+                <span style="font-size:11px;color:#888;text-align:right;">
+                  ${list.length} ${list.length === 1 ? t('studentOne') : t('studentMany')}
+                  · <span style="color:${started ? 'var(--gold)' : '#888'};">${started} ${t('startedWord')}</span>
+                </span>
+              </summary>
+              <div style="padding:0 10px 10px;">${body}</div>
+            </details>`;
         }).join('');
 
         box.innerHTML = `
@@ -3737,13 +3788,26 @@
             <span style="color:var(--gold);font-weight:950;">${money(teamPageRaised)}</span>
           </div>` : '';
 
+        // the same practice counts the admin roster shows
+        let pracCount = {};
+        try {
+          const pr = await supabaseQuery('campaign_practice', 'GET', null,
+            `?campaign_id=eq.${campaignId}&select=player_id,runs`);
+          (pr || []).forEach(r => {
+            pracCount[r.player_id] = (pracCount[r.player_id] || 0) + Number(r.runs || 0);
+          });
+        } catch (e) { console.error('Practice:', e); }
+
         const rosterRows = (!players || players.length === 0)
           ? `<p style="color:#aaa;">${t('noPlayers')}</p>`
-          : players.map((p) => `
+          : groupedRoster(players, pracCount, (p) => `
           <div style="padding:10px;background:#0e0a11;border-radius:9px;margin:5px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;">
             <div>
               <span>${p.name}${gradeTag(p)}</span>
               <span style="color:var(--gold);font-weight:950;margin-left:8px;">${money(raisedBy[p.id] || 0)}</span>
+              <span style="display:block;color:${pracCount[p.id] ? '#8AA4BD' : '#666'};font-size:10px;margin-top:2px;">
+                ${pracCount[p.id] ? pracCount[p.id] + ' ' + t('practicesWord') : t('notStarted')}
+              </span>
             </div>
             <span style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
               ${COACH_CHALLENGE_ID ? `
@@ -3755,7 +3819,7 @@
               <button class="btn alt" onclick="removePlayer('${p.id}')" style="padding:5px 10px;font-size:11px;">${t('remove')}</button>
             </span>
           </div>
-        `).join('');
+        `);
 
         const myGrade = sessionStorage.getItem('coachGrade') || '';
         const myLabel = sessionStorage.getItem('coachLabel') || '';
