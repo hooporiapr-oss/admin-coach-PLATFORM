@@ -1819,7 +1819,7 @@
       try {
         const [players, rows, camp] = await Promise.all([
           supabaseQuery('players', 'GET', null, `?campaign_id=eq.${campaignId}&select=id,name,grade&order=name.asc`),
-          supabaseQuery('campaign_tryouts', 'GET', null, `?campaign_id=eq.${campaignId}&select=player_id,game,best_level,runs`),
+          supabaseQuery('campaign_practice', 'GET', null, `?campaign_id=eq.${campaignId}&select=player_id,game,best_level,runs`),
           supabaseQuery('campaigns', 'GET', null, `?id=eq.${campaignId}&select=tryout_one_run,tryout_game,practice_required`)
         ]);
 
@@ -1949,11 +1949,11 @@
       try {
         await supabaseQuery(`campaigns?id=eq.${campaignId}`, 'PATCH', { tryout_one_run: oneRun });
 
-        const existing = await supabaseQuery('campaign_tryouts', 'GET', null,
+        const existing = await supabaseQuery('campaign_practice', 'GET', null,
           `?campaign_id=eq.${campaignId}&select=player_id&limit=1`);
 
         if (existing && existing.length && confirm(t('modeChangedReset'))) {
-          await supabaseQuery('campaign_tryouts', 'DELETE', null, `?campaign_id=eq.${campaignId}`);
+          await supabaseQuery('campaign_practice', 'DELETE', null, `?campaign_id=eq.${campaignId}`);
         }
 
         loadTryout(campaignId);
@@ -1966,6 +1966,10 @@
     async function resetTryout(campaignId) {
       if (!confirm(t('confirmResetTryout'))) return;
       try {
+        // Practice lives in its own table now; the old competition
+        // table is cleared too so nothing is left behind.
+        await supabaseQuery('campaign_practice', 'DELETE', null,
+          `?campaign_id=eq.${campaignId}`);
         await supabaseQuery('campaign_tryouts', 'DELETE', null,
           `?campaign_id=eq.${campaignId}`);
         loadTryout(campaignId);
