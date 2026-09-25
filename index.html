@@ -1865,7 +1865,13 @@
             </div>`;
         }).join('');
 
-        const roster = (players || []).map(p => {
+        // how much each student has practised, for the grade tabs
+        const practiceTotals = {};
+        (rows || []).forEach(r => {
+          practiceTotals[r.player_id] = (practiceTotals[r.player_id] || 0) + Number(r.runs || 0);
+        });
+
+        const roster = groupedRoster(players || [], practiceTotals, p => {
           const mine = byPlayer[p.id] || {};
           const cells = games.map(g => {
             const r = mine[g];
@@ -1874,10 +1880,14 @@
           const runsTaken = games.reduce((n, g) => n + (mine[g] ? (mine[g].runs || 0) : 0), 0);
           return `
             <div style="padding:8px 10px;background:#1a1420;border-radius:8px;margin:4px 0;display:flex;justify-content:space-between;gap:8px;font-size:12px;">
-              <span>${p.name}${p.grade ? `<span style="color:#888;font-weight:400;"> · ${t('gradeWord')} ${p.grade}</span>` : ''}</span>
-              <span style="flex-shrink:0;font-weight:900;">${cells}${oneRun && runsTaken ? `<span style="color:#888;font-weight:400;font-size:10px;margin-left:8px;">${t('runUsed')}</span>` : ''}</span>
+              <span>${p.name}</span>
+              <span style="flex-shrink:0;font-weight:900;">${cells}
+                <span style="color:#888;font-weight:400;font-size:10px;margin-left:8px;">
+                  ${runsTaken ? runsTaken + ' ' + t('practicesWord') : t('notStarted')}
+                </span>
+              </span>
             </div>`;
-        }).join('');
+        });
 
         box.innerHTML = `
           <p style="margin:0 0 8px 0;font-size:11px;color:#888;">${t('tryoutBody')}</p>
