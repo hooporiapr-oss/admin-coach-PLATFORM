@@ -2736,7 +2736,6 @@
                   </div>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-                  <button class="btn" onclick="copyTeamLink('${c.slug}')" style="padding:6px 10px;font-size:11px;">${t('teamLink')}</button>
                   <button class="btn alt" onclick="editCampaign('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('edit')}</button>
                   <button class="btn alt" onclick="toggleCampaignPlayers('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('players')}</button>
                   <button class="btn alt" onclick="toggleTryout('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('tryout')}</button>
@@ -3768,7 +3767,6 @@
         const earnBox = document.getElementById('coachEarnings');
         if (earnBox) {
           earnBox.innerHTML = `
-            <button class="btn" onclick="copyTeamLink('${campaigns[0].slug}')" style="width:100%;margin-bottom:12px;">${t('teamLink')}</button>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;">
               <div style="padding:14px;background:#ffffff08;border-radius:12px;border:1px solid #ffffff14;">
                 <p style="margin:0;font-size:12px;color:#aaa;">${t('teamShareTotal')}</p>
