@@ -509,6 +509,13 @@
         whichGame:'Which challenge they play', allThree:'All three challenges',
         allThreeNote:'Students see all three and can play any of them.',
         oneGameOn:'Students see only this challenge.',
+        printQR:'Print QR sheet', qrTitle:'Student sign-up',
+        qrSub:'Scan this to join, practise and take your run',
+        qrStep1:'Point your camera at the code.',
+        qrStep2:'Type your name, your grade, and four digits you will remember.',
+        qrStep3:'Those four digits are how you get back in — nobody can look them up for you.',
+        qrPrint:'Print this sheet',
+        popupBlocked:'Your browser blocked the new window. Allow pop-ups for this site and try again.',
         tryout:'Student sign-up', tryoutLink:'Copy student link',
         tryoutBody:'One link for the whole school. A student opens it, adds their name, grade and a PIN, then practises as much as they like. When a challenge is live they get their own padrino link from the same page.',
         noTryouts:'Nobody has played yet.', bestFit:'Best fit', perPlayer:'Per player',
@@ -788,6 +795,13 @@
         whichGame:'Qué reto juegan', allThree:'Los tres retos',
         allThreeNote:'Los estudiantes ven los tres y pueden jugar cualquiera.',
         oneGameOn:'Los estudiantes solo ven este reto.',
+        printQR:'Imprimir hoja QR', qrTitle:'Registro de estudiantes',
+        qrSub:'Escanea esto para entrar, practicar y hacer tu corrida',
+        qrStep1:'Apunta tu c\u00e1mara al c\u00f3digo.',
+        qrStep2:'Escribe tu nombre, tu grado, y cuatro d\u00edgitos que recuerdes.',
+        qrStep3:'Esos cuatro d\u00edgitos son como vuelves a entrar — nadie puede buscarlos por ti.',
+        qrPrint:'Imprimir esta hoja',
+        popupBlocked:'Tu navegador bloque\u00f3 la ventana. Permite las ventanas emergentes e intenta de nuevo.',
         tryout:'Registro de estudiantes', tryoutLink:'Copiar enlace de estudiantes',
         tryoutBody:'Un solo enlace para toda la escuela. El estudiante lo abre, pone su nombre, grado y un PIN, y practica todo lo que quiera. Cuando un reto está en vivo, recibe su enlace de padrinos en esa misma página.',
         noTryouts:'Todav\u00eda no ha jugado nadie.', bestFit:'Mejor opci\u00f3n', perPlayer:'Por jugador',
@@ -1813,6 +1827,60 @@
       }
     }
 
+    // A sheet a teacher can print once and pin up. Scanning beats
+    // typing a forty-character address, and a child copying one by
+    // hand is where a campaign quietly stalls.
+    async function studentQR(campaignId) {
+      try {
+        const rows = await supabaseQuery('campaigns', 'GET', null,
+          `?id=eq.${campaignId}&select=name`);
+        const name = (rows && rows[0] && rows[0].name) || '';
+        const link = SITES.school + '/challenges.html?tryout=' + campaignId;
+
+        // drawn by a public QR service, so nothing has to be bundled
+        const img = 'https://api.qrserver.com/v1/create-qr-code/?size=900x900&margin=0&data='
+                  + encodeURIComponent(link);
+
+        const w = window.open('', '_blank');
+        if (!w) { alert(t('popupBlocked')); return; }
+
+        w.document.write(`<!doctype html><html><head><meta charset="utf-8">
+          <title>${name} — ${t('qrTitle')}</title>
+          <style>
+            @page { margin: 14mm; }
+            body{margin:0;font-family:Archivo,Arial,Helvetica,sans-serif;color:#0B1622;
+              display:flex;flex-direction:column;align-items:center;justify-content:center;
+              min-height:100vh;text-align:center;padding:24px;box-sizing:border-box;}
+            h1{font-size:30px;margin:0 0 6px;letter-spacing:-.02em}
+            h2{font-size:17px;font-weight:600;color:#44525F;margin:0 0 26px}
+            img{width:min(420px,70vw);height:auto;display:block;margin:0 auto 22px}
+            .addr{font-size:14px;color:#44525F;word-break:break-all;max-width:520px;margin:0 auto}
+            .steps{margin:26px auto 0;max-width:460px;text-align:left;font-size:15px;line-height:1.7}
+            .brand{margin-top:30px;font-size:13px;color:#7A8894;letter-spacing:.16em;text-transform:uppercase}
+            @media print { .noprint{display:none} }
+            .noprint{margin-top:26px}
+            button{padding:12px 22px;font:inherit;font-weight:700;border:none;border-radius:9px;
+              background:#0B6FA8;color:#fff;cursor:pointer}
+          </style></head><body>
+          <h1>${name}</h1>
+          <h2>${t('qrSub')}</h2>
+          <img src="${img}" alt="QR">
+          <div class="addr">${link}</div>
+          <div class="steps">
+            <div>1. ${t('qrStep1')}</div>
+            <div>2. ${t('qrStep2')}</div>
+            <div>3. ${t('qrStep3')}</div>
+          </div>
+          <div class="brand">cadapunto.com</div>
+          <div class="noprint"><button onclick="window.print()">${t('qrPrint')}</button></div>
+        </body></html>`);
+        w.document.close();
+      } catch (error) {
+        console.error('QR:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
     async function loadTryout(campaignId) {
       const box = document.getElementById('campaignTryout-' + campaignId);
       if (!box) return;
@@ -1915,6 +1983,7 @@
 
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
             <button class="btn" onclick="copyTryoutLink('${campaignId}')" style="padding:8px 14px;font-size:11px;">${t('tryoutLink')}</button>
+            <button class="btn alt" onclick="studentQR('${campaignId}')" style="padding:8px 14px;font-size:11px;">${t('printQR')}</button>
             ${played ? `<button class="btn red" onclick="resetTryout('${campaignId}')" style="padding:8px 14px;font-size:11px;">${t('resetTryout')}</button>` : ''}
           </div>
 
