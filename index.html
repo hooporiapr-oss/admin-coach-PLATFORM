@@ -170,6 +170,7 @@
             <select id="challengeGame" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;margin-top:6px;font-family:inherit;">
               <option value="fortress">The Fortress</option>
               <option value="recall">The Recall</option>
+              <option value="replay">The Replay</option>
               <option value="recognition">Recognition</option>
               <option value="spots">The Spots (Cash Rack floor)</option>
               <option value="cashrack">Cash Rack (in person)</option>
@@ -1974,6 +1975,7 @@
               <option value=""${!onlyGame ? ' selected' : ''}>${t('allThree')}</option>
               <option value="fortress"${onlyGame === 'fortress' ? ' selected' : ''}>${GAME_LABELS.fortress}</option>
               <option value="recall"${onlyGame === 'recall' ? ' selected' : ''}>${GAME_LABELS.recall}</option>
+              <option value="replay"${onlyGame === 'replay' ? ' selected' : ''}>${GAME_LABELS.replay}</option>
               <option value="recognition"${onlyGame === 'recognition' ? ' selected' : ''}>${GAME_LABELS.recognition}</option>
               <option value="spots"${onlyGame === 'spots' ? ' selected' : ''}>${GAME_LABELS.spots}</option>
             </select>
@@ -3112,6 +3114,7 @@
     const GAME_LABELS = {
       fortress: 'The Fortress',
       recall: 'The Recall',
+      replay: 'The Replay',
       recognition: 'Recognition',
       cashrack: 'Cash Rack',
       spots: 'The Spots'
