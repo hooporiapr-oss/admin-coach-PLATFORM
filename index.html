@@ -171,6 +171,7 @@
               <option value="fortress">The Fortress</option>
               <option value="recall">The Recall</option>
               <option value="replay">The Replay</option>
+              <option value="rebound">The Rebound</option>
               <option value="recognition">Recognition</option>
               <option value="spots">The Spots (Cash Rack floor)</option>
               <option value="cashrack">Cash Rack (in person)</option>
@@ -373,7 +374,9 @@
         badPassword:'Invalid password', loggedOut:'Logged out',
         enterBusiness:'Enter a business name', merchantAdded:'Merchant added',
         selectMerchant:'Select a merchant', enterCardName:'Enter a card name',
-        enterPrice:'Enter a price', cardCreated:'Card created',
+        enterPrice:'Enter a price',
+        enterShare:'The program share must be a number from 0 to 100. Use 0 if the program keeps nothing.',
+        cardCreated:'Card created',
         enterPlayerName:'Enter player name', playerAdded:'Player added',
         coachCopied:'Coach code copied', badCoachCode:'Invalid coach code',
         fillFields:'Please fill in all required fields', campaignDeleted:'Campaign deleted',
@@ -659,7 +662,9 @@
         badPassword:'Contraseña incorrecta', loggedOut:'Sesión cerrada',
         enterBusiness:'Entra el nombre del negocio', merchantAdded:'Comercio añadido',
         selectMerchant:'Selecciona un comercio', enterCardName:'Entra el nombre de la tarjeta',
-        enterPrice:'Entra un precio', cardCreated:'Tarjeta creada',
+        enterPrice:'Entra un precio',
+        enterShare:'La parte del programa debe ser un n\u00famero de 0 a 100. Usa 0 si el programa no se queda con nada.',
+        cardCreated:'Tarjeta creada',
         enterPlayerName:'Entra el nombre del jugador', playerAdded:'Jugador añadido',
         coachCopied:'Código del entrenador copiado', badCoachCode:'Código inválido',
         fillFields:'Por favor completa todos los campos', campaignDeleted:'Campaña eliminada',
@@ -1976,6 +1981,7 @@
               <option value="fortress"${onlyGame === 'fortress' ? ' selected' : ''}>${GAME_LABELS.fortress}</option>
               <option value="recall"${onlyGame === 'recall' ? ' selected' : ''}>${GAME_LABELS.recall}</option>
               <option value="replay"${onlyGame === 'replay' ? ' selected' : ''}>${GAME_LABELS.replay}</option>
+              <option value="rebound"${onlyGame === 'rebound' ? ' selected' : ''}>${GAME_LABELS.rebound}</option>
               <option value="recognition"${onlyGame === 'recognition' ? ' selected' : ''}>${GAME_LABELS.recognition}</option>
               <option value="spots"${onlyGame === 'spots' ? ' selected' : ''}>${GAME_LABELS.spots}</option>
             </select>
@@ -2610,11 +2616,13 @@
       const merchantId = document.getElementById('designMerchant').value;
       const name = document.getElementById('designName').value.trim();
       const price = parseFloat(document.getElementById('designPrice').value);
-      const share = parseInt(document.getElementById('designShare').value, 10);
+      const shareRaw = document.getElementById('designShare').value.trim();
+      const share = shareRaw === '' ? 0 : parseInt(shareRaw, 10);
 
       if (!merchantId) { alert(t('selectMerchant')); return; }
       if (!name) { alert(t('enterCardName')); return; }
       if (!price || price <= 0) { alert(t('enterPrice')); return; }
+      if (isNaN(share) || share < 0 || share > 100) { alert(t('enterShare')); return; }
 
       try {
         const chosen = document.getElementById('designMerchant');
@@ -2631,7 +2639,7 @@
           display_name: merchantName || null,
           display_logo: merchantLogo,
           name,
-          tab_count: kind === 'license' ? 1 : parseInt(document.getElementById('designTabs').value, 10),
+          tab_count: kind === 'license' ? 1 : (parseInt(document.getElementById('designTabs').value, 10) || 1),
           price,
           team_share_pct: share,
           offer_text: document.getElementById('designOffer').value.trim() || 'Buy One Get One Free',
@@ -3113,6 +3121,7 @@
     // challenge site.
     const GAME_LABELS = {
       fortress: 'The Fortress',
+      rebound: 'The Rebound',
       recall: 'The Recall',
       replay: 'The Replay',
       recognition: 'Recognition',
