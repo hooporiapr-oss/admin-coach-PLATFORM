@@ -1416,7 +1416,7 @@
           supabaseQuery('challenges', 'GET', null, '?select=id,name,game,campaign_id,created_at&order=created_at.desc'),
           supabaseQuery('players', 'GET', null, '?select=id,name,grade,campaign_id,added_by'),
           supabaseQuery('pledges', 'GET', null, '?select=*'),
-          supabaseQuery('challenge_runs', 'GET', null, '?select=challenge_id,player_id,points,level_reached'),
+          supabaseQuery('challenge_runs', 'GET', null, '?select=challenge_id,player_id,game,points,level_reached'),
           supabaseQuery('payouts', 'GET', null, '?select=campaign_id,amount,paid_on,method,reference'),
           supabaseQuery('cards', 'GET', null, '?select=design_id,campaign_id,price_paid,team_amount,platform_amount,payment_status,created_at'),
           supabaseQuery('card_designs', 'GET', null, '?select=id,name,kind,price,merchant_id,active'),
@@ -1586,8 +1586,9 @@
 
         const withPadrinos = new Set(pl.filter(p => p.player_id).map(p => p.player_id));
         const perParticipant = withPadrinos.size ? (pl.length / withPadrinos.size) : 0;
-        const avgPoints = runs.length
-          ? Math.round(runs.reduce((n, r) => n + Number(r.points || 0), 0) / runs.length) : 0;
+        const ranPlayers = new Set(runs.map(r => r.player_id));
+        const avgPoints = ranPlayers.size
+          ? Math.round(runs.reduce((n, r) => n + Number(r.points || 0), 0) / ranPlayers.size) : 0;
 
         // What one point was worth, averaged across those who found
         // anyone — the Padrino Point Value, reported back.
@@ -1626,7 +1627,7 @@
             <div style="font-size:11px;color:#ccc;line-height:1.9;">
               ${roster.length} ${t('playersWord')}
               → <strong>${withPadrinos.size}</strong> ${t('cFoundPadrinos')} (${pct(withPadrinos.size, roster.length)})
-              → <strong>${runs.length}</strong> ${t('cTookRun')} (${pct(runs.length, roster.length)})<br>
+              → <strong>${ranPlayers.size}</strong> ${t('cTookRun')} (${pct(ranPlayers.size, roster.length)})<br>
               <strong>${pl.length}</strong> ${t('chPadrinos')}
               · ${perParticipant.toFixed(1)} ${t('chPerParticipant')}
               · ${money(ppv)} ${t('chAvgPPV')}
@@ -1790,7 +1791,7 @@
           const sums = pledgeSums(pl);
           rows.push([ch.name, camp ? camp.name : '', ch.game, roster.length,
                      new Set(pl.filter(p => p.player_id).map(p => p.player_id)).size,
-                     runs.length, pl.length, sums.invoiced.toFixed(2),
+                     new Set(runs.map(r => r.player_id)).size, pl.length, sums.invoiced.toFixed(2),
                      sums.collected.toFixed(2), pct(sums.collected, sums.invoiced)]);
         });
       } else {
@@ -3367,7 +3368,21 @@
           supabaseQuery('pledges', 'GET', null, `?challenge_id=eq.${challengeId}&select=*&order=created_at.desc`)
         ]);
 
-        const runBy = {}; (runs || []).forEach(r => runBy[r.player_id] = r);
+        // three runs per student now, so they add together
+        const runBy = {};
+        (runs || []).forEach(r => {
+          const cur = runBy[r.player_id];
+          if (!cur) {
+            runBy[r.player_id] = { ...r, done: 1 };
+            return;
+          }
+          cur.points = (cur.points || 0) + (r.points || 0);
+          cur.level_reached = (cur.level_reached || 0) + (r.level_reached || 0);
+          cur.attempts = (cur.attempts || 0) + (r.attempts || 0);
+          cur.threes = (cur.threes || 0) + (r.threes || 0);
+          cur.fouls = (cur.fouls || 0) + (r.fouls || 0);
+          cur.done++;
+        });
         const pracBy = {}; (practice || []).forEach(r => pracBy[r.player_id] = r);
 
         const teamPoints = (runs || []).reduce((sum, r) => sum + (r.points || 0), 0);
