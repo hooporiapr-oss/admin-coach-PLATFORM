@@ -172,10 +172,12 @@
               <option value="recall">The Recall</option>
               <option value="replay">The Replay</option>
               <option value="rebound">The Rebound</option>
-              <option value="recognition">Recognition</option>
               <option value="spots">The Spots (Cash Rack floor)</option>
               <option value="cashrack">Cash Rack (in person)</option>
             </select>
+            <p style="margin:6px 0 0 0;font-size:11px;color:#888;" data-i18n="gameNote">
+              A school challenge is scored on The Replay and The Recall together, whichever you pick here — this only sets which game the practice button opens. A basketball challenge is scored on the game you pick.
+            </p>
 
             <label data-i18n="challengeName">Challenge Name</label>
             <input type="text" id="challengeName" data-i18n-ph="challengeNamePh" placeholder="e.g. Fall Fortress Challenge">
@@ -480,6 +482,7 @@
         backToAll:'Back to all locations', whereValid:'Where these coupons work',
         switchTeam:'Switch team',
         challenges:'Challenges', newChallenge:'+ New Challenge', createChallenge:'Create a Challenge',
+        gameNote:'A school challenge is scored on The Replay and The Recall together, whichever you pick here — this only sets which game the practice button opens. A basketball challenge is scored on the game you pick.',
         challengeCampaign:'Campaign', selectCampaign:'Select a campaign...', challengeName:'Challenge Name',
         challengeNamePh:'e.g. Fall Fortress Challenge', pledgeDeadline:'Pledges Close', runDeadline:'Runs Close',
         createChallengeBtn:'Create Challenge', enterChallengeName:'Enter a challenge name',
@@ -770,6 +773,7 @@
         backToAll:'Volver a todos los locales', whereValid:'D\u00f3nde funcionan estos cupones',
         switchTeam:'Cambiar equipo',
         challenges:'Retos', newChallenge:'+ Nuevo reto', createChallenge:'Crear un reto',
+        gameNote:'Un reto escolar se punt\u00faa con The Replay y The Recall juntos, escojas lo que escojas aqu\u00ed — esto solo fija qu\u00e9 juego abre el bot\u00f3n de pr\u00e1ctica. Un reto de baloncesto se punt\u00faa con el juego que escojas.',
         challengeCampaign:'Campa\u00f1a', selectCampaign:'Selecciona una campa\u00f1a...', challengeName:'Nombre del reto',
         challengeNamePh:'ej. Reto Fortress de Oto\u00f1o', pledgeDeadline:'Cierran las promesas', runDeadline:'Cierran las corridas',
         createChallengeBtn:'Crear reto', enterChallengeName:'Entra el nombre del reto',
@@ -1916,9 +1920,9 @@
 
         // Only the game this competition is being run on, unless it
         // is running on all of them.
-        const games = onlyGame ? [onlyGame] : ['fortress', 'recall', 'recognition'];
-        const totals = { fortress: 0, recall: 0, recognition: 0 };
-        const counts = { fortress: 0, recall: 0, recognition: 0 };
+        const games = onlyGame ? [onlyGame] : ['replay', 'recall'];
+        const totals = { replay: 0, recall: 0 };
+        const counts = { replay: 0, recall: 0 };
         const byPlayer = {};
 
         (rows || []).forEach(r => {
@@ -1987,7 +1991,6 @@
               <option value="recall"${onlyGame === 'recall' ? ' selected' : ''}>${GAME_LABELS.recall}</option>
               <option value="replay"${onlyGame === 'replay' ? ' selected' : ''}>${GAME_LABELS.replay}</option>
               <option value="rebound"${onlyGame === 'rebound' ? ' selected' : ''}>${GAME_LABELS.rebound}</option>
-              <option value="recognition"${onlyGame === 'recognition' ? ' selected' : ''}>${GAME_LABELS.recognition}</option>
               <option value="spots"${onlyGame === 'spots' ? ' selected' : ''}>${GAME_LABELS.spots}</option>
             </select>
             <div style="color:#888;margin-top:6px;">${onlyGame ? t('oneGameOn') : t('allThreeNote')}</div>
@@ -2004,7 +2007,7 @@
 
           ${played && players && players.length ? `
             <p style="margin:14px 0 4px 0;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#888;">
-              ${t('perPlayer')} <span style="font-weight:400;text-transform:none;letter-spacing:0;">(${gameLabel('fortress')} · ${gameLabel('recall')} · ${gameLabel('recognition')})</span>
+              ${t('perPlayer')} <span style="font-weight:400;text-transform:none;letter-spacing:0;">(${gameLabel('replay')} · ${gameLabel('recall')})</span>
             </p>
             ${roster}` : ''}`;
       } catch (error) {
