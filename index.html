@@ -513,9 +513,9 @@
         practiceRuns:'practice runs', 
         practiceNote:'Nobody takes their one official attempt cold. Practice is unlimited either way — this is only how much is needed before the official run unlocks.',
         liveOn:'Live — students can see their links', liveOff:'Not live — students see no links yet',
-        whichGame:'Which challenge they play', allThree:'All three challenges',
-        allThreeNote:'Students see all three and can play any of them.',
-        oneGameOn:'Students see only this challenge.',
+        whichGame:'Which challenge they play', allThree:'Both — Replay and Recall',
+        allThreeNote:'Participants see both and take one run in each. The two add up to their score.',
+        oneGameOn:'Participants see only this challenge, and only it is scored.',
         printQR:'Print QR sheet', qrTitle:'Student sign-up',
         qrSub:'Scan this to join, practise and take your run',
         qrStep1:'Point your camera at the code.',
@@ -804,9 +804,9 @@
         practiceRuns:'prácticas',
         practiceNote:'Nadie hace su único intento oficial en frío. La práctica es ilimitada de todos modos — esto es solo cuánta hace falta para desbloquear la corrida oficial.',
         liveOn:'En vivo — los estudiantes ven sus enlaces', liveOff:'No en vivo — todav\u00eda no ven enlaces',
-        whichGame:'Qué reto juegan', allThree:'Los tres retos',
-        allThreeNote:'Los estudiantes ven los tres y pueden jugar cualquiera.',
-        oneGameOn:'Los estudiantes solo ven este reto.',
+        whichGame:'Qué reto juegan', allThree:'Ambos — Replay y Recall',
+        allThreeNote:'Los participantes ven los dos y hacen una corrida en cada uno. Los dos se suman.',
+        oneGameOn:'Los participantes solo ven este reto, y solo ese se punt\u00faa.',
         printQR:'Imprimir hoja QR', qrTitle:'Registro de estudiantes',
         qrSub:'Escanea esto para entrar, practicar y hacer tu corrida',
         qrStep1:'Apunta tu c\u00e1mara al c\u00f3digo.',
@@ -1987,11 +1987,8 @@
             <div style="font-weight:900;margin-bottom:6px;">${t('whichGame')}</div>
             <select onchange="setTryoutGame('${campaignId}',this.value)" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
               <option value=""${!onlyGame ? ' selected' : ''}>${t('allThree')}</option>
-              <option value="fortress"${onlyGame === 'fortress' ? ' selected' : ''}>${GAME_LABELS.fortress}</option>
-              <option value="recall"${onlyGame === 'recall' ? ' selected' : ''}>${GAME_LABELS.recall}</option>
               <option value="replay"${onlyGame === 'replay' ? ' selected' : ''}>${GAME_LABELS.replay}</option>
-              <option value="rebound"${onlyGame === 'rebound' ? ' selected' : ''}>${GAME_LABELS.rebound}</option>
-              <option value="spots"${onlyGame === 'spots' ? ' selected' : ''}>${GAME_LABELS.spots}</option>
+              <option value="recall"${onlyGame === 'recall' ? ' selected' : ''}>${GAME_LABELS.recall}</option>
             </select>
             <div style="color:#888;margin-top:6px;">${onlyGame ? t('oneGameOn') : t('allThreeNote')}</div>
           </div>
