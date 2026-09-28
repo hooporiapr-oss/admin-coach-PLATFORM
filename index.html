@@ -451,7 +451,7 @@
         teamPageSales:'Team page sales',
         chooseCards:'Cards', chooseCardsBody:'Tick the cards this team can sell.',
         noCardsForTeam:'No cards are set up for this team yet. Please check back soon.',
-        noSalesYet:'No sales yet. Campaigns appear here once cards start selling.',
+        noSalesYet:'Nothing collected yet. A campaign appears here once a padrino has paid.',
         expiredWord:'Expired', validThrough:'Valid through', cardExpired:'This card expired on',
         expiryTitle:'Card Expiry', liveCards:'still valid', expiringSoon:'expiring within 30 days',
         lastCardExpires:'Last card expires', noCardsYet:'No cards sold yet.',
@@ -742,7 +742,7 @@
         teamPageSales:'Ventas de la p\u00e1gina del equipo',
         chooseCards:'Tarjetas', chooseCardsBody:'Marca las tarjetas que este equipo puede vender.',
         noCardsForTeam:'Todav\u00eda no hay tarjetas asignadas a este equipo. Vuelve pronto.',
-        noSalesYet:'Todav\u00eda no hay ventas. Las campa\u00f1as aparecen aqu\u00ed cuando se vendan tarjetas.',
+        noSalesYet:'Todav\u00eda no se ha cobrado nada. Una campa\u00f1a aparece aqu\u00ed cuando un padrino ha pagado.',
         expiredWord:'Vencido', validThrough:'V\u00e1lida hasta', cardExpired:'Esta tarjeta venci\u00f3 el',
         expiryTitle:'Vencimiento de Tarjetas', liveCards:'a\u00fan v\u00e1lidas', expiringSoon:'vencen en 30 d\u00edas',
         lastCardExpires:'La \u00faltima vence el', noCardsYet:'Todav\u00eda no se han vendido tarjetas.',
@@ -2951,7 +2951,25 @@
         const cards = await supabaseQuery('cards', 'GET', null, '?select=campaign_id,team_amount,platform_amount');
         const paid = await supabaseQuery('payouts', 'GET', null, '?select=campaign_id,amount');
 
+        // Pledges are where the money comes from now, and a pledge is
+        // only owed to a program once it has actually been collected.
+        const chs = await supabaseQuery('challenges', 'GET', null, '?select=id,campaign_id');
+        const campaignOf = {};
+        (chs || []).forEach(c => { campaignOf[c.id] = c.campaign_id; });
+
+        const pledges = await supabaseQuery('pledges', 'GET', null,
+          '?select=challenge_id,team_amount,platform_amount,invoice_status');
+
         const owedBy = {}, platformBy = {}, paidBy = {};
+
+        (pledges || []).forEach(p => {
+          if (p.invoice_status !== 'paid') return;
+          const cid = campaignOf[p.challenge_id];
+          if (!cid) return;
+          owedBy[cid] = (owedBy[cid] || 0) + Number(p.team_amount || 0);
+          platformBy[cid] = (platformBy[cid] || 0) + Number(p.platform_amount || 0);
+        });
+
         (cards || []).forEach(c => {
           owedBy[c.campaign_id] = (owedBy[c.campaign_id] || 0) + Number(c.team_amount || 0);
           platformBy[c.campaign_id] = (platformBy[c.campaign_id] || 0) + Number(c.platform_amount || 0);
