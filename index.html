@@ -513,6 +513,9 @@
         practiceRuns:'practice runs', 
         practiceNote:'Nobody takes their one official attempt cold. Practice is unlimited either way — this is only how much is needed before the official run unlocks.',
         liveOn:'Live — students can see their links', liveOff:'Not live — students see no links yet',
+        whichPair:'Which two are scored', pairBall:'Basketball — The Fortress and The Rebound',
+        pairMind:'Memory — The Replay and The Recall',
+        whichPairNote:'Participants take one official run in each of these two. The two add up to their score.',
         whichGame:'Which challenge they play', allThree:'Both — Replay and Recall',
         allThreeNote:'Participants see both and take one run in each. The two add up to their score.',
         oneGameOn:'Participants see only this challenge, and only it is scored.',
@@ -804,6 +807,9 @@
         practiceRuns:'prácticas',
         practiceNote:'Nadie hace su único intento oficial en frío. La práctica es ilimitada de todos modos — esto es solo cuánta hace falta para desbloquear la corrida oficial.',
         liveOn:'En vivo — los estudiantes ven sus enlaces', liveOff:'No en vivo — todav\u00eda no ven enlaces',
+        whichPair:'Cu\u00e1les dos se punt\u00faan', pairBall:'Baloncesto — The Fortress y The Rebound',
+        pairMind:'Memoria — The Replay y The Recall',
+        whichPairNote:'Los participantes hacen una corrida oficial en cada uno de estos dos. Los dos se suman.',
         whichGame:'Qué reto juegan', allThree:'Ambos — Replay y Recall',
         allThreeNote:'Los participantes ven los dos y hacen una corrida en cada uno. Los dos se suman.',
         oneGameOn:'Los participantes solo ven este reto, y solo ese se punt\u00faa.',
@@ -1905,7 +1911,7 @@
         const [players, rows, camp] = await Promise.all([
           supabaseQuery('players', 'GET', null, `?campaign_id=eq.${campaignId}&select=id,name,grade&order=name.asc`),
           supabaseQuery('campaign_practice', 'GET', null, `?campaign_id=eq.${campaignId}&select=player_id,game,best_level,runs`),
-          supabaseQuery('campaigns', 'GET', null, `?id=eq.${campaignId}&select=tryout_one_run,tryout_game,practice_required`)
+          supabaseQuery('campaigns', 'GET', null, `?id=eq.${campaignId}&select=tryout_one_run,tryout_game,practice_required,scored_games`)
         ]);
 
         // Two shapes of competition. Best-of rewards persistence and
@@ -1915,14 +1921,19 @@
         // Which game this competition is being run on. Blank means all
         // three, which is how it worked before.
         const onlyGame = (camp && camp[0] && camp[0].tryout_game) || '';
+        // Which two challenges this campaign scores. Basketball by
+        // default; a campaign can pick the other pair instead.
+        const sp = camp && camp[0] && camp[0].scored_games;
+        const scoredPair = (Array.isArray(sp) && sp.length ? sp : ['fortress','rebound']).join(',');
+
         const pr = camp && camp[0] ? camp[0].practice_required : 3;
         const practiceNeed = (pr === 0 || pr) ? pr : 3;
 
         // Only the game this competition is being run on, unless it
         // is running on all of them.
-        const games = onlyGame ? [onlyGame] : ['replay', 'recall'];
-        const totals = { replay: 0, recall: 0 };
-        const counts = { replay: 0, recall: 0 };
+        const games = onlyGame ? [onlyGame] : scoredPair.split(',');
+        const totals = {}; games.forEach(g => totals[g] = 0);
+        const counts = {}; games.forEach(g => counts[g] = 0);
         const byPlayer = {};
 
         (rows || []).forEach(r => {
@@ -1984,11 +1995,21 @@
           </div>
 
           <div style="padding:10px 12px;background:#1a1420;border:1px solid #ffffff14;border-radius:9px;margin-bottom:10px;font-size:12px;">
+            <div style="font-weight:900;margin-bottom:6px;">${t('whichPair')}</div>
+            <select onchange="setScoredPair('${campaignId}',this.value)" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;">
+              <option value="fortress,rebound"${scoredPair === 'fortress,rebound' ? ' selected' : ''}>${t('pairBall')}</option>
+              <option value="replay,recall"${scoredPair === 'replay,recall' ? ' selected' : ''}>${t('pairMind')}</option>
+              <option value="fortress,replay"${scoredPair === 'fortress,replay' ? ' selected' : ''}>${GAME_LABELS.fortress} · ${GAME_LABELS.replay}</option>
+              <option value="rebound,recall"${scoredPair === 'rebound,recall' ? ' selected' : ''}>${GAME_LABELS.rebound} · ${GAME_LABELS.recall}</option>
+            </select>
+            <div style="color:#888;margin-top:6px;">${t('whichPairNote')}</div>
+          </div>
+
+          <div style="padding:10px 12px;background:#1a1420;border:1px solid #ffffff14;border-radius:9px;margin-bottom:10px;font-size:12px;">
             <div style="font-weight:900;margin-bottom:6px;">${t('whichGame')}</div>
             <select onchange="setTryoutGame('${campaignId}',this.value)" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
               <option value=""${!onlyGame ? ' selected' : ''}>${t('allThree')}</option>
-              <option value="replay"${onlyGame === 'replay' ? ' selected' : ''}>${GAME_LABELS.replay}</option>
-              <option value="recall"${onlyGame === 'recall' ? ' selected' : ''}>${GAME_LABELS.recall}</option>
+              ${scoredPair.split(',').map(g => `<option value="${g}"${onlyGame === g ? ' selected' : ''}>${GAME_LABELS[g] || g}</option>`).join('')}
             </select>
             <div style="color:#888;margin-top:6px;">${onlyGame ? t('oneGameOn') : t('allThreeNote')}</div>
           </div>
@@ -2004,7 +2025,7 @@
 
           ${played && players && players.length ? `
             <p style="margin:14px 0 4px 0;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#888;">
-              ${t('perPlayer')} <span style="font-weight:400;text-transform:none;letter-spacing:0;">(${gameLabel('replay')} · ${gameLabel('recall')})</span>
+              ${t('perPlayer')} <span style="font-weight:400;text-transform:none;letter-spacing:0;">(${scoredPair.split(',').map(g => gameLabel(g)).join(' · ')})</span>
             </p>
             ${roster}` : ''}`;
       } catch (error) {
@@ -2018,6 +2039,20 @@
     // only the scores go.
     // Switching mode mid-competition would be unfair to whoever has
     // already played, so this offers to clear the board with it.
+
+    // Which pair a campaign scores. Stored on the campaign, so the
+    // student page and the reports follow it without being told twice.
+    async function setScoredPair(campaignId, pair) {
+      try {
+        await supabaseQuery('campaigns', 'PATCH', { scored_games: pair.split(',') },
+          `?id=eq.${campaignId}`);
+        loadTryoutPanel(campaignId);
+      } catch (error) {
+        console.error('Scored pair:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
     async function setPracticeRequired(campaignId, n) {
       try {
         await supabaseQuery(`campaigns?id=eq.${campaignId}`, 'PATCH',
