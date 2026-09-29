@@ -172,6 +172,7 @@
               <option value="recall">The Recall</option>
               <option value="replay">The Replay</option>
               <option value="rebound">The Rebound</option>
+              <option value="fortress131">The Fortress 1-3-1</option>
               <option value="spots">The Spots (Cash Rack floor)</option>
               <option value="cashrack">Cash Rack (in person)</option>
             </select>
@@ -513,7 +514,8 @@
         practiceRuns:'practice runs', 
         practiceNote:'Nobody takes their one official attempt cold. Practice is unlimited either way — this is only how much is needed before the official run unlocks.',
         liveOn:'Live — students can see their links', liveOff:'Not live — students see no links yet',
-        whichPair:'Which two are scored', pairBall:'Basketball — The Fortress and The Rebound',
+        whichPair:'Which two are scored',
+        pairBall:'Basketball — The Fortress and The Rebound',
         pairMind:'Memory — The Replay and The Recall',
         whichPairNote:'Participants take one official run in each of these two. The two add up to their score.',
         whichGame:'Which challenge they play', allThree:'Both — Replay and Recall',
@@ -807,7 +809,8 @@
         practiceRuns:'prácticas',
         practiceNote:'Nadie hace su único intento oficial en frío. La práctica es ilimitada de todos modos — esto es solo cuánta hace falta para desbloquear la corrida oficial.',
         liveOn:'En vivo — los estudiantes ven sus enlaces', liveOff:'No en vivo — todav\u00eda no ven enlaces',
-        whichPair:'Cu\u00e1les dos se punt\u00faan', pairBall:'Baloncesto — The Fortress y The Rebound',
+        whichPair:'Cu\u00e1les dos se punt\u00faan',
+        pairBall:'Baloncesto — The Fortress y The Rebound',
         pairMind:'Memoria — The Replay y The Recall',
         whichPairNote:'Los participantes hacen una corrida oficial en cada uno de estos dos. Los dos se suman.',
         whichGame:'Qué reto juegan', allThree:'Ambos — Replay y Recall',
@@ -1998,6 +2001,7 @@
             <div style="font-weight:900;margin-bottom:6px;">${t('whichPair')}</div>
             <select onchange="setScoredPair('${campaignId}',this.value)" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;">
               <option value="fortress,rebound"${scoredPair === 'fortress,rebound' ? ' selected' : ''}>${t('pairBall')}</option>
+              <option value="fortress,fortress131"${scoredPair === 'fortress,fortress131' ? ' selected' : ''}>${GAME_LABELS.fortress} · ${GAME_LABELS.fortress131}</option>
               <option value="replay,recall"${scoredPair === 'replay,recall' ? ' selected' : ''}>${t('pairMind')}</option>
               <option value="fortress,replay"${scoredPair === 'fortress,replay' ? ' selected' : ''}>${GAME_LABELS.fortress} · ${GAME_LABELS.replay}</option>
               <option value="rebound,recall"${scoredPair === 'rebound,recall' ? ' selected' : ''}>${GAME_LABELS.rebound} · ${GAME_LABELS.recall}</option>
@@ -3180,6 +3184,7 @@
     const GAME_LABELS = {
       fortress: 'The Fortress',
       rebound: 'The Rebound',
+      fortress131: 'The Fortress 1-3-1',
       recall: 'The Recall',
       replay: 'The Replay',
       recognition: 'Recognition',
