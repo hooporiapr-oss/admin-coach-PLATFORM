@@ -1931,10 +1931,20 @@
         const pairNames = scoredPair.split(',').map(function(g){ return GAME_LABELS[g] || g; });
         const bothLabel = t('bothWord') + ' — ' + pairNames.join(' ' + t('andWord') + ' ');
 
-        const pairOptions = scoredPair.split(',').map(function(g){
+        // the scored pair first, then everything else that can be played
+        const inPair = scoredPair.split(',');
+        const others = ['fortress','rebound','fortress131','replay','recall']
+          .filter(function(g){ return inPair.indexOf(g) === -1; });
+
+        function optionFor(g){
           return '<option value="' + g + '"' + (onlyGame === g ? ' selected' : '') + '>' +
                  (GAME_LABELS[g] || g) + '</option>';
-        }).join('');
+        }
+
+        const pairOptions =
+          inPair.map(optionFor).join('') +
+          '<option disabled>──────────</option>' +
+          others.map(optionFor).join('');
 
         const pr = camp && camp[0] ? camp[0].practice_required : 3;
         const practiceNeed = (pr === 0 || pr) ? pr : 3;
