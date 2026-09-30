@@ -2030,7 +2030,6 @@
             <div style="font-weight:900;margin-bottom:6px;">${t('whichPair')}</div>
             <select onchange="setScoredPair('${campaignId}',this.value)" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;">
               <option value="fortress,rebound"${scoredPair === 'fortress,rebound' ? ' selected' : ''}>${t('pairBall')}</option>
-              <option value="fortress,fortress131"${scoredPair === 'fortress,fortress131' ? ' selected' : ''}>${GAME_LABELS.fortress} · ${GAME_LABELS.fortress131}</option>
               <option value="replay,recall"${scoredPair === 'replay,recall' ? ' selected' : ''}>${t('pairMind')}</option>
               <option value="fortress,replay"${scoredPair === 'fortress,replay' ? ' selected' : ''}>${GAME_LABELS.fortress} · ${GAME_LABELS.replay}</option>
               <option value="rebound,recall"${scoredPair === 'rebound,recall' ? ' selected' : ''}>${GAME_LABELS.rebound} · ${GAME_LABELS.recall}</option>
