@@ -518,7 +518,7 @@
         pairBall:'Basketball — The Fortress and The Rebound',
         pairMind:'Memory — The Replay and The Recall',
         whichPairNote:'Participants take one official run in each of these two. The two add up to their score.',
-        whichGame:'Which challenge they play', allThree:'Both — Replay and Recall',
+        whichGame:'Which challenge they play', bothWord:'Both', andWord:'and',
         allThreeNote:'Participants see both and take one run in each. The two add up to their score.',
         oneGameOn:'Participants see only this challenge, and only it is scored.',
         printQR:'Print QR sheet', qrTitle:'Student sign-up',
@@ -813,7 +813,7 @@
         pairBall:'Baloncesto — The Fortress y The Rebound',
         pairMind:'Memoria — The Replay y The Recall',
         whichPairNote:'Los participantes hacen una corrida oficial en cada uno de estos dos. Los dos se suman.',
-        whichGame:'Qué reto juegan', allThree:'Ambos — Replay y Recall',
+        whichGame:'Qué reto juegan', bothWord:'Ambos', andWord:'y',
         allThreeNote:'Los participantes ven los dos y hacen una corrida en cada uno. Los dos se suman.',
         oneGameOn:'Los participantes solo ven este reto, y solo ese se punt\u00faa.',
         printQR:'Imprimir hoja QR', qrTitle:'Registro de estudiantes',
@@ -1928,6 +1928,9 @@
         // default; a campaign can pick the other pair instead.
         const sp = camp && camp[0] && camp[0].scored_games;
         const scoredPair = (Array.isArray(sp) && sp.length ? sp : ['fortress','rebound']).join(',');
+        const pairNames = scoredPair.split(',').map(function(g){ return GAME_LABELS[g] || g; });
+        const bothLabel = t('bothWord') + ' — ' + pairNames.join(' ' + t('andWord') + ' ');
+
         const pairOptions = scoredPair.split(',').map(function(g){
           return '<option value="' + g + '"' + (onlyGame === g ? ' selected' : '') + '>' +
                  (GAME_LABELS[g] || g) + '</option>';
@@ -2016,7 +2019,7 @@
           <div style="padding:10px 12px;background:#1a1420;border:1px solid #ffffff14;border-radius:9px;margin-bottom:10px;font-size:12px;">
             <div style="font-weight:900;margin-bottom:6px;">${t('whichGame')}</div>
             <select onchange="setTryoutGame('${campaignId}',this.value)" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
-              <option value=""${!onlyGame ? ' selected' : ''}>${t('allThree')}</option>
+              <option value=""${!onlyGame ? ' selected' : ''}>${bothLabel}</option>
               ${pairOptions}
             </select>
             <div style="color:#888;margin-top:6px;">${onlyGame ? t('oneGameOn') : t('allThreeNote')}</div>
