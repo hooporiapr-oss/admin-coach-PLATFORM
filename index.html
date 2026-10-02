@@ -514,6 +514,8 @@
         practiceRuns:'practice runs', 
         practiceNote:'Nobody takes their one official attempt cold. Practice is unlimited either way — this is only how much is needed before the official run unlocks.',
         liveOn:'Live — students can see their links', liveOff:'Not live — students see no links yet',
+        sendBills:'Send pay links',
+        confirmGameInvoices:'Email every padrino on this game their pay link? Links already sent are not sent again.',
         whoBrings:'Who is bringing padrinos', noneYet:'none yet', theirLink:'Their link',
         ofWord:'of', bringingNote:'players have brought a pledge',
         noRoster:'No players on the roster yet. Add them under Players.',
@@ -825,6 +827,8 @@
         practiceRuns:'prácticas',
         practiceNote:'Nadie hace su único intento oficial en frío. La práctica es ilimitada de todos modos — esto es solo cuánta hace falta para desbloquear la corrida oficial.',
         liveOn:'En vivo — los estudiantes ven sus enlaces', liveOff:'No en vivo — todav\u00eda no ven enlaces',
+        sendBills:'Mandar enlaces de pago',
+        confirmGameInvoices:'\u00bfMandar a cada padrino de este juego su enlace de pago? Los que ya se mandaron no se repiten.',
         whoBrings:'Qui\u00e9n est\u00e1 trayendo padrinos', noneYet:'nada a\u00fan', theirLink:'Su enlace',
         ofWord:'de', bringingNote:'jugadores han tra\u00eddo una promesa',
         noRoster:'Todav\u00eda no hay jugadores. A\u00f1\u00e1delos en Jugadores.',
@@ -1948,7 +1952,8 @@
                   </div>
                   <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
                     ${played
-                      ? `<button class="btn alt" onclick="scoreGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editScore')}</button>`
+                      ? `<button class="btn" onclick="sendGameInvoices('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('sendBills')}</button>
+                         <button class="btn alt" onclick="scoreGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editScore')}</button>`
                       : cancelled ? ''
                       : `<button class="btn" onclick="scoreGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('enterScore')}</button>
                          <button class="btn alt" onclick="killGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('cancelGame')}</button>`}
@@ -3908,6 +3913,42 @@
         navigator.clipboard.writeText(url).then(() => alert(t('linkCopied'))).catch(() => prompt(t('copy'), url));
       } else {
         prompt(t('copy'), url);
+      }
+    }
+
+
+    // Cerrado el juego con su marcador, esto manda a cada padrino su
+    // enlace de pago. Un enlace por promesa, una sola vez.
+    async function sendGameInvoices(campaignId, gameId) {
+      if (!confirm(t('confirmGameInvoices'))) return;
+
+      const token = await currentToken();
+      if (!token) { alert(t('signInFirst')); return; }
+
+      try {
+        const res = await fetch(`${PAYMENT_SERVER}/game-invoices`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ game_id: gameId })
+        });
+
+        const data = await res.json();
+        if (!res.ok) { alert(t('invoiceError') + ' ' + (data.error || res.status)); return; }
+
+        let summary = `${t('linksSent')}: ${data.sent}`;
+        if (data.skipped) summary += `\n${t('alreadyInvoiced')}: ${data.skipped}`;
+        if (data.zero)    summary += `\n${t('nothingOwed')}: ${data.zero}`;
+        if (data.failed)  summary += `\n${t('invoicesFailed')}: ${data.failed}`;
+        if (data.errors && data.errors.length) summary += '\n\n' + data.errors.join('\n');
+
+        alert(summary);
+        await loadGames(campaignId);
+      } catch (error) {
+        console.error('Game invoices:', error);
+        alert(t('invoiceError') + ' ' + error.message);
       }
     }
 
