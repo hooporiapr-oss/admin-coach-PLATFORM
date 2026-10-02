@@ -514,6 +514,19 @@
         practiceRuns:'practice runs', 
         practiceNote:'Nobody takes their one official attempt cold. Practice is unlimited either way — this is only how much is needed before the official run unlocks.',
         liveOn:'Live — students can see their links', liveOff:'Not live — students see no links yet',
+        games:'Games', addGame:'Add a game', noGamesYet:'No games yet.',
+        seasonPoints:'Points', collected:'Collected', awaiting:'To collect',
+        pledgesWord:'pledges', pointsWord:'points', toCollect:'to collect',
+        enterScore:'Enter score', editScore:'Edit score', cancelGame:'Cancel',
+        copyBoard:'Copy scoreboard link',
+        askOpponent:'Opponent?', askDate:'Date (YYYY-MM-DD)?', askTime:'Tip time? (optional)',
+        askHome:'Home game? OK = home, Cancel = away', askNote:'Note? (tournament, round — optional)',
+        askOurScore:'Our points?', askTheirScore:'Their points? (optional)',
+        badScore:'Points must be a number.',
+        scoreSaved:'Score saved. {N} pledge(s) are now billable.',
+        confirmCancel:'Cancel this game? Open pledges move to the next scheduled game.',
+        movedPledges:'{N} pledge(s) moved to the next game.',
+        copyManually:'Copy this link:',
         whichPair:'Which two are scored',
         pairBall:'Basketball — The Fortress and The Rebound',
         pairMind:'Memory — The Replay and The Recall',
@@ -809,6 +822,19 @@
         practiceRuns:'prácticas',
         practiceNote:'Nadie hace su único intento oficial en frío. La práctica es ilimitada de todos modos — esto es solo cuánta hace falta para desbloquear la corrida oficial.',
         liveOn:'En vivo — los estudiantes ven sus enlaces', liveOff:'No en vivo — todav\u00eda no ven enlaces',
+        games:'Juegos', addGame:'A\u00f1adir juego', noGamesYet:'Todav\u00eda no hay juegos.',
+        seasonPoints:'Puntos', collected:'Cobrado', awaiting:'Por cobrar',
+        pledgesWord:'promesas', pointsWord:'puntos', toCollect:'por cobrar',
+        enterScore:'Poner marcador', editScore:'Cambiar marcador', cancelGame:'Cancelar',
+        copyBoard:'Copiar enlace del tablero',
+        askOpponent:'\u00bfContra qui\u00e9n?', askDate:'\u00bfFecha (AAAA-MM-DD)?', askTime:'\u00bfHora? (opcional)',
+        askHome:'\u00bfEn casa? OK = casa, Cancelar = visita', askNote:'\u00bfNota? (torneo, ronda \u2014 opcional)',
+        askOurScore:'\u00bfNuestros puntos?', askTheirScore:'\u00bfSus puntos? (opcional)',
+        badScore:'Los puntos tienen que ser un n\u00famero.',
+        scoreSaved:'Marcador guardado. {N} promesa(s) ya se pueden cobrar.',
+        confirmCancel:'\u00bfCancelar este juego? Las promesas abiertas pasan al pr\u00f3ximo juego.',
+        movedPledges:'{N} promesa(s) pasaron al pr\u00f3ximo juego.',
+        copyManually:'Copia este enlace:',
         whichPair:'Cu\u00e1les dos se punt\u00faan',
         pairBall:'Baloncesto — The Fortress y The Rebound',
         pairMind:'Memoria — The Replay y The Recall',
@@ -1833,6 +1859,165 @@
     // Before committing a fundraiser to one game, a team plays all
     // three and sees which they score highest on. This is where the
     // coach gets the link and reads the result.
+
+
+    // ══════════════════════════════════════════════════════
+    //  Juegos — el calendario, las promesas y los marcadores.
+    //  Añadir un juego tiene que tomar diez segundos desde el
+    //  teléfono, porque se hace en el torneo.
+    // ══════════════════════════════════════════════════════
+
+    // Un nombre de equipo lo escribe el coach, as\u00ed que se escapa
+    // antes de ponerlo en la p\u00e1gina.
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[m]));
+    }
+    async function toggleGames(campaignId) {
+      const box = document.getElementById(`campaignGames-${campaignId}`);
+      if (box.style.display === 'block') { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      box.innerHTML = `<p style="color:#888;">${t('loading')}</p>`;
+      await loadGames(campaignId);
+    }
+
+    async function loadGames(campaignId) {
+      const box = document.getElementById(`campaignGames-${campaignId}`);
+      try {
+        const [games, pledges] = await Promise.all([
+          supabaseQuery('games', 'GET', null,
+            `?campaign_id=eq.${campaignId}&select=*&order=plays_on.asc.nullslast,created_at.asc`),
+          supabaseQuery('game_pledges', 'GET', null,
+            `?campaign_id=eq.${campaignId}&select=game_id,rate,amount,team_amount,platform_amount,invoice_status`)
+        ]);
+
+        // money per game, and what is still to collect
+        const byGame = {};
+        (pledges || []).forEach(p => {
+          const g = byGame[p.game_id] = byGame[p.game_id] || { n:0, due:0, paid:0 };
+          g.n++;
+          const amt = Number(p.team_amount || 0);
+          if (p.invoice_status === 'paid') g.paid += amt; else g.due += amt;
+        });
+
+        const points = (games || [])
+          .filter(g => g.status === 'played')
+          .reduce((n, g) => n + Number(g.team_points || 0), 0);
+
+        const collected = Object.values(byGame).reduce((n, g) => n + g.paid, 0);
+        const owed = Object.values(byGame).reduce((n, g) => n + g.due, 0);
+
+        box.innerHTML = `
+          <div style="padding:12px;background:#140f1a;border:1px solid #ffffff14;border-radius:10px;">
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+              <div><div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.1em;">${t('seasonPoints')}</div>
+                   <div style="font-size:20px;font-weight:900;">${points}</div></div>
+              <div><div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.1em;">${t('collected')}</div>
+                   <div style="font-size:20px;font-weight:900;color:#4ade80;">$${collected.toFixed(2)}</div></div>
+              <div><div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.1em;">${t('awaiting')}</div>
+                   <div style="font-size:20px;font-weight:900;color:#facc15;">$${owed.toFixed(2)}</div></div>
+            </div>
+
+            <button class="btn" onclick="addGame('${campaignId}')" style="margin-bottom:10px;">+ ${t('addGame')}</button>
+            <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="margin-bottom:10px;">${t('copyBoard')}</button>
+
+            ${(games || []).length ? (games || []).map(g => {
+              const m = byGame[g.id] || { n:0, due:0, paid:0 };
+              const played = g.status === 'played';
+              const cancelled = g.status === 'cancelled';
+              return `
+                <div style="padding:10px 12px;background:#0e0a11;border:1px solid #ffffff14;border-radius:9px;margin-bottom:8px;${cancelled ? 'opacity:.5;' : ''}">
+                  <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;">
+                    <div style="font-weight:800;">${g.home ? '' : '@ '}${escapeHtml(g.opponent)}</div>
+                    <div style="color:#888;font-size:12px;">${g.plays_on || '—'}${g.tip_time ? ' · ' + escapeHtml(g.tip_time) : ''}</div>
+                  </div>
+                  ${g.note ? `<div style="color:#888;font-size:12px;">${escapeHtml(g.note)}</div>` : ''}
+                  <div style="color:#888;font-size:12px;margin-top:4px;">
+                    ${m.n} ${t('pledgesWord')}
+                    ${played ? ` · <b style="color:#fff;">${g.team_points} ${t('pointsWord')}</b>` : ''}
+                    ${m.due > 0 ? ` · <span style="color:#facc15;">$${m.due.toFixed(2)} ${t('toCollect')}</span>` : ''}
+                  </div>
+                  <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+                    ${played
+                      ? `<button class="btn alt" onclick="scoreGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editScore')}</button>`
+                      : cancelled ? ''
+                      : `<button class="btn" onclick="scoreGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('enterScore')}</button>
+                         <button class="btn alt" onclick="killGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('cancelGame')}</button>`}
+                  </div>
+                </div>`;
+            }).join('') : `<p style="color:#888;margin:8px 0 0;">${t('noGamesYet')}</p>`}
+          </div>`;
+      } catch (error) {
+        console.error('Games:', error);
+        box.innerHTML = `<p style="color:#f87171;">${error.message}</p>`;
+      }
+    }
+
+    async function addGame(campaignId) {
+      const opponent = prompt(t('askOpponent'));
+      if (!opponent) return;
+      const date = prompt(t('askDate'), new Date().toISOString().slice(0, 10));
+      const time = prompt(t('askTime')) || null;
+      const home = confirm(t('askHome'));
+      const note = prompt(t('askNote')) || null;
+
+      try {
+        await supabaseQuery('games', 'POST', {
+          campaign_id: campaignId,
+          opponent: opponent.trim(),
+          plays_on: date || null,
+          tip_time: time,
+          home: home,
+          note: note
+        });
+        await loadGames(campaignId);
+      } catch (error) {
+        console.error('Add game:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // El marcador es lo que convierte las promesas en dinero.
+    async function scoreGame(campaignId, gameId) {
+      const ours = prompt(t('askOurScore'));
+      if (ours === null) return;
+      if (!/^\d+$/.test(ours.trim())) { alert(t('badScore')); return; }
+      const theirs = prompt(t('askTheirScore'));
+
+      try {
+        const r = await supabaseQuery('rpc/score_game', 'POST', {
+          p_game: gameId,
+          p_team: parseInt(ours, 10),
+          p_opp: theirs && /^\d+$/.test(theirs.trim()) ? parseInt(theirs, 10) : null
+        });
+        if (r && r.ok === false) { alert('Error'); return; }
+        if (r && r.pledges) alert(t('scoreSaved').replace('{N}', r.pledges));
+        await loadGames(campaignId);
+      } catch (error) {
+        console.error('Score:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    async function killGame(campaignId, gameId) {
+      if (!confirm(t('confirmCancel'))) return;
+      try {
+        const r = await supabaseQuery('rpc/cancel_game', 'POST', { p_game: gameId });
+        if (r && r.moved) alert(t('movedPledges').replace('{N}', r.moved));
+        await loadGames(campaignId);
+      } catch (error) {
+        console.error('Cancel:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    function copyBoardLink(campaignId) {
+      const url = `https://cadapunto.com/scoreboard.html?c=${campaignId}`;
+      navigator.clipboard.writeText(url)
+        .then(() => alert(t('copied') + '\n\n' + url))
+        .catch(() => prompt(t('copyManually'), url));
+    }
 
     async function toggleTryout(campaignId) {
       const box = document.getElementById('campaignTryout-' + campaignId);
@@ -2890,6 +3075,7 @@
                   <button class="btn alt" onclick="editCampaign('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('edit')}</button>
                   <button class="btn alt" onclick="toggleCampaignPlayers('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('players')}</button>
                   <button class="btn alt" onclick="toggleTryout('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('tryout')}</button>
+                  <button class="btn alt" onclick="toggleGames('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('games')}</button>
                   <button class="btn red" onclick="deleteCampaign('${c.id}')" style="padding:6px 10px;font-size:11px;">${t('delete')}</button>
                 </div>
               </div>
@@ -2897,6 +3083,7 @@
               <div id="campaignLocs-${c.id}" style="display:none;margin-top:12px;"></div>
               <div id="campaignPlayers-${c.id}" style="display:none;margin-top:12px;"></div>
               <div id="campaignTryout-${c.id}" style="display:none;margin-top:12px;"></div>
+              <div id="campaignGames-${c.id}" style="display:none;margin-top:12px;"></div>
             </div>
           `;
         }
