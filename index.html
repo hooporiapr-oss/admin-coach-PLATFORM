@@ -514,6 +514,9 @@
         practiceRuns:'practice runs', 
         practiceNote:'Nobody takes their one official attempt cold. Practice is unlimited either way — this is only how much is needed before the official run unlocks.',
         liveOn:'Live — students can see their links', liveOff:'Not live — students see no links yet',
+        whoBrings:'Who is bringing padrinos', noneYet:'none yet', theirLink:'Their link',
+        ofWord:'of', bringingNote:'players have brought a pledge',
+        noRoster:'No players on the roster yet. Add them under Players.',
         games:'Games', addGame:'Add a game', noGamesYet:'No games yet.',
         seasonPoints:'Points', collected:'Collected', awaiting:'To collect',
         pledgesWord:'pledges', pointsWord:'points', toCollect:'to collect',
@@ -822,6 +825,9 @@
         practiceRuns:'prácticas',
         practiceNote:'Nadie hace su único intento oficial en frío. La práctica es ilimitada de todos modos — esto es solo cuánta hace falta para desbloquear la corrida oficial.',
         liveOn:'En vivo — los estudiantes ven sus enlaces', liveOff:'No en vivo — todav\u00eda no ven enlaces',
+        whoBrings:'Qui\u00e9n est\u00e1 trayendo padrinos', noneYet:'nada a\u00fan', theirLink:'Su enlace',
+        ofWord:'de', bringingNote:'jugadores han tra\u00eddo una promesa',
+        noRoster:'Todav\u00eda no hay jugadores. A\u00f1\u00e1delos en Jugadores.',
         games:'Juegos', addGame:'A\u00f1adir juego', noGamesYet:'Todav\u00eda no hay juegos.',
         seasonPoints:'Puntos', collected:'Cobrado', awaiting:'Por cobrar',
         pledgesWord:'promesas', pointsWord:'puntos', toCollect:'por cobrar',
@@ -1922,6 +1928,8 @@
             <button class="btn" onclick="addGame('${campaignId}')" style="margin-bottom:10px;">+ ${t('addGame')}</button>
             <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="margin-bottom:10px;">${t('copyBoard')}</button>
 
+            <div id="playerPledges-${campaignId}"></div>
+
             ${(games || []).length ? (games || []).map(g => {
               const m = byGame[g.id] || { n:0, due:0, paid:0 };
               const played = g.status === 'played';
@@ -1948,10 +1956,56 @@
                 </div>`;
             }).join('') : `<p style="color:#888;margin:8px 0 0;">${t('noGamesYet')}</p>`}
           </div>`;
+        await loadPlayerPledges(campaignId);
       } catch (error) {
         console.error('Games:', error);
         box.innerHTML = `<p style="color:#f87171;">${error.message}</p>`;
       }
+    }
+
+    // Quién trae padrinos. El dinero sale del marcador del equipo —
+    // esto sólo dice quién consiguió la promesa, que es lo que un
+    // coach quiere saber para empujar a los demás.
+    async function loadPlayerPledges(campaignId) {
+      const box = document.getElementById(`playerPledges-${campaignId}`);
+      if (!box) return;
+      try {
+        const rows = await supabaseQuery('rpc/player_pledges', 'POST', { p_campaign: campaignId });
+        const withAny = (rows || []).filter(r => Number(r.pledges) > 0);
+
+        box.innerHTML = `
+          <div style="margin:4px 0 12px;">
+            <div style="font-weight:900;margin-bottom:6px;font-size:13px;">${t('whoBrings')}</div>
+            ${(rows || []).length ? `
+              <div style="display:grid;gap:4px;">
+                ${(rows || []).map(r => `
+                  <div style="display:flex;justify-content:space-between;gap:10px;padding:7px 10px;
+                              background:#0e0a11;border:1px solid #ffffff10;border-radius:7px;font-size:12px;">
+                    <span>${escapeHtml(r.name)}</span>
+                    <span style="white-space:nowrap;">
+                      ${Number(r.pledges) ? `<b>${r.pledges}</b> · $${Number(r.raised).toFixed(2)}`
+                                          : `<span style="color:#666;">${t('noneYet')}</span>`}
+                      <button class="btn alt" onclick="copyPlayerBoard('${campaignId}','${r.id}')"
+                              style="padding:3px 7px;font-size:10px;margin-left:8px;">${t('theirLink')}</button>
+                    </span>
+                  </div>`).join('')}
+              </div>
+              <div style="color:#888;font-size:11px;margin-top:6px;">
+                ${withAny.length} ${t('ofWord')} ${(rows || []).length} ${t('bringingNote')}
+              </div>`
+              : `<p style="color:#888;font-size:12px;margin:0;">${t('noRoster')}</p>`}
+          </div>`;
+      } catch (error) {
+        console.error('Player pledges:', error);
+        box.innerHTML = '';
+      }
+    }
+
+    function copyPlayerBoard(campaignId, playerId) {
+      const url = `https://cadapunto.com/scoreboard.html?c=${campaignId}&p=${playerId}`;
+      navigator.clipboard.writeText(url)
+        .then(() => alert(t('copied') + '\n\n' + url))
+        .catch(() => prompt(t('copyManually'), url));
     }
 
     async function addGame(campaignId) {
