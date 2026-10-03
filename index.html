@@ -137,9 +137,6 @@
             <label data-i18n="teamLogo">Team Logo URL (optional)</label>
             <input type="text" id="campaignLogo" placeholder="https://...">
 
-            <label data-i18n="campaignGoal">Campaign Goal ($)</label>
-            <input type="number" id="campaignGoal" data-i18n-ph="campaignGoalPh" placeholder="Enter goal amount">
-
             <label data-i18n="description">Description</label>
             <textarea id="campaignDesc" data-i18n-ph="descriptionPh" placeholder="Campaign description" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;margin-top:6px;font-family:inherit;height:80px;"></textarea>
 
@@ -371,7 +368,6 @@
 
         campaigns:'Campaigns', newCampaign:'+ New Campaign', createCampaignTitle:'Create New Campaign',
         campaignName:'Campaign Name', campaignNamePh:'Enter campaign name',
-        campaignGoal:'Campaign Goal ($)', campaignGoalPh:'Enter goal amount',
         description:'Description', descriptionPh:'Campaign description', createCampaignBtn:'Create Campaign',
 
         badPassword:'Invalid password', loggedOut:'Logged out',
@@ -693,7 +689,6 @@
 
         campaigns:'Campañas', newCampaign:'+ Nueva campaña', createCampaignTitle:'Crear nueva campaña',
         campaignName:'Nombre de la campaña', campaignNamePh:'Entra el nombre',
-        campaignGoal:'Meta de la campaña ($)', campaignGoalPh:'Entra la meta',
         description:'Descripción', descriptionPh:'Descripción de la campaña', createCampaignBtn:'Crear campaña',
 
         badPassword:'Contraseña incorrecta', loggedOut:'Sesión cerrada',
@@ -2860,15 +2855,13 @@
         if (name === null) return;
         const logo = prompt(t('teamLogo'), c.logo_url || '');
         if (logo === null) return;
-        const goal = prompt(t('campaignGoal'), c.goal || '');
-        if (goal === null) return;
+
         const desc = prompt(t('description'), c.description || '');
         if (desc === null) return;
 
         await supabaseQuery(`campaigns?id=eq.${id}`, 'PATCH', {
           name: name.trim() || c.name,
           logo_url: logo.trim() || null,
-          goal: parseFloat(goal) || c.goal,
           description: desc.trim() || null
         });
 
@@ -3148,10 +3141,9 @@
 
     async function createCampaign() {
       const name = document.getElementById('campaignName').value;
-      const goal = document.getElementById('campaignGoal').value;
       const desc = document.getElementById('campaignDesc').value;
-      
-      if (!name || !goal) {
+
+      if (!name) {
         alert(t('fillFields'));
         return;
       }
@@ -3166,7 +3158,6 @@
 
         const campaign = await supabaseQuery('campaigns', 'POST', {
           name,
-          goal: parseFloat(goal),
           description: desc,
           admin_code: adminCode,
           logo_url: document.getElementById('campaignLogo').value.trim() || null,
@@ -3184,7 +3175,6 @@
         }, '?select=*');
         
         document.getElementById('campaignName').value = '';
-        document.getElementById('campaignGoal').value = '';
         document.getElementById('campaignDesc').value = '';
         document.getElementById('campaignLogo').value = '';
         document.getElementById('createCampaignForm').style.display = 'none';
