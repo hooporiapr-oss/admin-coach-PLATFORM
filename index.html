@@ -521,6 +521,9 @@
         whoBrings:'Who is bringing padrinos', noneYet:'none yet', theirLink:'Their link',
         ofWord:'of', bringingNote:'players have brought a pledge',
         noRoster:'No players on the roster yet. Add them under Players.',
+        logoLabel:'Program logo on the scoreboard', save:'Save',
+        logoNote:'Paste a link to an image. Leave empty for no logo.',
+        logoHttps:'The link has to start with https://',
         games:'Games', addGame:'Add a game', noGamesYet:'No games yet.',
         seasonPoints:'Points', collected:'Collected', awaiting:'To collect',
         pledgesWord:'pledges', pointsWord:'points', toCollect:'to collect',
@@ -836,6 +839,9 @@
         whoBrings:'Qui\u00e9n est\u00e1 trayendo padrinos', noneYet:'nada a\u00fan', theirLink:'Su enlace',
         ofWord:'de', bringingNote:'jugadores han tra\u00eddo una promesa',
         noRoster:'Todav\u00eda no hay jugadores. A\u00f1\u00e1delos en Jugadores.',
+        logoLabel:'Logo del programa en el tablero', save:'Guardar',
+        logoNote:'Pega el enlace de una imagen. D\u00e9jalo vac\u00edo para no poner logo.',
+        logoHttps:'El enlace tiene que empezar con https://',
         games:'Juegos', addGame:'A\u00f1adir juego', noGamesYet:'Todav\u00eda no hay juegos.',
         seasonPoints:'Puntos', collected:'Cobrado', awaiting:'Por cobrar',
         pledgesWord:'promesas', pointsWord:'puntos', toCollect:'por cobrar',
@@ -1899,12 +1905,14 @@
     async function loadGames(campaignId) {
       const box = document.getElementById(`campaignGames-${campaignId}`);
       try {
-        const [games, pledges] = await Promise.all([
+        const [games, pledges, camps] = await Promise.all([
           supabaseQuery('games', 'GET', null,
             `?campaign_id=eq.${campaignId}&select=*&order=plays_on.asc.nullslast,created_at.asc`),
           supabaseQuery('game_pledges', 'GET', null,
-            `?campaign_id=eq.${campaignId}&select=game_id,rate,amount,team_amount,platform_amount,invoice_status`)
+            `?campaign_id=eq.${campaignId}&select=game_id,rate,amount,team_amount,platform_amount,invoice_status`),
+          supabaseQuery('campaigns', 'GET', null, `?id=eq.${campaignId}&select=logo_url`)
         ]);
+        const camp = (camps && camps[0]) || null;
 
         // money per game, and what is still to collect
         const byGame = {};
@@ -1931,6 +1939,17 @@
                    <div style="font-size:20px;font-weight:900;color:#4ade80;">$${collected.toFixed(2)}</div></div>
               <div><div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.1em;">${t('awaiting')}</div>
                    <div style="font-size:20px;font-weight:900;color:#facc15;">$${owed.toFixed(2)}</div></div>
+            </div>
+
+            <div style="padding:9px 11px;background:#0e0a11;border:1px solid #ffffff14;border-radius:8px;margin-bottom:10px;">
+              <div style="font-size:11px;font-weight:900;margin-bottom:5px;">${t('logoLabel')}</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <input id="logo-${campaignId}" type="url" placeholder="https://…"
+                       value="${(camp && camp.logo_url) ? escapeHtml(camp.logo_url) : ''}"
+                       style="flex:1 1 200px;padding:7px 9px;border-radius:7px;border:1px solid #ffffff1d;background:#140f1a;color:#fff;font-family:inherit;font-size:12px;">
+                <button class="btn alt" onclick="saveLogo('${campaignId}')" style="padding:6px 11px;font-size:11px;">${t('save')}</button>
+              </div>
+              <div style="color:#888;font-size:11px;margin-top:5px;">${t('logoNote')}</div>
             </div>
 
             <button class="btn" onclick="addGame('${campaignId}')" style="margin-bottom:10px;">+ ${t('addGame')}</button>
@@ -2015,6 +2034,27 @@
       navigator.clipboard.writeText(url)
         .then(() => alert(t('copied') + '\n\n' + url))
         .catch(() => prompt(t('copyManually'), url));
+    }
+
+
+    // El logo del programa en el tablero público. Una dirección a una
+    // imagen que ellos ya tienen en algún sitio.
+    async function saveLogo(campaignId) {
+      const el = document.getElementById(`logo-${campaignId}`);
+      const url = (el.value || '').trim();
+
+      if (url && !/^https:\/\//i.test(url)) {
+        alert(t('logoHttps'));
+        return;
+      }
+
+      try {
+        await supabaseQuery('campaigns', 'PATCH', { logo_url: url || null }, `?id=eq.${campaignId}`);
+        await loadGames(campaignId);
+      } catch (error) {
+        console.error('Logo:', error);
+        alert('Error: ' + error.message);
+      }
     }
 
     async function addGame(campaignId) {
