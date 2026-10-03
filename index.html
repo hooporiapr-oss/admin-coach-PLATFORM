@@ -531,7 +531,9 @@
         copyJoin:'Copy player sign-up link',
         joinCopied:'Send this to the team group. Each player adds their name and gets their own padrino link.',
         copyBoard:'Copy scoreboard link',
-        askOpponent:'Opponent?', askDate:'Date (YYYY-MM-DD)?', askTime:'Tip time? (optional)',
+        askOpponent:'Opponent?', askDate:'Date (YYYY-MM-DD)?',
+        askTime:'Tip time? e.g. 7:00PM — pledging closes at that moment',
+        pledgingShut:'pledging closed',
         askNote:'Note? (tournament, round — optional)',
         askOurScore:'Our points?', askTheirScore:'Their points? (optional)',
         badScore:'Points must be a number.',
@@ -854,7 +856,9 @@
         copyJoin:'Copiar enlace para jugadores',
         joinCopied:'Manda esto al grupo del equipo. Cada jugador pone su nombre y recibe su propio enlace de padrinos.',
         copyBoard:'Copiar enlace del tablero',
-        askOpponent:'\u00bfContra qui\u00e9n?', askDate:'\u00bfFecha (AAAA-MM-DD)?', askTime:'\u00bfHora? (opcional)',
+        askOpponent:'\u00bfContra qui\u00e9n?', askDate:'\u00bfFecha (AAAA-MM-DD)?',
+        askTime:'\u00bfHora del saque? ej. 7:00PM \u2014 cierra las promesas en ese momento',
+        pledgingShut:'promesas cerradas',
         askNote:'\u00bfNota? (torneo, ronda \u2014 opcional)',
         askOurScore:'\u00bfNuestros puntos?', askTheirScore:'\u00bfSus puntos? (opcional)',
         badScore:'Los puntos tienen que ser un n\u00famero.',
@@ -1977,6 +1981,8 @@
                   </div>
                   ${g.note ? `<div style="color:#888;font-size:12px;">${escapeHtml(g.note)}</div>` : ''}
                   <div style="color:#888;font-size:12px;margin-top:4px;">
+                    ${(!played && !cancelled && g.tips_at && new Date(g.tips_at) <= new Date())
+                      ? `<span style="color:#facc15;">${t('pledgingShut')}</span> · ` : ''}
                     ${m.n} ${t('pledgesWord')}
                     ${played ? ` · <b style="color:#fff;">${g.team_points} ${t('pointsWord')}</b>` : ''}
                     ${m.due > 0 ? ` · <span style="color:#facc15;">$${m.due.toFixed(2)} ${t('toCollect')}</span>` : ''}
@@ -2068,6 +2074,22 @@
     }
 
 
+
+    // La hora del saque, en un momento exacto. Puerto Rico no cambia
+    // la hora en todo el año, así que la local más cuatro es UTC
+    // siempre — sin esto no se puede cerrar una promesa al saque.
+    function tipsAt(dateStr, timeStr) {
+      if (!dateStr) return null;
+      const t = (timeStr || '').trim().toUpperCase().replace(/\s+/g, '');
+      const m = t.match(/^(\d{1,2}):(\d{2})(AM|PM)$/);
+      if (!m) return null;
+
+      let h = Number(m[1]) % 12;
+      if (m[3] === 'PM') h += 12;
+
+      return `${dateStr}T${String(h).padStart(2,'0')}:${m[2]}:00-04:00`;
+    }
+
     // Casa o visita, escrito en vez de adivinado. Acepta la primera
     // letra en los dos idiomas, y la palabra completa.
     function askHomeAway(current) {
@@ -2096,6 +2118,7 @@
           opponent: opponent.trim(),
           plays_on: date || null,
           tip_time: time,
+          tips_at: tipsAt(date, time),
           home: home,
           note: note
         });
@@ -2134,6 +2157,7 @@
           opponent: opponent.trim(),
           plays_on: (date || '').trim() || null,
           tip_time: (time || '').trim() || null,
+          tips_at: tipsAt((date || '').trim(), (time || '').trim()),
           home: home,
           note: (note || '').trim() || null
         }, `?id=eq.${gameId}`);
@@ -4341,6 +4365,11 @@
                    <div style="font-size:22px;font-weight:900;color:#facc15;">$${due.toFixed(2)}</div></div>
               <div><div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.1em;">${t('cdPlayed')}</div>
                    <div style="font-size:22px;font-weight:900;">${played.length}</div></div>
+            </div>
+
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+              <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('copyBoard')}</button>
+              <button class="btn alt" onclick="copyJoinLink('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('copyJoin')}</button>
             </div>
 
             ${next ? `
