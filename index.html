@@ -521,6 +521,8 @@
         whoBrings:'Who is bringing padrinos', noneYet:'none yet', theirLink:'Their link',
         ofWord:'of', bringingNote:'players have brought a pledge',
         noRoster:'No players on the roster yet. Add them under Players.',
+        editGame:'Edit', gameGone:'That game is no longer there.',
+        needOpponent:'The opponent cannot be empty.',
         logoLabel:'Program logo on the scoreboard', save:'Save',
         logoNote:'Paste a link to an image. Leave empty for no logo.',
         logoHttps:'The link has to start with https://',
@@ -839,6 +841,8 @@
         whoBrings:'Qui\u00e9n est\u00e1 trayendo padrinos', noneYet:'nada a\u00fan', theirLink:'Su enlace',
         ofWord:'de', bringingNote:'jugadores han tra\u00eddo una promesa',
         noRoster:'Todav\u00eda no hay jugadores. A\u00f1\u00e1delos en Jugadores.',
+        editGame:'Cambiar', gameGone:'Ese juego ya no est\u00e1.',
+        needOpponent:'El contrario no puede quedar vac\u00edo.',
         logoLabel:'Logo del programa en el tablero', save:'Guardar',
         logoNote:'Pega el enlace de una imagen. D\u00e9jalo vac\u00edo para no poner logo.',
         logoHttps:'El enlace tiene que empezar con https://',
@@ -1976,9 +1980,11 @@
                   <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
                     ${played
                       ? `<button class="btn" onclick="sendGameInvoices('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('sendBills')}</button>
-                         <button class="btn alt" onclick="scoreGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editScore')}</button>`
+                         <button class="btn alt" onclick="scoreGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editScore')}</button>
+                         <button class="btn alt" onclick="editGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editGame')}</button>`
                       : cancelled ? ''
                       : `<button class="btn" onclick="scoreGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('enterScore')}</button>
+                         <button class="btn alt" onclick="editGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editGame')}</button>
                          <button class="btn alt" onclick="killGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('cancelGame')}</button>`}
                   </div>
                 </div>`;
@@ -2077,6 +2083,44 @@
         await loadGames(campaignId);
       } catch (error) {
         console.error('Add game:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+
+    // Cambiar un juego ya puesto. Cada pregunta trae lo que hay ahora,
+    // así que dejarlo igual es apretar OK.
+    async function editGame(campaignId, gameId) {
+      try {
+        const rows = await supabaseQuery('games', 'GET', null, `?id=eq.${gameId}&select=*`);
+        const g = rows && rows[0];
+        if (!g) { alert(t('gameGone')); return; }
+
+        const opponent = prompt(t('askOpponent'), g.opponent || '');
+        if (opponent === null) return;
+        if (!opponent.trim()) { alert(t('needOpponent')); return; }
+
+        const date = prompt(t('askDate'), g.plays_on || '');
+        if (date === null) return;
+
+        const time = prompt(t('askTime'), g.tip_time || '');
+        if (time === null) return;
+
+        const home = confirm(t('askHome'));
+        const note = prompt(t('askNote'), g.note || '');
+        if (note === null) return;
+
+        await supabaseQuery('games', 'PATCH', {
+          opponent: opponent.trim(),
+          plays_on: (date || '').trim() || null,
+          tip_time: (time || '').trim() || null,
+          home: home,
+          note: (note || '').trim() || null
+        }, `?id=eq.${gameId}`);
+
+        await loadGames(campaignId);
+      } catch (error) {
+        console.error('Edit game:', error);
         alert('Error: ' + error.message);
       }
     }
