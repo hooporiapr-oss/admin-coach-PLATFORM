@@ -528,6 +528,8 @@
         seasonPoints:'Points', collected:'Collected', awaiting:'To collect',
         pledgesWord:'pledges', pointsWord:'points', toCollect:'to collect',
         enterScore:'Enter score', editScore:'Edit score', cancelGame:'Cancel',
+        copyJoin:'Copy player sign-up link',
+        joinCopied:'Send this to the team group. Each player adds their name and gets their own padrino link.',
         copyBoard:'Copy scoreboard link',
         askOpponent:'Opponent?', askDate:'Date (YYYY-MM-DD)?', askTime:'Tip time? (optional)',
         askNote:'Note? (tournament, round — optional)',
@@ -849,6 +851,8 @@
         seasonPoints:'Puntos', collected:'Cobrado', awaiting:'Por cobrar',
         pledgesWord:'promesas', pointsWord:'puntos', toCollect:'por cobrar',
         enterScore:'Poner marcador', editScore:'Cambiar marcador', cancelGame:'Cancelar',
+        copyJoin:'Copiar enlace para jugadores',
+        joinCopied:'Manda esto al grupo del equipo. Cada jugador pone su nombre y recibe su propio enlace de padrinos.',
         copyBoard:'Copiar enlace del tablero',
         askOpponent:'\u00bfContra qui\u00e9n?', askDate:'\u00bfFecha (AAAA-MM-DD)?', askTime:'\u00bfHora? (opcional)',
         askNote:'\u00bfNota? (torneo, ronda \u2014 opcional)',
@@ -1957,6 +1961,7 @@
 
             <button class="btn" onclick="addGame('${campaignId}')" style="margin-bottom:10px;">+ ${t('addGame')}</button>
             <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="margin-bottom:10px;">${t('copyBoard')}</button>
+            <button class="btn alt" onclick="copyJoinLink('${campaignId}')" style="margin-bottom:10px;">${t('copyJoin')}</button>
 
             <div id="playerPledges-${campaignId}"></div>
 
@@ -2172,6 +2177,17 @@
         console.error('Cancel:', error);
         alert('Error: ' + error.message);
       }
+    }
+
+
+    // El enlace que el coach manda al grupo del equipo. Cada jugador
+    // se añade con su nombre y su categoría, y sale con su propio
+    // enlace de padrinos.
+    function copyJoinLink(campaignId) {
+      const url = `https://cadapunto.com/jugador.html?c=${campaignId}`;
+      navigator.clipboard.writeText(url)
+        .then(() => alert(t('joinCopied') + '\n\n' + url))
+        .catch(() => prompt(t('copyManually'), url));
     }
 
     function copyBoardLink(campaignId) {
