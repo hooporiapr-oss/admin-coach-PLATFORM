@@ -521,6 +521,8 @@
         whoBrings:'Who is bringing padrinos', noneYet:'none yet', theirLink:'Their link',
         ofWord:'of', bringingNote:'players have brought a pledge',
         noRoster:'No players on the roster yet. Add them under Players.',
+        askHomeAway:'Home or away? H = home, A = away',
+        homeAwayBad:'Type H for home or A for away.',
         editGame:'Edit', gameGone:'That game is no longer there.',
         needOpponent:'The opponent cannot be empty.',
         logoLabel:'Program logo on the scoreboard', save:'Save',
@@ -532,7 +534,7 @@
         enterScore:'Enter score', editScore:'Edit score', cancelGame:'Cancel',
         copyBoard:'Copy scoreboard link',
         askOpponent:'Opponent?', askDate:'Date (YYYY-MM-DD)?', askTime:'Tip time? (optional)',
-        askHome:'Home game? OK = home, Cancel = away', askNote:'Note? (tournament, round — optional)',
+        askNote:'Note? (tournament, round — optional)',
         askOurScore:'Our points?', askTheirScore:'Their points? (optional)',
         badScore:'Points must be a number.',
         scoreSaved:'Score saved. {N} pledge(s) are now billable.',
@@ -841,6 +843,8 @@
         whoBrings:'Qui\u00e9n est\u00e1 trayendo padrinos', noneYet:'nada a\u00fan', theirLink:'Su enlace',
         ofWord:'de', bringingNote:'jugadores han tra\u00eddo una promesa',
         noRoster:'Todav\u00eda no hay jugadores. A\u00f1\u00e1delos en Jugadores.',
+        askHomeAway:'\u00bfCasa o visita? C = casa, V = visita',
+        homeAwayBad:'Escribe C para casa o V para visita.',
         editGame:'Cambiar', gameGone:'Ese juego ya no est\u00e1.',
         needOpponent:'El contrario no puede quedar vac\u00edo.',
         logoLabel:'Logo del programa en el tablero', save:'Guardar',
@@ -852,7 +856,7 @@
         enterScore:'Poner marcador', editScore:'Cambiar marcador', cancelGame:'Cancelar',
         copyBoard:'Copiar enlace del tablero',
         askOpponent:'\u00bfContra qui\u00e9n?', askDate:'\u00bfFecha (AAAA-MM-DD)?', askTime:'\u00bfHora? (opcional)',
-        askHome:'\u00bfEn casa? OK = casa, Cancelar = visita', askNote:'\u00bfNota? (torneo, ronda \u2014 opcional)',
+        askNote:'\u00bfNota? (torneo, ronda \u2014 opcional)',
         askOurScore:'\u00bfNuestros puntos?', askTheirScore:'\u00bfSus puntos? (opcional)',
         badScore:'Los puntos tienen que ser un n\u00famero.',
         scoreSaved:'Marcador guardado. {N} promesa(s) ya se pueden cobrar.',
@@ -2063,12 +2067,27 @@
       }
     }
 
+
+    // Casa o visita, escrito en vez de adivinado. Acepta la primera
+    // letra en los dos idiomas, y la palabra completa.
+    function askHomeAway(current) {
+      const now = current === false ? 'A' : 'H';
+      const ans = prompt(t('askHomeAway'), now);
+      if (ans === null) return null;
+      const v = (ans || '').trim().toUpperCase();
+      if (v === 'A' || v === 'V' || v.indexOf('AWAY') === 0 || v.indexOf('VISITA') === 0) return false;
+      if (v === 'H' || v === 'C' || v.indexOf('HOME') === 0 || v.indexOf('CASA') === 0) return true;
+      alert(t('homeAwayBad'));
+      return askHomeAway(current);
+    }
+
     async function addGame(campaignId) {
       const opponent = prompt(t('askOpponent'));
       if (!opponent) return;
       const date = prompt(t('askDate'), new Date().toISOString().slice(0, 10));
       const time = prompt(t('askTime')) || null;
-      const home = confirm(t('askHome'));
+      const home = askHomeAway(true);
+      if (home === null) return;
       const note = prompt(t('askNote')) || null;
 
       try {
@@ -2106,7 +2125,8 @@
         const time = prompt(t('askTime'), g.tip_time || '');
         if (time === null) return;
 
-        const home = confirm(t('askHome'));
+        const home = askHomeAway(g.home);
+        if (home === null) return;
         const note = prompt(t('askNote'), g.note || '');
         if (note === null) return;
 
