@@ -169,6 +169,7 @@
           </div>
 
           <div id="campaignsList" class="panel">
+            <div id="reqBox"></div>
             <div id="campaignsContainer" style="margin-top:4px;">—</div>
           </div>
 
@@ -552,6 +553,14 @@
         gfDepends:'Only happens if they win…', gfNoDepend:'Nothing — this game is already scheduled',
         gfDependsNote:'Pick a game and this one stays locked on the scoreboard until that one is won. That is how the bracket shows the path to a final.',
         cancel:'Cancel',
+        teamsWaiting:'Teams asking for a campaign', approveIt:'Approve', declineIt:'Decline',
+        confirmApprove:'Approve this team? It creates the campaign, links the team name and adds the coach.',
+        confirmDecline:'Decline this request?',
+        approved:'{T} approved — campaign “{P}” created.',
+        approveFailed:'Could not approve. The team may already have a campaign.',
+        seePledges:'Pledges', noPledgesYet:'No pledges on this game.',
+        voidIt:'Void', voidedWord:'void', paidWord:'paid',
+        confirmVoid:'Void this pledge? It will not be billed, and it stays on the record as voided.',
         deleteGame:'Delete',
         confirmDelete:'Delete this game? It disappears completely.',
         confirmDeletePledges:'Delete this game? {N} unpaid pledge(s) on it go too.',
@@ -897,6 +906,14 @@
         gfDepends:'S\u00f3lo pasa si ganan\u2026', gfNoDepend:'Nada \u2014 este juego ya est\u00e1 en el calendario',
         gfDependsNote:'Escoge un juego y \u00e9ste queda bloqueado en el tablero hasta que se gane aquel. As\u00ed se ve el camino hasta una final.',
         cancel:'Cancelar',
+        teamsWaiting:'Equipos pidiendo campa\u00f1a', approveIt:'Aprobar', declineIt:'Rechazar',
+        confirmApprove:'\u00bfAprobar este equipo? Se crea la campa\u00f1a, se ata el nombre y se a\u00f1ade al coach.',
+        confirmDecline:'\u00bfRechazar esta petici\u00f3n?',
+        approved:'{T} aprobado \u2014 campa\u00f1a \u201c{P}\u201d creada.',
+        approveFailed:'No se pudo aprobar. Puede que el equipo ya tenga campa\u00f1a.',
+        seePledges:'Promesas', noPledgesYet:'No hay promesas en este juego.',
+        voidIt:'Anular', voidedWord:'anulada', paidWord:'pagada',
+        confirmVoid:'\u00bfAnular esta promesa? No se cobra, y queda constancia de que se anul\u00f3.',
         deleteGame:'Borrar',
         confirmDelete:'\u00bfBorrar este juego? Desaparece por completo.',
         confirmDeletePledges:'\u00bfBorrar este juego? Se van tambi\u00e9n {N} promesa(s) sin pagar.',
@@ -2053,6 +2070,10 @@
                     ${played ? ` · <b style="color:#fff;">${g.team_points} ${t('pointsWord')}</b>` : ''}
                     ${m.due > 0 ? ` · <span style="color:#facc15;">$${m.due.toFixed(2)} ${t('toCollect')}</span>` : ''}
                   </div>
+                  ${m.n ? `<button class="btn alt" onclick="gamePledges('${campaignId}','${g.id}')"
+                        style="padding:4px 9px;font-size:10px;margin-top:6px;">${t('seePledges')} (${m.n})</button>` : ''}
+                  <div id="pledgeBox-${g.id}" style="display:none;"></div>
+
                   <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
                     ${locked
                       ? `<button class="btn alt" onclick="unlockGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('unlockNow')}</button>
@@ -2330,6 +2351,72 @@
         await loadGames(campaignId);
       } catch (error) {
         console.error('Save game:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+
+    // Quién prometió en un juego, y la opción de anular una promesa.
+    // Un padrino que se arrepiente antes de pagar es normal; borrarla
+    // del todo no, porque entonces nadie sabe qué pasó.
+    async function gamePledges(campaignId, gameId) {
+      const box = document.getElementById(`pledgeBox-${gameId}`);
+      if (!box) return;
+
+      if (box.style.display === 'block') { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      box.innerHTML = `<p style="color:#888;font-size:12px;">${t('loading')}</p>`;
+
+      try {
+        const rows = await supabaseQuery('game_pledges', 'GET', null,
+          `?game_id=eq.${gameId}&select=*&order=created_at.asc`);
+
+        if (!rows || !rows.length) {
+          box.innerHTML = `<p style="color:#888;font-size:12px;">${t('noPledgesYet')}</p>`;
+          return;
+        }
+
+        box.innerHTML = `
+          <div style="display:grid;gap:4px;margin-top:6px;">
+            ${rows.map(p => {
+              const dead = p.invoice_status === 'void';
+              const paid = p.invoice_status === 'paid';
+              return `
+                <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;
+                            padding:7px 10px;background:#0e0a11;border:1px solid #ffffff10;
+                            border-radius:7px;font-size:12px;${dead ? 'opacity:.45;' : ''}">
+                  <span>
+                    <b>${escapeHtml(p.padrino_name)}</b>
+                    <span style="color:#888;"> · $${Number(p.rate).toFixed(2)}/pt</span>
+                    ${p.team_amount ? ` · $${Number(p.team_amount).toFixed(2)}` : ''}
+                    ${dead ? ` · <span style="color:#f87171;">${t('voidedWord')}</span>` : ''}
+                    ${paid ? ` · <span style="color:#4ade80;">${t('paidWord')}</span>` : ''}
+                  </span>
+                  ${(!dead && !paid)
+                    ? `<button class="btn alt" onclick="voidPledge('${campaignId}','${gameId}','${p.id}')"
+                               style="padding:3px 8px;font-size:10px;">${t('voidIt')}</button>`
+                    : ''}
+                </div>`;
+            }).join('')}
+          </div>`;
+      } catch (error) {
+        console.error('Pledges:', error);
+        box.innerHTML = `<p style="color:#f87171;font-size:12px;">${error.message}</p>`;
+      }
+    }
+
+    async function voidPledge(campaignId, gameId, pledgeId) {
+      if (!confirm(t('confirmVoid'))) return;
+      try {
+        await supabaseQuery('game_pledges', 'PATCH',
+          { invoice_status: 'void' }, `?id=eq.${pledgeId}`);
+        // volver a pintar la lista en su sitio, sin cerrarla
+        const box = document.getElementById(`pledgeBox-${gameId}`);
+        if (box) box.style.display = 'none';
+        await gamePledges(campaignId, gameId);
+        await loadGames(campaignId);
+      } catch (error) {
+        console.error('Void:', error);
         alert('Error: ' + error.message);
       }
     }
@@ -3408,8 +3495,80 @@
       }
     }
 
+    // ══════════════════════════════════════════════════════
+    //  Equipos pidiendo campaña. Aprobar crea la campaña, ata el
+    //  nombre del equipo y deja al coach dentro — todo de una vez,
+    //  porque si no se olvida alguno de los pasos.
+    // ══════════════════════════════════════════════════════
+    async function loadRequests() {
+      const box = document.getElementById('reqBox');
+      if (!box) return;
+
+      try {
+        const rows = await supabaseQuery('rpc/bw_requests_pending', 'POST', {});
+
+        if (!rows || !rows.length) { box.innerHTML = ''; return; }
+
+        box.innerHTML = `
+          <div style="padding:14px;background:#1a1420;border:1px solid #facc1540;
+                      border-radius:10px;margin-bottom:16px;">
+            <div style="font-weight:900;margin-bottom:8px;color:#facc15;">
+              ${t('teamsWaiting')} (${rows.length})
+            </div>
+            <div style="display:grid;gap:8px;">
+              ${rows.map(r => `
+                <div style="padding:10px 12px;background:#0e0a11;border:1px solid #ffffff14;
+                            border-radius:8px;font-size:12px;">
+                  <div style="font-weight:800;font-size:13px;">${escapeHtml(r.team_name)}
+                    <span style="color:#888;font-weight:400;"> → ${escapeHtml(r.program)}</span></div>
+                  <div style="color:#888;margin-top:3px;">
+                    ${escapeHtml(r.coach_name)} · ${escapeHtml(r.coach_email)}
+                    ${r.phone ? ' · ' + escapeHtml(r.phone) : ''}
+                  </div>
+                  <div style="display:flex;gap:6px;margin-top:8px;">
+                    <button class="btn" onclick="approveRequest('${r.id}')"
+                            style="padding:5px 10px;font-size:11px;">${t('approveIt')}</button>
+                    <button class="btn alt" onclick="declineRequest('${r.id}')"
+                            style="padding:5px 10px;font-size:11px;">${t('declineIt')}</button>
+                  </div>
+                </div>`).join('')}
+            </div>
+          </div>`;
+      } catch (error) {
+        console.error('Requests:', error);
+        box.innerHTML = '';
+      }
+    }
+
+    async function approveRequest(id) {
+      if (!confirm(t('confirmApprove'))) return;
+      try {
+        const r = await supabaseQuery('rpc/bw_approve_request', 'POST', { p_id: id });
+        if (!r || !r.ok) { alert(t('approveFailed')); return; }
+        alert(t('approved').replace('{T}', r.team).replace('{P}', r.program));
+        await loadRequests();
+        await loadCampaigns();
+      } catch (error) {
+        console.error('Approve:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    async function declineRequest(id) {
+      if (!confirm(t('confirmDecline'))) return;
+      try {
+        await supabaseQuery('bw_requests', 'PATCH',
+          { status: 'declined', decided_at: new Date().toISOString() }, `?id=eq.${id}`);
+        await loadRequests();
+      } catch (error) {
+        console.error('Decline:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
     async function loadCampaigns() {
       try {
+        await loadRequests();
         const campaigns = await supabaseQuery('campaigns', 'GET', null, '?order=created_at.desc');
         
         if (!campaigns || campaigns.length === 0) {
