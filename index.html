@@ -170,6 +170,7 @@
 
           <div id="campaignsList" class="panel">
             <div id="reqBox"></div>
+            <div id="billBox"></div>
             <div id="campaignsContainer" style="margin-top:4px;">—</div>
           </div>
 
@@ -553,6 +554,7 @@
         gfDepends:'Only happens if they win…', gfNoDepend:'Nothing — this game is already scheduled',
         gfDependsNote:'Pick a game and this one stays locked on the scoreboard until that one is won. That is how the bracket shows the path to a final.',
         cancel:'Cancel',
+        readyToBill:'Scored and ready to bill',
         teamsWaiting:'Teams asking for a campaign', approveIt:'Approve', declineIt:'Decline',
         confirmApprove:'Approve this team? It creates the campaign, links the team name and adds the coach.',
         confirmDecline:'Decline this request?',
@@ -906,6 +908,7 @@
         gfDepends:'S\u00f3lo pasa si ganan\u2026', gfNoDepend:'Nada \u2014 este juego ya est\u00e1 en el calendario',
         gfDependsNote:'Escoge un juego y \u00e9ste queda bloqueado en el tablero hasta que se gane aquel. As\u00ed se ve el camino hasta una final.',
         cancel:'Cancelar',
+        readyToBill:'Con marcador, listos para cobrar',
         teamsWaiting:'Equipos pidiendo campa\u00f1a', approveIt:'Aprobar', declineIt:'Rechazar',
         confirmApprove:'\u00bfAprobar este equipo? Se crea la campa\u00f1a, se ata el nombre y se a\u00f1ade al coach.',
         confirmDecline:'\u00bfRechazar esta petici\u00f3n?',
@@ -3500,6 +3503,81 @@
     //  nombre del equipo y deja al coach dentro — todo de una vez,
     //  porque si no se olvida alguno de los pasos.
     // ══════════════════════════════════════════════════════
+
+    // ══════════════════════════════════════════════════════
+    //  Juegos con marcador puesto y promesas sin cobrar.
+    //
+    //  Los marcadores entran por el calendario, no por aquí, así
+    //  que sin este aviso habría que ir a buscarlos campaña por
+    //  campaña — y el padrino espera su enlace.
+    // ══════════════════════════════════════════════════════
+    async function loadBillable() {
+      const box = document.getElementById('billBox');
+      if (!box) return;
+
+      try {
+        const [games, pledges, camps] = await Promise.all([
+          supabaseQuery('games', 'GET', null,
+            '?status=eq.played&select=id,campaign_id,opponent,plays_on,team_points,home'),
+          supabaseQuery('game_pledges', 'GET', null,
+            '?invoice_status=eq.open&select=game_id,team_amount'),
+          supabaseQuery('campaigns', 'GET', null, '?select=id,name')
+        ]);
+
+        const open = {};
+        (pledges || []).forEach(p => {
+          const o = open[p.game_id] = open[p.game_id] || { n: 0, due: 0 };
+          o.n++;
+          o.due += Number(p.team_amount || 0);
+        });
+
+        const names = {};
+        (camps || []).forEach(c => { names[c.id] = c.name; });
+
+        const ready = (games || [])
+          .filter(g => open[g.id])
+          .sort((a, b) => String(a.plays_on || '').localeCompare(String(b.plays_on || '')));
+
+        if (!ready.length) { box.innerHTML = ''; return; }
+
+        const total = ready.reduce((n, g) => n + open[g.id].due, 0);
+        const pledgeCount = ready.reduce((n, g) => n + open[g.id].n, 0);
+
+        box.innerHTML = `
+          <div style="padding:14px;background:#0f1a14;border:1px solid #4ade8050;
+                      border-radius:10px;margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;">
+              <div style="font-weight:900;color:#4ade80;">
+                ${t('readyToBill')} (${ready.length})
+              </div>
+              <div style="font-size:12px;color:#888;">
+                ${pledgeCount} ${t('pledgesWord')} · <b style="color:#fff;">$${total.toFixed(2)}</b>
+              </div>
+            </div>
+
+            <div style="display:grid;gap:6px;margin-top:10px;">
+              ${ready.map(g => `
+                <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;
+                            padding:8px 11px;background:#0e0a11;border:1px solid #ffffff14;
+                            border-radius:8px;font-size:12px;flex-wrap:wrap;">
+                  <span>
+                    <b>${escapeHtml(names[g.campaign_id] || '—')}</b>
+                    <span style="color:#888;"> · ${g.home ? '' : '@ '}${escapeHtml(g.opponent)}</span>
+                    <span style="color:#888;"> · ${g.plays_on || ''}</span>
+                    · <b>${g.team_points}</b> ${t('pointsWord')}
+                    · <span style="color:#facc15;">$${open[g.id].due.toFixed(2)}</span>
+                  </span>
+                  <button class="btn" onclick="sendGameInvoices('${g.campaign_id}','${g.id}')"
+                          style="padding:5px 10px;font-size:11px;">${t('sendBills')}</button>
+                </div>`).join('')}
+            </div>
+          </div>`;
+      } catch (error) {
+        console.error('Billable:', error);
+        box.innerHTML = '';
+      }
+    }
+
     async function loadRequests() {
       const box = document.getElementById('reqBox');
       if (!box) return;
@@ -3569,6 +3647,7 @@
     async function loadCampaigns() {
       try {
         await loadRequests();
+        await loadBillable();
         const campaigns = await supabaseQuery('campaigns', 'GET', null, '?order=created_at.desc');
         
         if (!campaigns || campaigns.length === 0) {
@@ -4424,6 +4503,7 @@
 
         alert(summary);
         await loadGames(campaignId);
+        await loadBillable();
       } catch (error) {
         console.error('Game invoices:', error);
         alert(t('invoiceError') + ' ' + error.message);
