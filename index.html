@@ -2179,7 +2179,7 @@
     async function addBracketGame(campaignId) {
       try {
         const games = await supabaseQuery('games', 'GET', null,
-          `?campaign_id=eq.${campaignId}&status=in.(scheduled,played)` +
+          `?campaign_id=eq.${campaignId}&status=in.(scheduled,played,conditional)` +
           `&select=id,opponent,plays_on,tip_time,status&order=plays_on.asc.nullslast`);
 
         if (!games || !games.length) {
@@ -2189,7 +2189,8 @@
 
         const list = games.map((g, i) =>
           `${i + 1}. ${g.opponent}${g.plays_on ? ' · ' + g.plays_on : ''}` +
-          `${g.status === 'played' ? ' (' + t('playedWord') + ')' : ''}`
+          `${g.status === 'played' ? ' (' + t('playedWord') + ')'
+            : g.status === 'conditional' ? ' (' + t('lockedWord') + ')' : ''}`
         ).join('\n');
 
         const pick = prompt(t('whichWin') + '\n\n' + list);
