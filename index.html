@@ -524,6 +524,16 @@
         logoLabel:'Program logo on the scoreboard', save:'Save',
         logoNote:'Paste a link to an image. Leave empty for no logo.',
         logoHttps:'The link has to start with https://',
+        addBracket:'+ Add a bracket game', lockedWord:'locked', unlockNow:'Open it',
+        whichWin:'Which game must they win first? Type the number.',
+        noPriorGame:'Add a normal game first — a bracket game hangs off one.',
+        pickNumber:'Type the number of a game on the list.',
+        playedWord:'played', winnerOf:'Winner of',
+        askOpponentNext:'Opponent in that next game?',
+        confirmUnlock:'Open this game for pledges now?',
+        bracketOpened:'{N} bracket game(s) opened for pledges.',
+        bracketDropped:'{N} bracket game(s) dropped — they lost.',
+        noOppScore:'No opponent score entered, so nothing in the bracket moved. Open it by hand if they won.',
         games:'Games', addGame:'Add a game', noGamesYet:'No games yet.',
         seasonPoints:'Points', collected:'Collected', awaiting:'To collect',
         pledgesWord:'pledges', pointsWord:'points', toCollect:'to collect',
@@ -849,6 +859,16 @@
         logoLabel:'Logo del programa en el tablero', save:'Guardar',
         logoNote:'Pega el enlace de una imagen. D\u00e9jalo vac\u00edo para no poner logo.',
         logoHttps:'El enlace tiene que empezar con https://',
+        addBracket:'+ A\u00f1adir juego del cuadro', lockedWord:'bloqueado', unlockNow:'Abrirlo',
+        whichWin:'\u00bfQu\u00e9 juego tienen que ganar primero? Escribe el n\u00famero.',
+        noPriorGame:'Primero a\u00f1ade un juego normal \u2014 uno del cuadro cuelga de otro.',
+        pickNumber:'Escribe el n\u00famero de un juego de la lista.',
+        playedWord:'jugado', winnerOf:'Ganador de',
+        askOpponentNext:'\u00bfContra qui\u00e9n en ese pr\u00f3ximo juego?',
+        confirmUnlock:'\u00bfAbrir este juego para promesas ahora?',
+        bracketOpened:'{N} juego(s) del cuadro abiertos para promesas.',
+        bracketDropped:'{N} juego(s) del cuadro se cayeron \u2014 perdieron.',
+        noOppScore:'No pusiste el marcador del contrario, as\u00ed que el cuadro no se movi\u00f3. \u00c1brelo a mano si ganaron.',
         games:'Juegos', addGame:'A\u00f1adir juego', noGamesYet:'Todav\u00eda no hay juegos.',
         seasonPoints:'Puntos', collected:'Cobrado', awaiting:'Por cobrar',
         pledgesWord:'promesas', pointsWord:'puntos', toCollect:'por cobrar',
@@ -1964,6 +1984,7 @@
             </div>
 
             <button class="btn" onclick="addGame('${campaignId}')" style="margin-bottom:10px;">+ ${t('addGame')}</button>
+            <button class="btn alt" onclick="addBracketGame('${campaignId}')" style="margin-bottom:10px;">+ ${t('addBracket')}</button>
             <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="margin-bottom:10px;">${t('copyBoard')}</button>
             <button class="btn alt" onclick="copyJoinLink('${campaignId}')" style="margin-bottom:10px;">${t('copyJoin')}</button>
 
@@ -1973,10 +1994,13 @@
               const m = byGame[g.id] || { n:0, due:0, paid:0 };
               const played = g.status === 'played';
               const cancelled = g.status === 'cancelled';
+              const locked = g.status === 'conditional';
               return `
                 <div style="padding:10px 12px;background:#0e0a11;border:1px solid #ffffff14;border-radius:9px;margin-bottom:8px;${cancelled ? 'opacity:.5;' : ''}">
                   <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;">
-                    <div style="font-weight:800;">${g.home ? '' : '@ '}${escapeHtml(g.opponent)}</div>
+                    <div style="font-weight:800;">
+                      ${locked ? `<span style="font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#a78bfa;">${t('lockedWord')}</span> ` : ''}
+                      ${g.home ? '' : '@ '}${escapeHtml(g.opponent)}</div>
                     <div style="color:#888;font-size:12px;">${g.plays_on || '—'}${g.tip_time ? ' · ' + escapeHtml(g.tip_time) : ''}</div>
                   </div>
                   ${g.note ? `<div style="color:#888;font-size:12px;">${escapeHtml(g.note)}</div>` : ''}
@@ -1988,7 +2012,11 @@
                     ${m.due > 0 ? ` · <span style="color:#facc15;">$${m.due.toFixed(2)} ${t('toCollect')}</span>` : ''}
                   </div>
                   <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
-                    ${played
+                    ${locked
+                      ? `<button class="btn alt" onclick="unlockGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('unlockNow')}</button>
+                         <button class="btn alt" onclick="editGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editGame')}</button>
+                         <button class="btn alt" onclick="killGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('cancelGame')}</button>`
+                      : played
                       ? `<button class="btn" onclick="sendGameInvoices('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('sendBills')}</button>
                          <button class="btn alt" onclick="scoreGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editScore')}</button>
                          <button class="btn alt" onclick="editGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editGame')}</button>`
@@ -2130,6 +2158,76 @@
     }
 
 
+
+
+    // Por si el marcador del contrario no se puso, o si el torneo
+    // decide otra cosa: abrir un juego del cuadro a mano.
+    async function unlockGame(campaignId, gameId) {
+      if (!confirm(t('confirmUnlock'))) return;
+      try {
+        await supabaseQuery('games', 'PATCH', { status: 'scheduled' }, `?id=eq.${gameId}`);
+        await loadGames(campaignId);
+      } catch (error) {
+        console.error('Unlock:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // Un juego que sólo pasa si ganan otro. Se ve en el tablero desde
+    // ya — ahí está la expectativa — pero sin botón de prometer hasta
+    // que el de antes se gana.
+    async function addBracketGame(campaignId) {
+      try {
+        const games = await supabaseQuery('games', 'GET', null,
+          `?campaign_id=eq.${campaignId}&status=in.(scheduled,played)` +
+          `&select=id,opponent,plays_on,tip_time,status&order=plays_on.asc.nullslast`);
+
+        if (!games || !games.length) {
+          alert(t('noPriorGame'));
+          return;
+        }
+
+        const list = games.map((g, i) =>
+          `${i + 1}. ${g.opponent}${g.plays_on ? ' · ' + g.plays_on : ''}` +
+          `${g.status === 'played' ? ' (' + t('playedWord') + ')' : ''}`
+        ).join('\n');
+
+        const pick = prompt(t('whichWin') + '\n\n' + list);
+        if (pick === null) return;
+        const idx = parseInt(pick, 10) - 1;
+        if (!(idx >= 0 && idx < games.length)) { alert(t('pickNumber')); return; }
+        const from = games[idx];
+
+        const opponent = prompt(t('askOpponentNext'), t('winnerOf'));
+        if (!opponent) return;
+        const date = prompt(t('askDate'), from.plays_on || '');
+        if (date === null) return;
+        const time = prompt(t('askTime'), '');
+        if (time === null) return;
+        const home = askHomeAway(true);
+        if (home === null) return;
+        const note = prompt(t('askNote'), '');
+        if (note === null) return;
+
+        await supabaseQuery('games', 'POST', {
+          campaign_id: campaignId,
+          opponent: opponent.trim(),
+          plays_on: (date || '').trim() || null,
+          tip_time: (time || '').trim() || null,
+          tips_at: tipsAt((date || '').trim(), (time || '').trim()),
+          home: home,
+          note: (note || '').trim() || null,
+          status: 'conditional',
+          unlocks_from: from.id
+        });
+
+        await loadGames(campaignId);
+      } catch (error) {
+        console.error('Bracket game:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
     // Cambiar un juego ya puesto. Cada pregunta trae lo que hay ahora,
     // así que dejarlo igual es apretar OK.
     async function editGame(campaignId, gameId) {
@@ -2183,7 +2281,11 @@
           p_opp: theirs && /^\d+$/.test(theirs.trim()) ? parseInt(theirs, 10) : null
         });
         if (r && r.ok === false) { alert('Error'); return; }
-        if (r && r.pledges) alert(t('scoreSaved').replace('{N}', r.pledges));
+        let msg = t('scoreSaved').replace('{N}', r.pledges || 0);
+        if (r.opened)  msg += '\n' + t('bracketOpened').replace('{N}', r.opened);
+        if (r.dropped) msg += '\n' + t('bracketDropped').replace('{N}', r.dropped);
+        if (!r.knewResult) msg += '\n' + t('noOppScore');
+        alert(msg);
         await loadGames(campaignId);
       } catch (error) {
         console.error('Score:', error);
