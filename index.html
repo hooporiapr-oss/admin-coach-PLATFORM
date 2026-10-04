@@ -56,7 +56,18 @@
       padding:9px 13px; border-radius:9px; border:1px solid #ffffff2a;
       background:#ffffff10; color:#fff; cursor:pointer; font-size:12px; font-weight:800;
     }
-  </style>
+  
+    .gf-card{padding:14px;background:#0e0a11;border:1px solid #ffffff1d;border-radius:10px}
+    .gf-head{font-weight:900;margin-bottom:8px;font-size:13px}
+    .gf-card label{display:block;font-size:11px;font-weight:800;margin:9px 0 3px;color:#bbb}
+    .gf-card input,.gf-card select{width:100%;padding:8px 10px;border-radius:8px;
+      border:1px solid #ffffff1d;background:#140f1a;color:#fff;font-family:inherit;font-size:13px}
+    .gf-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:520px){.gf-two{grid-template-columns:1fr}}
+    .gf-hint{color:#888;font-size:11px;margin-top:4px}
+    .gf-btns{display:flex;gap:8px;margin-top:12px}
+    .gf-btns .btn{flex:1}
+</style>
 </head>
 <body>
   <nav>
@@ -524,6 +535,12 @@
         logoLabel:'Program logo on the scoreboard', save:'Save',
         logoNote:'Paste a link to an image. Leave empty for no logo.',
         logoHttps:'The link has to start with https://',
+        gfOpponent:'Opponent', gfOpponentPh:'Team name, or “Winner of J-#14”',
+        gfDate:'Date', gfTime:'Tip time', gfWhere:'Where', gfHome:'Home', gfAway:'Away',
+        gfNote:'Note', gfNotePh:'Juniors · Basketween · C-1',
+        gfDepends:'Only happens if they win…', gfNoDepend:'Nothing — this game is already scheduled',
+        gfDependsNote:'Pick a game and this one stays locked on the scoreboard until that one is won. That is how the bracket shows the path to a final.',
+        cancel:'Cancel',
         addBracket:'+ Add a bracket game', lockedWord:'locked', unlockNow:'Open it',
         whichWin:'Which game must they win first? Type the number.',
         noPriorGame:'Add a normal game first — a bracket game hangs off one.',
@@ -859,6 +876,12 @@
         logoLabel:'Logo del programa en el tablero', save:'Guardar',
         logoNote:'Pega el enlace de una imagen. D\u00e9jalo vac\u00edo para no poner logo.',
         logoHttps:'El enlace tiene que empezar con https://',
+        gfOpponent:'Contra qui\u00e9n', gfOpponentPh:'Nombre del equipo, o \u201cGanador de J-#14\u201d',
+        gfDate:'Fecha', gfTime:'Hora del saque', gfWhere:'D\u00f3nde', gfHome:'Casa', gfAway:'Visita',
+        gfNote:'Nota', gfNotePh:'Juniors \u00b7 Basketween \u00b7 C-1',
+        gfDepends:'S\u00f3lo pasa si ganan\u2026', gfNoDepend:'Nada \u2014 este juego ya est\u00e1 en el calendario',
+        gfDependsNote:'Escoge un juego y \u00e9ste queda bloqueado en el tablero hasta que se gane aquel. As\u00ed se ve el camino hasta una final.',
+        cancel:'Cancelar',
         addBracket:'+ A\u00f1adir juego del cuadro', lockedWord:'bloqueado', unlockNow:'Abrirlo',
         whichWin:'\u00bfQu\u00e9 juego tienen que ganar primero? Escribe el n\u00famero.',
         noPriorGame:'Primero a\u00f1ade un juego normal \u2014 uno del cuadro cuelga de otro.',
@@ -1983,8 +2006,8 @@
               <div style="color:#888;font-size:11px;margin-top:5px;">${t('logoNote')}</div>
             </div>
 
-            <button class="btn" onclick="addGame('${campaignId}')" style="margin-bottom:10px;">+ ${t('addGame')}</button>
-            <button class="btn alt" onclick="addBracketGame('${campaignId}')" style="margin-bottom:10px;">+ ${t('addBracket')}</button>
+            <button class="btn" onclick="gameForm('${campaignId}')" style="margin-bottom:10px;">+ ${t('addGame')}</button>
+            <div id="gameFormBox" style="display:none;margin-bottom:12px;"></div>
             <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="margin-bottom:10px;">${t('copyBoard')}</button>
             <button class="btn alt" onclick="copyJoinLink('${campaignId}')" style="margin-bottom:10px;">${t('copyJoin')}</button>
 
@@ -2014,15 +2037,15 @@
                   <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
                     ${locked
                       ? `<button class="btn alt" onclick="unlockGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('unlockNow')}</button>
-                         <button class="btn alt" onclick="editGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editGame')}</button>
+                         <button class="btn alt" onclick="gameForm('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editGame')}</button>
                          <button class="btn alt" onclick="killGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('cancelGame')}</button>`
                       : played
                       ? `<button class="btn" onclick="sendGameInvoices('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('sendBills')}</button>
                          <button class="btn alt" onclick="scoreGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editScore')}</button>
-                         <button class="btn alt" onclick="editGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editGame')}</button>`
+                         <button class="btn alt" onclick="gameForm('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editGame')}</button>`
                       : cancelled ? ''
                       : `<button class="btn" onclick="scoreGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('enterScore')}</button>
-                         <button class="btn alt" onclick="editGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editGame')}</button>
+                         <button class="btn alt" onclick="gameForm('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editGame')}</button>
                          <button class="btn alt" onclick="killGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('cancelGame')}</button>`}
                   </div>
                 </div>`;
@@ -2129,143 +2152,6 @@
       if (v === 'H' || v === 'C' || v.indexOf('HOME') === 0 || v.indexOf('CASA') === 0) return true;
       alert(t('homeAwayBad'));
       return askHomeAway(current);
-    }
-
-    async function addGame(campaignId) {
-      const opponent = prompt(t('askOpponent'));
-      if (!opponent) return;
-      const date = prompt(t('askDate'), new Date().toISOString().slice(0, 10));
-      const time = prompt(t('askTime')) || null;
-      const home = askHomeAway(true);
-      if (home === null) return;
-      const note = prompt(t('askNote')) || null;
-
-      try {
-        await supabaseQuery('games', 'POST', {
-          campaign_id: campaignId,
-          opponent: opponent.trim(),
-          plays_on: date || null,
-          tip_time: time,
-          tips_at: tipsAt(date, time),
-          home: home,
-          note: note
-        });
-        await loadGames(campaignId);
-      } catch (error) {
-        console.error('Add game:', error);
-        alert('Error: ' + error.message);
-      }
-    }
-
-
-
-
-    // Por si el marcador del contrario no se puso, o si el torneo
-    // decide otra cosa: abrir un juego del cuadro a mano.
-    async function unlockGame(campaignId, gameId) {
-      if (!confirm(t('confirmUnlock'))) return;
-      try {
-        await supabaseQuery('games', 'PATCH', { status: 'scheduled' }, `?id=eq.${gameId}`);
-        await loadGames(campaignId);
-      } catch (error) {
-        console.error('Unlock:', error);
-        alert('Error: ' + error.message);
-      }
-    }
-
-    // Un juego que sólo pasa si ganan otro. Se ve en el tablero desde
-    // ya — ahí está la expectativa — pero sin botón de prometer hasta
-    // que el de antes se gana.
-    async function addBracketGame(campaignId) {
-      try {
-        const games = await supabaseQuery('games', 'GET', null,
-          `?campaign_id=eq.${campaignId}&status=in.(scheduled,played,conditional)` +
-          `&select=id,opponent,plays_on,tip_time,status&order=plays_on.asc.nullslast`);
-
-        if (!games || !games.length) {
-          alert(t('noPriorGame'));
-          return;
-        }
-
-        const list = games.map((g, i) =>
-          `${i + 1}. ${g.opponent}${g.plays_on ? ' · ' + g.plays_on : ''}` +
-          `${g.status === 'played' ? ' (' + t('playedWord') + ')'
-            : g.status === 'conditional' ? ' (' + t('lockedWord') + ')' : ''}`
-        ).join('\n');
-
-        const pick = prompt(t('whichWin') + '\n\n' + list);
-        if (pick === null) return;
-        const idx = parseInt(pick, 10) - 1;
-        if (!(idx >= 0 && idx < games.length)) { alert(t('pickNumber')); return; }
-        const from = games[idx];
-
-        const opponent = prompt(t('askOpponentNext'), t('winnerOf'));
-        if (!opponent) return;
-        const date = prompt(t('askDate'), from.plays_on || '');
-        if (date === null) return;
-        const time = prompt(t('askTime'), '');
-        if (time === null) return;
-        const home = askHomeAway(true);
-        if (home === null) return;
-        const note = prompt(t('askNote'), '');
-        if (note === null) return;
-
-        await supabaseQuery('games', 'POST', {
-          campaign_id: campaignId,
-          opponent: opponent.trim(),
-          plays_on: (date || '').trim() || null,
-          tip_time: (time || '').trim() || null,
-          tips_at: tipsAt((date || '').trim(), (time || '').trim()),
-          home: home,
-          note: (note || '').trim() || null,
-          status: 'conditional',
-          unlocks_from: from.id
-        });
-
-        await loadGames(campaignId);
-      } catch (error) {
-        console.error('Bracket game:', error);
-        alert('Error: ' + error.message);
-      }
-    }
-
-    // Cambiar un juego ya puesto. Cada pregunta trae lo que hay ahora,
-    // así que dejarlo igual es apretar OK.
-    async function editGame(campaignId, gameId) {
-      try {
-        const rows = await supabaseQuery('games', 'GET', null, `?id=eq.${gameId}&select=*`);
-        const g = rows && rows[0];
-        if (!g) { alert(t('gameGone')); return; }
-
-        const opponent = prompt(t('askOpponent'), g.opponent || '');
-        if (opponent === null) return;
-        if (!opponent.trim()) { alert(t('needOpponent')); return; }
-
-        const date = prompt(t('askDate'), g.plays_on || '');
-        if (date === null) return;
-
-        const time = prompt(t('askTime'), g.tip_time || '');
-        if (time === null) return;
-
-        const home = askHomeAway(g.home);
-        if (home === null) return;
-        const note = prompt(t('askNote'), g.note || '');
-        if (note === null) return;
-
-        await supabaseQuery('games', 'PATCH', {
-          opponent: opponent.trim(),
-          plays_on: (date || '').trim() || null,
-          tip_time: (time || '').trim() || null,
-          tips_at: tipsAt((date || '').trim(), (time || '').trim()),
-          home: home,
-          note: (note || '').trim() || null
-        }, `?id=eq.${gameId}`);
-
-        await loadGames(campaignId);
-      } catch (error) {
-        console.error('Edit game:', error);
-        alert('Error: ' + error.message);
-      }
     }
 
     // El marcador es lo que convierte las promesas en dinero.
