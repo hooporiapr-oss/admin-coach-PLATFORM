@@ -67,6 +67,17 @@
     .gf-hint{color:#888;font-size:11px;margin-top:4px}
     .gf-btns{display:flex;gap:8px;margin-top:12px}
     .gf-btns .btn{flex:1}
+
+    .gf-card{padding:14px;background:#0e0a11;border:1px solid #ffffff1d;border-radius:10px}
+    .gf-head{font-weight:900;margin-bottom:8px;font-size:13px}
+    .gf-card label{display:block;font-size:11px;font-weight:800;margin:9px 0 3px;color:#bbb}
+    .gf-card input,.gf-card select{width:100%;padding:8px 10px;border-radius:8px;
+      border:1px solid #ffffff1d;background:#140f1a;color:#fff;font-family:inherit;font-size:13px}
+    .gf-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:520px){.gf-two{grid-template-columns:1fr}}
+    .gf-hint{color:#888;font-size:11px;margin-top:4px}
+    .gf-btns{display:flex;gap:8px;margin-top:12px}
+    .gf-btns .btn{flex:1}
 </style>
 </head>
 <body>
@@ -2015,7 +2026,7 @@
             </div>
 
             <button class="btn" onclick="gameForm('${campaignId}')" style="margin-bottom:10px;">+ ${t('addGame')}</button>
-            <div id="gameFormBox" style="display:none;margin-bottom:12px;"></div>
+            <div id="gameFormBox-${campaignId}" style="display:none;margin-bottom:12px;"></div>
             <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="margin-bottom:10px;">${t('copyBoard')}</button>
             <button class="btn alt" onclick="copyJoinLink('${campaignId}')" style="margin-bottom:10px;">${t('copyJoin')}</button>
 
@@ -2193,6 +2204,136 @@
 
     // Abrir a mano un juego del cuadro: si no se puso el marcador del
     // contrario, el sistema no sabe quién ganó.
+
+    // ══════════════════════════════════════════════════════
+    //  Un juego, en una sola pantalla. Doce preguntas seguidas
+    //  es donde se cometen los errores — sobre todo poniendo un
+    //  cuadro entero.
+    // ══════════════════════════════════════════════════════
+    async function gameForm(campaignId, gameId) {
+      try {
+        let g = null;
+        if (gameId) {
+          const rows = await supabaseQuery('games', 'GET', null, `?id=eq.${gameId}&select=*`);
+          g = rows && rows[0];
+          if (!g) { alert(t('gameGone')); return; }
+        }
+
+        // De qué juego puede colgar: cualquiera menos él mismo.
+        const others = await supabaseQuery('games', 'GET', null,
+          `?campaign_id=eq.${campaignId}&status=in.(scheduled,played,conditional)` +
+          `&select=id,opponent,plays_on,status&order=plays_on.asc.nullslast`);
+        const pool = (others || []).filter(o => !gameId || o.id !== gameId);
+
+        const box = document.getElementById(`gameFormBox-${campaignId}`);
+        if (!box) return;
+        box.dataset.campaign = campaignId;
+        box.dataset.game = gameId || '';
+        box.style.display = 'block';
+
+        box.innerHTML = `
+          <div class="gf-card">
+            <div class="gf-head">${gameId ? t('editGame') : t('addGame')}</div>
+
+            <label>${t('gfOpponent')}</label>
+            <input id="gfOpp" type="text" maxlength="60" value="${g ? escapeHtml(g.opponent || '') : ''}"
+                   placeholder="${t('gfOpponentPh')}">
+
+            <div class="gf-two">
+              <div>
+                <label>${t('gfDate')}</label>
+                <input id="gfDate" type="date" value="${g && g.plays_on ? g.plays_on : ''}">
+              </div>
+              <div>
+                <label>${t('gfTime')}</label>
+                <input id="gfTime" type="text" maxlength="10" value="${g ? escapeHtml(g.tip_time || '') : ''}"
+                       placeholder="7:00PM">
+              </div>
+            </div>
+
+            <div class="gf-two">
+              <div>
+                <label>${t('gfWhere')}</label>
+                <select id="gfHome">
+                  <option value="H"${(!g || g.home !== false) ? ' selected' : ''}>${t('gfHome')}</option>
+                  <option value="A"${(g && g.home === false) ? ' selected' : ''}>${t('gfAway')}</option>
+                </select>
+              </div>
+              <div>
+                <label>${t('gfNote')}</label>
+                <input id="gfNote" type="text" maxlength="80" value="${g ? escapeHtml(g.note || '') : ''}"
+                       placeholder="${t('gfNotePh')}">
+              </div>
+            </div>
+
+            <label>${t('gfDepends')}</label>
+            <select id="gfFrom">
+              <option value="">${t('gfNoDepend')}</option>
+              ${pool.map(o => `<option value="${o.id}"${(g && g.unlocks_from === o.id) ? ' selected' : ''}>` +
+                `${escapeHtml(o.opponent)}${o.plays_on ? ' · ' + o.plays_on : ''}` +
+                `${o.status === 'played' ? ' (' + t('playedWord') + ')'
+                  : o.status === 'conditional' ? ' (' + t('lockedWord') + ')' : ''}</option>`).join('')}
+            </select>
+            <div class="gf-hint">${t('gfDependsNote')}</div>
+
+            <div class="gf-btns">
+              <button class="btn" onclick="saveGameForm('${campaignId}')">${t('save')}</button>
+              <button class="btn alt" onclick="closeGameForm('${campaignId}')">${t('cancel')}</button>
+            </div>
+          </div>`;
+
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } catch (error) {
+        console.error('Game form:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    function closeGameForm(campaignId) {
+      const box = document.getElementById(`gameFormBox-${campaignId}`);
+      if (!box) return;
+      box.style.display = 'none';
+      box.innerHTML = '';
+    }
+
+    async function saveGameForm(campaignId) {
+      const box = document.getElementById(`gameFormBox-${campaignId}`);
+      const gameId = box.dataset.game;
+
+      const opponent = document.getElementById('gfOpp').value.trim();
+      if (!opponent) { alert(t('needOpponent')); return; }
+
+      const date = document.getElementById('gfDate').value || null;
+      const time = document.getElementById('gfTime').value.trim() || null;
+      const home = document.getElementById('gfHome').value === 'H';
+      const note = document.getElementById('gfNote').value.trim() || null;
+      const from = document.getElementById('gfFrom').value || null;
+
+      const body = {
+        opponent, plays_on: date, tip_time: time,
+        tips_at: tipsAt(date, time), home, note, unlocks_from: from
+      };
+
+      try {
+        if (gameId) {
+          // Un juego ya jugado no cambia de estado por editarlo.
+          const rows = await supabaseQuery('games', 'GET', null, `?id=eq.${gameId}&select=status`);
+          const was = rows && rows[0] ? rows[0].status : 'scheduled';
+          if (was !== 'played') body.status = from ? 'conditional' : 'scheduled';
+          await supabaseQuery('games', 'PATCH', body, `?id=eq.${gameId}`);
+        } else {
+          body.campaign_id = campaignId;
+          body.status = from ? 'conditional' : 'scheduled';
+          await supabaseQuery('games', 'POST', body);
+        }
+        closeGameForm(campaignId);
+        await loadGames(campaignId);
+      } catch (error) {
+        console.error('Save game:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
     async function unlockGame(campaignId, gameId) {
       if (!confirm(t('confirmUnlock'))) return;
       try {
