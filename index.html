@@ -541,6 +541,10 @@
         gfDepends:'Only happens if they win…', gfNoDepend:'Nothing — this game is already scheduled',
         gfDependsNote:'Pick a game and this one stays locked on the scoreboard until that one is won. That is how the bracket shows the path to a final.',
         cancel:'Cancel',
+        deleteGame:'Delete',
+        confirmDelete:'Delete this game? It disappears completely.',
+        confirmDeletePledges:'Delete this game? {N} unpaid pledge(s) on it go too.',
+        cannotDelete:'Cannot delete — {N} pledge(s) on this game have been paid. Cancel it instead.',
         addBracket:'+ Add a bracket game', lockedWord:'locked', unlockNow:'Open it',
         whichWin:'Which game must they win first? Type the number.',
         noPriorGame:'Add a normal game first — a bracket game hangs off one.',
@@ -882,6 +886,10 @@
         gfDepends:'S\u00f3lo pasa si ganan\u2026', gfNoDepend:'Nada \u2014 este juego ya est\u00e1 en el calendario',
         gfDependsNote:'Escoge un juego y \u00e9ste queda bloqueado en el tablero hasta que se gane aquel. As\u00ed se ve el camino hasta una final.',
         cancel:'Cancelar',
+        deleteGame:'Borrar',
+        confirmDelete:'\u00bfBorrar este juego? Desaparece por completo.',
+        confirmDeletePledges:'\u00bfBorrar este juego? Se van tambi\u00e9n {N} promesa(s) sin pagar.',
+        cannotDelete:'No se puede borrar \u2014 {N} promesa(s) de este juego ya se pagaron. C\u00e1ncelalo en vez de borrarlo.',
         addBracket:'+ A\u00f1adir juego del cuadro', lockedWord:'bloqueado', unlockNow:'Abrirlo',
         whichWin:'\u00bfQu\u00e9 juego tienen que ganar primero? Escribe el n\u00famero.',
         noPriorGame:'Primero a\u00f1ade un juego normal \u2014 uno del cuadro cuelga de otro.',
@@ -2043,10 +2051,12 @@
                       ? `<button class="btn" onclick="sendGameInvoices('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('sendBills')}</button>
                          <button class="btn alt" onclick="scoreGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editScore')}</button>
                          <button class="btn alt" onclick="gameForm('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editGame')}</button>`
-                      : cancelled ? ''
+                      : cancelled
+                      ? `<button class="btn alt" onclick="deleteGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('deleteGame')}</button>`
                       : `<button class="btn" onclick="scoreGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('enterScore')}</button>
                          <button class="btn alt" onclick="gameForm('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('editGame')}</button>
-                         <button class="btn alt" onclick="killGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('cancelGame')}</button>`}
+                         <button class="btn alt" onclick="killGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('cancelGame')}</button>
+                         <button class="btn alt" onclick="deleteGame('${campaignId}','${g.id}')" style="padding:5px 9px;font-size:11px;">${t('deleteGame')}</button>`}
                   </div>
                 </div>`;
             }).join('') : `<p style="color:#888;margin:8px 0 0;">${t('noGamesYet')}</p>`}
@@ -2176,6 +2186,47 @@
         await loadGames(campaignId);
       } catch (error) {
         console.error('Score:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+
+    // Abrir a mano un juego del cuadro: si no se puso el marcador del
+    // contrario, el sistema no sabe quién ganó.
+    async function unlockGame(campaignId, gameId) {
+      if (!confirm(t('confirmUnlock'))) return;
+      try {
+        await supabaseQuery('games', 'PATCH', { status: 'scheduled' }, `?id=eq.${gameId}`);
+        await loadGames(campaignId);
+      } catch (error) {
+        console.error('Unlock:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // Cancelar guarda el juego por si tenía promesas. Borrar lo quita
+    // de verdad — para lo que se puso por error.
+    async function deleteGame(campaignId, gameId) {
+      try {
+        const pledges = await supabaseQuery('game_pledges', 'GET', null,
+          `?game_id=eq.${gameId}&select=id,invoice_status`);
+
+        const paid = (pledges || []).filter(p => p.invoice_status === 'paid').length;
+        if (paid > 0) {
+          alert(t('cannotDelete').replace('{N}', paid));
+          return;
+        }
+
+        const n = (pledges || []).length;
+        const ask = n > 0
+          ? t('confirmDeletePledges').replace('{N}', n)
+          : t('confirmDelete');
+        if (!confirm(ask)) return;
+
+        await supabaseQuery('games', 'DELETE', null, `?id=eq.${gameId}`);
+        await loadGames(campaignId);
+      } catch (error) {
+        console.error('Delete game:', error);
         alert('Error: ' + error.message);
       }
     }
