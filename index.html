@@ -171,6 +171,7 @@
           <div id="campaignsList" class="panel">
             <div id="reqBox"></div>
             <div id="billBox"></div>
+            <div id="linkBox"></div>
             <div id="campaignsContainer" style="margin-top:4px;">—</div>
           </div>
 
@@ -554,6 +555,14 @@
         gfDepends:'Only happens if they win…', gfNoDepend:'Nothing — this game is already scheduled',
         gfDependsNote:'Pick a game and this one stays locked on the scoreboard until that one is won. That is how the bracket shows the path to a final.',
         cancel:'Cancel',
+        teamNames:'Team names on tournament schedules',
+        teamNamesNote:'A program plays under several names — Paradiso, Paradiso A, Paradiso B. Every name linked here shows that team\u2019s pledge button on the schedule.',
+        teamNamePh:'Team name, exactly as the schedule spells it',
+        linkIt:'Link', unlink:'Unlink', noLinks:'No team names linked yet.',
+        linkHint:'Approving a sign-up links one name. Add the other squads here.',
+        needTeamName:'Type the team name.', needCampaign:'Pick a campaign.',
+        linkFailed:'Could not link that name.',
+        confirmUnlink:'Unlink “{T}”? Its pledge buttons stop showing on schedules.',
         readyToBill:'Scored and ready to bill',
         teamsWaiting:'Teams asking for a campaign', approveIt:'Approve', declineIt:'Decline',
         confirmApprove:'Approve this team? It creates the campaign, links the team name and adds the coach.',
@@ -908,6 +917,14 @@
         gfDepends:'S\u00f3lo pasa si ganan\u2026', gfNoDepend:'Nada \u2014 este juego ya est\u00e1 en el calendario',
         gfDependsNote:'Escoge un juego y \u00e9ste queda bloqueado en el tablero hasta que se gane aquel. As\u00ed se ve el camino hasta una final.',
         cancel:'Cancelar',
+        teamNames:'Nombres de equipo en los calendarios',
+        teamNamesNote:'Un programa juega con varios nombres \u2014 Paradiso, Paradiso A, Paradiso B. Cada nombre atado aqu\u00ed ense\u00f1a el bot\u00f3n de prometer de ese equipo en el calendario.',
+        teamNamePh:'Nombre del equipo, igual que en el calendario',
+        linkIt:'Atar', unlink:'Soltar', noLinks:'Todav\u00eda no hay nombres atados.',
+        linkHint:'Aprobar una inscripci\u00f3n ata un nombre. Las dem\u00e1s escuadras se a\u00f1aden aqu\u00ed.',
+        needTeamName:'Escribe el nombre del equipo.', needCampaign:'Escoge una campa\u00f1a.',
+        linkFailed:'No se pudo atar ese nombre.',
+        confirmUnlink:'\u00bfSoltar \u201c{T}\u201d? Sus botones de prometer dejan de salir en los calendarios.',
         readyToBill:'Con marcador, listos para cobrar',
         teamsWaiting:'Equipos pidiendo campa\u00f1a', approveIt:'Aprobar', declineIt:'Rechazar',
         confirmApprove:'\u00bfAprobar este equipo? Se crea la campa\u00f1a, se ata el nombre y se a\u00f1ade al coach.',
@@ -3511,6 +3528,111 @@
     //  que sin este aviso habría que ir a buscarlos campaña por
     //  campaña — y el padrino espera su enlace.
     // ══════════════════════════════════════════════════════
+
+    // ══════════════════════════════════════════════════════
+    //  Nombres de equipo atados a campañas.
+    //
+    //  Un programa sale en el calendario con varios nombres —
+    //  Paradiso, Paradiso A, Paradiso B — y los tres cobran en
+    //  la misma campaña. Sin esto, cada nombre era SQL a mano.
+    // ══════════════════════════════════════════════════════
+    async function loadLinks() {
+      const box = document.getElementById('linkBox');
+      if (!box) return;
+
+      try {
+        const [links, camps] = await Promise.all([
+          supabaseQuery('rpc/bw_links', 'POST', {}),
+          supabaseQuery('campaigns', 'GET', null, '?select=id,name&order=name.asc')
+        ]);
+
+        // Agrupadas por campaña: así se ve de un vistazo que a un
+        // programa le falta una de sus escuadras.
+        const byCamp = {};
+        (links || []).forEach(l => {
+          (byCamp[l.campaign] = byCamp[l.campaign] || { program: l.program, names: [] })
+            .names.push(l.name);
+        });
+
+        box.innerHTML = `
+          <div style="padding:14px;background:#140f1a;border:1px solid #ffffff14;
+                      border-radius:10px;margin-bottom:16px;">
+            <div style="font-weight:900;margin-bottom:4px;">${t('teamNames')}</div>
+            <div style="color:#888;font-size:11px;margin-bottom:10px;">${t('teamNamesNote')}</div>
+
+            ${Object.keys(byCamp).length ? `
+              <div style="display:grid;gap:6px;margin-bottom:12px;">
+                ${Object.keys(byCamp).map(id => `
+                  <div style="padding:8px 11px;background:#0e0a11;border:1px solid #ffffff10;
+                              border-radius:8px;font-size:12px;">
+                    <b>${escapeHtml(byCamp[id].program)}</b>
+                    <div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap;">
+                      ${byCamp[id].names.map(n => `
+                        <span style="display:inline-flex;align-items:center;gap:5px;
+                                     background:#140f1a;border:1px solid #ffffff1d;
+                                     border-radius:999px;padding:3px 5px 3px 10px;">
+                          ${escapeHtml(n)}
+                          <button onclick="unlinkTeam(${JSON.stringify(n).replace(/"/g,'&quot;')})"
+                                  title="${t('unlink')}"
+                                  style="border:none;background:none;color:#f87171;cursor:pointer;
+                                         font-size:14px;line-height:1;padding:0 4px;">×</button>
+                        </span>`).join('')}
+                    </div>
+                  </div>`).join('')}
+              </div>`
+              : `<p style="color:#888;font-size:12px;margin:0 0 12px;">${t('noLinks')}</p>`}
+
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+              <input id="linkName" type="text" placeholder="${t('teamNamePh')}"
+                     style="flex:1 1 170px;padding:7px 10px;border-radius:7px;
+                            border:1px solid #ffffff1d;background:#0e0a11;color:#fff;
+                            font-family:inherit;font-size:12px;">
+              <select id="linkCamp"
+                      style="flex:1 1 170px;padding:7px 10px;border-radius:7px;
+                             border:1px solid #ffffff1d;background:#0e0a11;color:#fff;
+                             font-family:inherit;font-size:12px;">
+                ${(camps || []).map(c =>
+                  `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')}
+              </select>
+              <button class="btn" onclick="linkTeam()"
+                      style="padding:7px 13px;font-size:11px;">${t('linkIt')}</button>
+            </div>
+            <div style="color:#888;font-size:11px;margin-top:6px;">${t('linkHint')}</div>
+          </div>`;
+      } catch (error) {
+        console.error('Links:', error);
+        box.innerHTML = '';
+      }
+    }
+
+    async function linkTeam() {
+      const name = (document.getElementById('linkName').value || '').trim();
+      const camp = document.getElementById('linkCamp').value;
+      if (!name) { alert(t('needTeamName')); return; }
+      if (!camp) { alert(t('needCampaign')); return; }
+
+      try {
+        const r = await supabaseQuery('rpc/bw_link_team', 'POST',
+          { p_name: name, p_campaign: camp });
+        if (!r || !r.ok) { alert(t('linkFailed')); return; }
+        await loadLinks();
+      } catch (error) {
+        console.error('Link:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    async function unlinkTeam(name) {
+      if (!confirm(t('confirmUnlink').replace('{T}', name))) return;
+      try {
+        await supabaseQuery('rpc/bw_unlink_team', 'POST', { p_name: name });
+        await loadLinks();
+      } catch (error) {
+        console.error('Unlink:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
     async function loadBillable() {
       const box = document.getElementById('billBox');
       if (!box) return;
@@ -3625,6 +3747,7 @@
         if (!r || !r.ok) { alert(t('approveFailed')); return; }
         alert(t('approved').replace('{T}', r.team).replace('{P}', r.program));
         await loadRequests();
+        await loadLinks();
         await loadCampaigns();
       } catch (error) {
         console.error('Approve:', error);
@@ -3648,6 +3771,7 @@
       try {
         await loadRequests();
         await loadBillable();
+        await loadLinks();
         const campaigns = await supabaseQuery('campaigns', 'GET', null, '?order=created_at.desc');
         
         if (!campaigns || campaigns.length === 0) {
