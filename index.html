@@ -535,6 +535,7 @@
         practiceRuns:'practice runs', 
         practiceNote:'Nobody takes their one official attempt cold. Practice is unlimited either way — this is only how much is needed before the official run unlocks.',
         liveOn:'Live — students can see their links', liveOff:'Not live — students see no links yet',
+        cdComing:'Coming up',
         cdSeason:'This season', cdYourShare:'Collected for you', cdPlayed:'Games played',
         cdNext:'Next game', cdResults:'Results',
         sendBills:'Send pay links',
@@ -897,6 +898,7 @@
         practiceRuns:'prácticas',
         practiceNote:'Nadie hace su único intento oficial en frío. La práctica es ilimitada de todos modos — esto es solo cuánta hace falta para desbloquear la corrida oficial.',
         liveOn:'En vivo — los estudiantes ven sus enlaces', liveOff:'No en vivo — todav\u00eda no ven enlaces',
+        cdComing:'Por jugar',
         cdSeason:'Esta temporada', cdYourShare:'Cobrado para ti', cdPlayed:'Juegos jugados',
         cdNext:'Pr\u00f3ximo juego', cdResults:'Resultados',
         sendBills:'Mandar enlaces de pago',
@@ -2235,7 +2237,7 @@
         if (r.dropped) msg += '\n' + t('bracketDropped').replace('{N}', r.dropped);
         if (!r.knewResult) msg += '\n' + t('noOppScore');
         alert(msg);
-        await loadGames(campaignId);
+        await refreshAfterGame(campaignId);
       } catch (error) {
         console.error('Score:', error);
         alert('Error: ' + error.message);
@@ -2368,7 +2370,7 @@
           await supabaseQuery('games', 'POST', body);
         }
         closeGameForm(campaignId);
-        await loadGames(campaignId);
+        await refreshAfterGame(campaignId);
       } catch (error) {
         console.error('Save game:', error);
         alert('Error: ' + error.message);
@@ -4867,6 +4869,19 @@
     //  Lo que ve el coach de su temporada: el calendario, lo que
     //  dejó cada juego, y quién está trayendo padrinos.
     // ══════════════════════════════════════════════════════
+
+    // El coach y el admin ven lo mismo en sitios distintos: esto
+    // repinta el que esté abierto, sin que ninguno de los dos tenga
+    // que saber del otro.
+    async function refreshAfterGame(campaignId) {
+      if (document.getElementById(`campaignGames-${campaignId}`)) {
+        await loadGames(campaignId);
+      }
+      if (document.getElementById('playersList')) {
+        await loadCoachDashboard();
+      }
+    }
+
     async function coachGamesBlock(campaignId) {
       try {
         const [games, pledges, byPlayer] = await Promise.all([
@@ -4912,16 +4927,34 @@
             </div>
 
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+              <button class="btn" onclick="gameForm('${campaignId}')" style="padding:6px 10px;font-size:11px;">+ ${t('addGame')}</button>
               <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('copyBoard')}</button>
               <button class="btn alt" onclick="copyJoinLink('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('copyJoin')}</button>
             </div>
 
-            ${next ? `
-              <div style="padding:9px 12px;background:#0e0a11;border:1px solid #ffffff14;border-radius:8px;margin-bottom:10px;font-size:12px;">
-                <span style="color:#888;text-transform:uppercase;letter-spacing:.1em;font-size:10px;">${t('cdNext')}</span><br>
-                <b>${next.home ? '' : '@ '}${escapeHtml(next.opponent)}</b>
-                <span style="color:#888;">${next.plays_on || ''}${next.tip_time ? ' · ' + escapeHtml(next.tip_time) : ''}</span>
-                ${(per[next.id] && per[next.id].n) ? ` · ${per[next.id].n} ${t('pledgesWord')}` : ''}
+            <div id="gameFormBox-${campaignId}" style="display:none;margin-bottom:12px;"></div>
+
+            ${games.filter(g => g.status === 'scheduled').length ? `
+              <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.1em;margin:10px 0 6px;">${t('cdComing')}</div>
+              <div style="display:grid;gap:4px;margin-bottom:10px;">
+                ${games.filter(g => g.status === 'scheduled').map(g => {
+                  const m = per[g.id] || { n:0 };
+                  return `
+                    <div style="padding:8px 11px;background:#0e0a11;border:1px solid #ffffff14;
+                                border-radius:8px;font-size:12px;">
+                      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                        <span><b>${g.home ? '' : '@ '}${escapeHtml(g.opponent)}</b>
+                          <span style="color:#888;">${g.plays_on || ''}${g.tip_time ? ' · ' + escapeHtml(g.tip_time) : ''}</span>
+                          ${m.n ? ` · ${m.n} ${t('pledgesWord')}` : ''}</span>
+                      </div>
+                      <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;">
+                        <button class="btn" onclick="scoreGame('${campaignId}','${g.id}')"
+                                style="padding:4px 9px;font-size:10px;">${t('enterScore')}</button>
+                        <button class="btn alt" onclick="gameForm('${campaignId}','${g.id}')"
+                                style="padding:4px 9px;font-size:10px;">${t('editGame')}</button>
+                      </div>
+                    </div>`;
+                }).join('')}
               </div>` : ''}
 
             ${played.length ? `
@@ -4938,6 +4971,8 @@
                         <b>${g.team_points}</b>${g.opp_points != null ? `<span style="color:#888;">–${g.opp_points}</span>` : ''}
                         ${m.paid ? ` · <span style="color:#4ade80;">$${m.paid.toFixed(2)}</span>` : ''}
                         ${m.due ? ` · <span style="color:#facc15;">$${m.due.toFixed(2)}</span>` : ''}
+                        <button class="btn alt" onclick="scoreGame('${campaignId}','${g.id}')"
+                                style="padding:3px 7px;font-size:10px;margin-left:6px;">${t('editScore')}</button>
                       </span>
                     </div>`;
                 }).join('')}
