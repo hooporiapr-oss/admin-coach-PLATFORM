@@ -591,6 +591,7 @@
         seasonPoints:'Points', collected:'Collected', awaiting:'To collect',
         pledgesWord:'pledges', pointsWord:'points', toCollect:'to collect',
         enterScore:'Enter score', editScore:'Edit score', cancelGame:'Cancel',
+        waBoard:'WhatsApp · families', waPlayers:'WhatsApp · players',
         copyJoin:'Copy player sign-up link',
         joinCopied:'Send this to the team group. Each player adds their name and gets their own padrino link.',
         copyBoard:'Copy scoreboard link',
@@ -954,6 +955,7 @@
         seasonPoints:'Puntos', collected:'Cobrado', awaiting:'Por cobrar',
         pledgesWord:'promesas', pointsWord:'puntos', toCollect:'por cobrar',
         enterScore:'Poner marcador', editScore:'Cambiar marcador', cancelGame:'Cancelar',
+        waBoard:'WhatsApp \u00b7 familias', waPlayers:'WhatsApp \u00b7 jugadores',
         copyJoin:'Copiar enlace para jugadores',
         joinCopied:'Manda esto al grupo del equipo. Cada jugador pone su nombre y recibe su propio enlace de padrinos.',
         copyBoard:'Copiar enlace del tablero',
@@ -2066,6 +2068,8 @@
 
             <button class="btn" onclick="gameForm('${campaignId}')" style="margin-bottom:10px;">+ ${t('addGame')}</button>
             <div id="gameFormBox-${campaignId}" style="display:none;margin-bottom:12px;"></div>
+            <button class="btn alt" onclick="shareBoard('${campaignId}')" style="margin-bottom:10px;">${t('waBoard')}</button>
+            <button class="btn alt" onclick="sharePlayers('${campaignId}')" style="margin-bottom:10px;">${t('waPlayers')}</button>
             <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="margin-bottom:10px;">${t('copyBoard')}</button>
             <button class="btn alt" onclick="copyJoinLink('${campaignId}')" style="margin-bottom:10px;">${t('copyJoin')}</button>
 
@@ -2502,6 +2506,44 @@
       navigator.clipboard.writeText(url)
         .then(() => alert(t('joinCopied') + '\n\n' + url))
         .catch(() => prompt(t('copyManually'), url));
+    }
+
+
+    // ══════════════════════════════════════════════════════
+    //  Los dos mensajes que manda el coach, escritos.
+    //
+    //  Copiar un enlace suelto deja al coach redactando el
+    //  mensaje cada vez — y escribiéndolo distinto cada vez.
+    //  Van los dos idiomas: la familia puede estar fuera.
+    // ══════════════════════════════════════════════════════
+    function waShare(text, url) {
+      const body = encodeURIComponent(text + '\n\n' + url);
+      window.open('https://wa.me/?text=' + body, '_blank', 'noopener');
+    }
+
+    function sharePlayers(campaignId) {
+      const url = `https://cadapunto.com/jugador.html?c=${campaignId}`;
+      waShare(
+        '¡Jugadores! Abran este enlace y pongan su nombre. Les da su propio enlace para ' +
+        'mandarle a su familia — lo que prometan queda apuntado a su nombre, y todo va al programa.' +
+        '\n\n' +
+        'Players — open this link and put your name in. It gives you your own link to send your ' +
+        'family. Whatever they pledge is credited to you, and all of it goes to the program.',
+        url
+      );
+    }
+
+    function shareBoard(campaignId) {
+      const url = `https://cadapunto.com/scoreboard.html?c=${campaignId}`;
+      waShare(
+        '¡Apoya a nuestro equipo! Aquí está nuestro calendario. Escoges un juego, prometes unos ' +
+        'centavos por cada punto que anotemos, y pagas sólo después del juego. Ganemos o perdamos, ' +
+        'el programa gana.' +
+        '\n\n' +
+        'Back our team! Here is our schedule. Pick a game, pledge a few cents for every point we ' +
+        'score, and pay only after the game. Win or lose, the program wins.',
+        url
+      );
     }
 
     function copyBoardLink(campaignId) {
@@ -4928,6 +4970,8 @@
 
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
               <button class="btn" onclick="gameForm('${campaignId}')" style="padding:6px 10px;font-size:11px;">+ ${t('addGame')}</button>
+              <button class="btn alt" onclick="shareBoard('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('waBoard')}</button>
+              <button class="btn alt" onclick="sharePlayers('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('waPlayers')}</button>
               <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('copyBoard')}</button>
               <button class="btn alt" onclick="copyJoinLink('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('copyJoin')}</button>
             </div>
