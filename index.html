@@ -2241,6 +2241,13 @@
         if (r.dropped) msg += '\n' + t('bracketDropped').replace('{N}', r.dropped);
         if (!r.knewResult) msg += '\n' + t('noOppScore');
         alert(msg);
+
+        fetch(`${PAYMENT_SERVER}/score-posted`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ game_id: gameId })
+        }).catch(e => console.error('notice', e));
+
         await refreshAfterGame(campaignId);
       } catch (error) {
         console.error('Score:', error);
