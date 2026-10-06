@@ -172,6 +172,7 @@
             <div id="reqBox"></div>
             <div id="billBox"></div>
             <div id="linkBox"></div>
+            <div id="codeBox"></div>
             <div id="campaignsContainer" style="margin-top:4px;">—</div>
           </div>
 
@@ -556,6 +557,17 @@
         gfDepends:'Only happens if they win…', gfNoDepend:'Nothing — this game is already scheduled',
         gfDependsNote:'Pick a game and this one stays locked on the scoreboard until that one is won. That is how the bracket shows the path to a final.',
         cancel:'Cancel',
+        scoreCodes:'Score codes for tournament tables',
+        scoreCodesNote:'One per court or table. Whoever holds a code can post any score, and every score records who posted it.',
+        codeLabelPh:'Cancha 1', codeValuePh:'A code they will remember',
+        makeCode:'Make', turnOff:'Turn off', noCodes:'No codes made yet.',
+        lastUsed:'last used', neverUsed:'never used',
+        codeHint:'The code is shown once. After that only they have it.',
+        needLabel:'Give it a label — which court or table.',
+        needLongerCode:'The code needs at least 4 characters.',
+        codeFailed:'Could not make that code.',
+        codeMade:'{L} — code: {C}\n\nWrite it down now. It is not shown again.',
+        confirmOff:'Turn off the code for {L}? They can no longer post scores.',
         teamNames:'Team names on tournament schedules',
         teamNamesNote:'A program plays under several names — Paradiso, Paradiso A, Paradiso B. Every name linked here shows that team\u2019s pledge button on the schedule.',
         teamNamePh:'Team name, exactly as the schedule spells it',
@@ -920,6 +932,17 @@
         gfDepends:'S\u00f3lo pasa si ganan\u2026', gfNoDepend:'Nada \u2014 este juego ya est\u00e1 en el calendario',
         gfDependsNote:'Escoge un juego y \u00e9ste queda bloqueado en el tablero hasta que se gane aquel. As\u00ed se ve el camino hasta una final.',
         cancel:'Cancelar',
+        scoreCodes:'C\u00f3digos para poner marcadores',
+        scoreCodesNote:'Uno por cancha o mesa. Quien tenga un c\u00f3digo puede poner cualquier marcador, y cada marcador queda firmado con qui\u00e9n lo puso.',
+        codeLabelPh:'Cancha 1', codeValuePh:'Un c\u00f3digo que recuerden',
+        makeCode:'Crear', turnOff:'Apagar', noCodes:'Todav\u00eda no hay c\u00f3digos.',
+        lastUsed:'\u00faltima vez', neverUsed:'sin usar',
+        codeHint:'El c\u00f3digo se ense\u00f1a una vez. Despu\u00e9s s\u00f3lo lo tienen ellos.',
+        needLabel:'Ponle nombre \u2014 qu\u00e9 cancha o mesa.',
+        needLongerCode:'El c\u00f3digo necesita al menos 4 caracteres.',
+        codeFailed:'No se pudo crear ese c\u00f3digo.',
+        codeMade:'{L} \u2014 c\u00f3digo: {C}\n\nAp\u00fantalo ahora. No se vuelve a ense\u00f1ar.',
+        confirmOff:'\u00bfApagar el c\u00f3digo de {L}? Ya no podr\u00e1n poner marcadores.',
         teamNames:'Nombres de equipo en los calendarios',
         teamNamesNote:'Un programa juega con varios nombres \u2014 Paradiso, Paradiso A, Paradiso B. Cada nombre atado aqu\u00ed ense\u00f1a el bot\u00f3n de prometer de ese equipo en el calendario.',
         teamNamePh:'Nombre del equipo, igual que en el calendario',
@@ -3751,6 +3774,93 @@
       }
     }
 
+
+    // ══════════════════════════════════════════════════════
+    //  Códigos para poner marcadores
+    //
+    //  Tres canchas, tres mesas. Cada una con el suyo, y cada
+    //  marcador firmado con quién lo puso.
+    // ══════════════════════════════════════════════════════
+    async function loadCodes() {
+      const box = document.getElementById('codeBox');
+      if (!box) return;
+
+      try {
+        const rows = await supabaseQuery('rpc/bw_codes_list', 'POST', {});
+        const live = (rows || []).filter(r => r.active);
+
+        box.innerHTML = `
+          <div style="padding:14px;background:#140f1a;border:1px solid #ffffff14;
+                      border-radius:10px;margin-bottom:16px;">
+            <div style="font-weight:900;margin-bottom:4px;">${t('scoreCodes')}</div>
+            <div style="color:#888;font-size:11px;margin-bottom:10px;">${t('scoreCodesNote')}</div>
+
+            ${live.length ? `
+              <div style="display:grid;gap:5px;margin-bottom:12px;">
+                ${live.map(r => `
+                  <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;
+                              padding:8px 11px;background:#0e0a11;border:1px solid #ffffff10;
+                              border-radius:8px;font-size:12px;">
+                    <span><b>${escapeHtml(r.label)}</b>
+                      <span style="color:#888;"> · ${r.used
+                        ? t('lastUsed') + ' ' + new Date(r.used).toLocaleDateString()
+                        : t('neverUsed')}</span></span>
+                    <button class="btn alt" onclick="killCode('${r.id}','${escapeHtml(r.label)}')"
+                            style="padding:3px 9px;font-size:10px;">${t('turnOff')}</button>
+                  </div>`).join('')}
+              </div>`
+              : `<p style="color:#888;font-size:12px;margin:0 0 12px;">${t('noCodes')}</p>`}
+
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <input id="codeLabel" type="text" placeholder="${t('codeLabelPh')}"
+                     style="flex:1 1 140px;padding:7px 10px;border-radius:7px;
+                            border:1px solid #ffffff1d;background:#0e0a11;color:#fff;
+                            font-family:inherit;font-size:12px;">
+              <input id="codeValue" type="text" placeholder="${t('codeValuePh')}"
+                     style="flex:1 1 140px;padding:7px 10px;border-radius:7px;
+                            border:1px solid #ffffff1d;background:#0e0a11;color:#fff;
+                            font-family:inherit;font-size:12px;">
+              <button class="btn" onclick="addCode()"
+                      style="padding:7px 13px;font-size:11px;">${t('makeCode')}</button>
+            </div>
+            <div style="color:#888;font-size:11px;margin-top:6px;">${t('codeHint')}</div>
+          </div>`;
+      } catch (error) {
+        console.error('Codes:', error);
+        box.innerHTML = '';
+      }
+    }
+
+    async function addCode() {
+      const label = (document.getElementById('codeLabel').value || '').trim();
+      const code = (document.getElementById('codeValue').value || '').trim();
+      if (!label) { alert(t('needLabel')); return; }
+      if (code.length < 4) { alert(t('needLongerCode')); return; }
+
+      try {
+        const r = await supabaseQuery('rpc/bw_code_add', 'POST',
+          { p_label: label, p_code: code });
+        if (!r || !r.ok) { alert(t('codeFailed')); return; }
+        // Se enseña una vez: después sólo queda guardado cifrado.
+        alert(t('codeMade').replace('{L}', label).replace('{C}', code));
+        await loadCodes();
+      } catch (error) {
+        console.error('Add code:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    async function killCode(id, label) {
+      if (!confirm(t('confirmOff').replace('{L}', label))) return;
+      try {
+        await supabaseQuery('rpc/bw_code_off', 'POST', { p_id: id });
+        await loadCodes();
+      } catch (error) {
+        console.error('Kill code:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
     async function loadRequests() {
       const box = document.getElementById('reqBox');
       if (!box) return;
@@ -3823,6 +3933,7 @@
         await loadRequests();
         await loadBillable();
         await loadLinks();
+        await loadCodes();
         const campaigns = await supabaseQuery('campaigns', 'GET', null, '?order=created_at.desc');
         
         if (!campaigns || campaigns.length === 0) {
