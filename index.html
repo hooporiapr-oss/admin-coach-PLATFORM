@@ -600,6 +600,9 @@
         bracketDropped:'{N} bracket game(s) dropped — they lost.',
         noOppScore:'No opponent score entered, so nothing in the bracket moved. Open it by hand if they won.',
         games:'Games', addGame:'Add a game', noGamesYet:'No games yet.',
+        breakdown:'Where the money came from',
+        bdPaid:'Padrinos paid', bdFee:'Platform fee (20%)', bdTeam:'Your program receives',
+        bdNote:'The fee is added to the padrino\u2019s payment, never taken out of yours.',
         seasonPoints:'Points', collected:'Collected', awaiting:'To collect',
         pledgesWord:'pledges', pointsWord:'points', toCollect:'to collect',
         enterScore:'Enter score', editScore:'Edit score', cancelGame:'Cancel',
@@ -975,6 +978,9 @@
         bracketDropped:'{N} juego(s) del cuadro se cayeron \u2014 perdieron.',
         noOppScore:'No pusiste el marcador del contrario, as\u00ed que el cuadro no se movi\u00f3. \u00c1brelo a mano si ganaron.',
         games:'Juegos', addGame:'A\u00f1adir juego', noGamesYet:'Todav\u00eda no hay juegos.',
+        breakdown:'De d\u00f3nde sali\u00f3 el dinero',
+        bdPaid:'Los padrinos pagaron', bdFee:'Cargo de plataforma (20%)', bdTeam:'Tu programa recibe',
+        bdNote:'El cargo se le suma al pago del padrino, nunca se saca de lo tuyo.',
         seasonPoints:'Puntos', collected:'Cobrado', awaiting:'Por cobrar',
         pledgesWord:'promesas', pointsWord:'puntos', toCollect:'por cobrar',
         enterScore:'Poner marcador', editScore:'Cambiar marcador', cancelGame:'Cancelar',
@@ -2067,6 +2073,13 @@
         const collected = Object.values(byGame).reduce((n, g) => n + g.paid, 0);
         const owed = Object.values(byGame).reduce((n, g) => n + g.due, 0);
 
+        // Lo que pagó el padrino, lo que cuesta la plataforma y lo que
+        // se queda el programa. Verlo en tres líneas evita la pregunta.
+        const feePaid = (pledges || [])
+          .filter(p => p.invoice_status === 'paid')
+          .reduce((n, p) => n + Number(p.platform_amount || 0), 0);
+        const padrinosPaid = collected + feePaid;
+
         box.innerHTML = `
           <div style="padding:12px;background:#140f1a;border:1px solid #ffffff14;border-radius:10px;">
             <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
@@ -2077,6 +2090,25 @@
               <div><div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.1em;">${t('awaiting')}</div>
                    <div style="font-size:20px;font-weight:900;color:#facc15;">$${owed.toFixed(2)}</div></div>
             </div>
+
+            ${collected > 0 ? `
+              <div style="padding:10px 12px;background:#0e0a11;border:1px solid #ffffff14;
+                          border-radius:8px;margin-bottom:10px;font-size:12px;">
+                <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">
+                  ${t('breakdown')}
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:3px 0;">
+                  <span style="color:#aaa;">${t('bdPaid')}</span>
+                  <b>$${padrinosPaid.toFixed(2)}</b></div>
+                <div style="display:flex;justify-content:space-between;padding:3px 0;">
+                  <span style="color:#aaa;">${t('bdFee')}</span>
+                  <span style="color:#aaa;">−$${feePaid.toFixed(2)}</span></div>
+                <div style="display:flex;justify-content:space-between;padding:6px 0 0;
+                            border-top:1px solid #ffffff14;margin-top:4px;">
+                  <b>${t('bdTeam')}</b>
+                  <b style="color:#4ade80;">$${collected.toFixed(2)}</b></div>
+                <div style="color:#888;font-size:11px;margin-top:7px;">${t('bdNote')}</div>
+              </div>` : ''}
 
             <div style="padding:9px 11px;background:#0e0a11;border:1px solid #ffffff14;border-radius:8px;margin-bottom:10px;">
               <div style="font-size:11px;font-weight:900;margin-bottom:5px;">${t('logoLabel')}</div>
@@ -5074,6 +5106,12 @@
         const paid   = Object.values(per).reduce((n, g) => n + g.paid, 0);
         const due    = Object.values(per).reduce((n, g) => n + g.due, 0);
 
+        // El desglose: lo que pagó el padrino y lo que recibe el programa.
+        const feePaid = (pledges || [])
+          .filter(p => p.invoice_status === 'paid')
+          .reduce((n, p) => n + Number(p.platform_amount || 0), 0);
+        const padrinosPaid = paid + feePaid;
+
         const bringing = (byPlayer || []).filter(r => Number(r.pledges) > 0);
 
         return `
@@ -5090,6 +5128,23 @@
               <div><div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.1em;">${t('cdPlayed')}</div>
                    <div style="font-size:22px;font-weight:900;">${played.length}</div></div>
             </div>
+
+            ${paid > 0 ? `
+              <div style="padding:10px 12px;background:#0e0a11;border:1px solid #ffffff14;
+                          border-radius:8px;margin-bottom:10px;font-size:12px;">
+                <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;">
+                  ${t('breakdown')}
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:3px 0;">
+                  <span style="color:#aaa;">${t('bdPaid')}</span><b>$${padrinosPaid.toFixed(2)}</b></div>
+                <div style="display:flex;justify-content:space-between;padding:3px 0;">
+                  <span style="color:#aaa;">${t('bdFee')}</span>
+                  <span style="color:#aaa;">−$${feePaid.toFixed(2)}</span></div>
+                <div style="display:flex;justify-content:space-between;padding:6px 0 0;
+                            border-top:1px solid #ffffff14;margin-top:4px;">
+                  <b>${t('bdTeam')}</b><b style="color:#4ade80;">$${paid.toFixed(2)}</b></div>
+                <div style="color:#888;font-size:11px;margin-top:7px;">${t('bdNote')}</div>
+              </div>` : ''}
 
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
               <button class="btn" onclick="gameForm('${campaignId}')" style="padding:6px 10px;font-size:11px;">+ ${t('addGame')}</button>
