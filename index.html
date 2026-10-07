@@ -2471,6 +2471,7 @@
         if (box) box.style.display = 'none';
         await gamePledges(campaignId, gameId);
         await loadGames(campaignId);
+        if (document.getElementById('billBox')) await loadBillable();
       } catch (error) {
         console.error('Void:', error);
         alert('Error: ' + error.message);
@@ -5039,6 +5040,10 @@
       }
       if (document.getElementById('playersList')) {
         await loadCoachDashboard();
+      }
+      // Un marcador casi siempre deja promesas listas para cobrar.
+      if (document.getElementById('billBox')) {
+        await loadBillable();
       }
     }
 
