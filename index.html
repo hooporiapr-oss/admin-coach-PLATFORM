@@ -173,6 +173,7 @@
             <div id="billBox"></div>
             <div id="linkBox"></div>
             <div id="codeBox"></div>
+            <div id="entryBox"></div>
             <div id="campaignsContainer" style="margin-top:4px;">—</div>
           </div>
 
@@ -557,6 +558,14 @@
         gfDepends:'Only happens if they win…', gfNoDepend:'Nothing — this game is already scheduled',
         gfDependsNote:'Pick a game and this one stays locked on the scoreboard until that one is won. That is how the bracket shows the path to a final.',
         cancel:'Cancel',
+        entries:'Tournament entries',
+        entriesNote:'Teams that signed up to play. Copy a category straight into the schedule builder.',
+        noEntries:'No entries for that tournament yet.',
+        entriesWord:'entries', catsWord:'categories',
+        copyList:'Copy', copyAll:'Copy every category',
+        copiedCat:'{N} teams in {C} copied — paste into the builder.',
+        copiedAll:'Every category copied.',
+        confirmDrop:'Remove {T} from the entries?',
         scoreCodes:'Score codes for tournament tables',
         scoreCodesNote:'One per court or table. Whoever holds a code can post any score, and every score records who posted it.',
         codeLabelPh:'Cancha 1', codeValuePh:'A code they will remember',
@@ -935,6 +944,14 @@
         gfDepends:'S\u00f3lo pasa si ganan\u2026', gfNoDepend:'Nada \u2014 este juego ya est\u00e1 en el calendario',
         gfDependsNote:'Escoge un juego y \u00e9ste queda bloqueado en el tablero hasta que se gane aquel. As\u00ed se ve el camino hasta una final.',
         cancel:'Cancelar',
+        entries:'Inscripciones al torneo',
+        entriesNote:'Equipos que se inscribieron a jugar. Copia una categor\u00eda y p\u00e9gala directo en el constructor.',
+        noEntries:'Todav\u00eda no hay inscripciones para ese torneo.',
+        entriesWord:'inscripciones', catsWord:'categor\u00edas',
+        copyList:'Copiar', copyAll:'Copiar todas las categor\u00edas',
+        copiedCat:'{N} equipos de {C} copiados \u2014 p\u00e9galos en el constructor.',
+        copiedAll:'Todas las categor\u00edas copiadas.',
+        confirmDrop:'\u00bfQuitar a {T} de las inscripciones?',
         scoreCodes:'C\u00f3digos para poner marcadores',
         scoreCodesNote:'Uno por cancha o mesa. Quien tenga un c\u00f3digo puede poner cualquier marcador, y cada marcador queda firmado con qui\u00e9n lo puso.',
         codeLabelPh:'Cancha 1', codeValuePh:'Un c\u00f3digo que recuerden',
@@ -3894,6 +3911,116 @@
       }
     }
 
+
+    // ══════════════════════════════════════════════════════
+    //  Inscripciones a un torneo
+    //
+    //  Lo que sale de aquí es exactamente lo que el constructor
+    //  necesita: por categoría, un equipo por línea, listo para
+    //  copiar y pegar. Sin PDF y sin transcribir.
+    // ══════════════════════════════════════════════════════
+    let ENTRY_TOURNEY = 'noviembre-2026';
+
+    async function loadEntries() {
+      const box = document.getElementById('entryBox');
+      if (!box) return;
+
+      try {
+        const rows = await supabaseQuery('rpc/bw_entry_list', 'POST',
+          { p_tourney: ENTRY_TOURNEY });
+
+        const byCat = {};
+        (rows || []).forEach(r => (byCat[r.category] = byCat[r.category] || []).push(r));
+        const cats = Object.keys(byCat).sort();
+
+        box.innerHTML = `
+          <div style="padding:14px;background:#140f1a;border:1px solid #ffffff14;
+                      border-radius:10px;margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;">
+              <div style="font-weight:900;">${t('entries')}</div>
+              <input id="entryT" type="text" value="${escapeHtml(ENTRY_TOURNEY)}"
+                     onchange="switchTourney(this.value)"
+                     style="flex:0 1 180px;padding:5px 9px;border-radius:7px;
+                            border:1px solid #ffffff1d;background:#0e0a11;color:#fff;
+                            font-family:inherit;font-size:11px;">
+            </div>
+            <div style="color:#888;font-size:11px;margin:4px 0 10px;">${t('entriesNote')}</div>
+
+            ${!rows || !rows.length
+              ? `<p style="color:#888;font-size:12px;margin:0;">${t('noEntries')}</p>`
+              : `
+              <div style="color:#888;font-size:11px;margin-bottom:8px;">
+                ${rows.length} ${t('entriesWord')} · ${cats.length} ${t('catsWord')}
+              </div>
+
+              <div style="display:grid;gap:10px;">
+                ${cats.map(c => `
+                  <div style="padding:10px 12px;background:#0e0a11;border:1px solid #ffffff14;
+                              border-radius:8px;">
+                    <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;">
+                      <b style="font-size:12px;">${escapeHtml(c)}</b>
+                      <button class="btn alt" onclick="copyCat('${escapeHtml(c).replace(/'/g,"\\'")}')"
+                              style="padding:3px 9px;font-size:10px;">${t('copyList')}</button>
+                    </div>
+                    <div style="display:grid;gap:3px;margin-top:7px;">
+                      ${byCat[c].map(r => `
+                        <div style="display:flex;justify-content:space-between;gap:8px;
+                                    font-size:11px;color:#bbb;">
+                          <span><b style="color:#fff;">${escapeHtml(r.team)}</b>
+                            · ${escapeHtml(r.coach)} · ${escapeHtml(r.email)}
+                            ${r.phone ? ' · ' + escapeHtml(r.phone) : ''}</span>
+                          <button onclick="dropEntry('${r.id}','${escapeHtml(r.team).replace(/'/g,"\\'")}')"
+                                  style="border:none;background:none;color:#f87171;cursor:pointer;
+                                         font-size:13px;line-height:1;padding:0 4px;">×</button>
+                        </div>`).join('')}
+                    </div>
+                  </div>`).join('')}
+              </div>
+
+              <button class="btn" onclick="copyAllCats()"
+                      style="margin-top:12px;padding:7px 13px;font-size:11px;">${t('copyAll')}</button>`}
+          </div>`;
+
+        window.__ENTRIES = byCat;
+      } catch (error) {
+        console.error('Entries:', error);
+        box.innerHTML = '';
+      }
+    }
+
+    function switchTourney(v) {
+      ENTRY_TOURNEY = (v || '').trim() || 'noviembre-2026';
+      loadEntries();
+    }
+
+    function copyCat(cat) {
+      const list = (window.__ENTRIES || {})[cat] || [];
+      const text = list.map(r => r.team).join('\n');
+      navigator.clipboard.writeText(text)
+        .then(() => alert(t('copiedCat').replace('{C}', cat).replace('{N}', list.length)))
+        .catch(() => prompt(t('copyManually'), text));
+    }
+
+    function copyAllCats() {
+      const byCat = window.__ENTRIES || {};
+      const text = Object.keys(byCat).sort().map(c =>
+        c + '\n' + byCat[c].map(r => r.team).join('\n')).join('\n\n');
+      navigator.clipboard.writeText(text)
+        .then(() => alert(t('copiedAll')))
+        .catch(() => prompt(t('copyManually'), text));
+    }
+
+    async function dropEntry(id, team) {
+      if (!confirm(t('confirmDrop').replace('{T}', team))) return;
+      try {
+        await supabaseQuery('rpc/bw_entry_drop', 'POST', { p_id: id });
+        await loadEntries();
+      } catch (error) {
+        console.error('Drop entry:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
     async function loadRequests() {
       const box = document.getElementById('reqBox');
       if (!box) return;
@@ -3967,6 +4094,7 @@
         await loadBillable();
         await loadLinks();
         await loadCodes();
+        await loadEntries();
         const campaigns = await supabaseQuery('campaigns', 'GET', null, '?order=created_at.desc');
         
         if (!campaigns || campaigns.length === 0) {
