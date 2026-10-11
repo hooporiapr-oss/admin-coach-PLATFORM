@@ -566,8 +566,11 @@
         copiedCat:'{N} teams in {C} copied — paste into the builder.',
         copiedAll:'Every category copied.',
         confirmDrop:'Remove {T} from the entries?',
-        scoreCodes:'Score codes for tournament tables',
-        scoreCodesNote:'One per court or table. Whoever holds a code can post any score, and every score records who posted it.',
+        scoreCodes:'Codes for posting scores',
+        scoreCodesNote:'One per court, table or coach. Tie a code to a team and it works only on that team, and every score it posts is signed with its name.',
+        codeTeamAny:'Any team (tournament table)', codeTeamLbl:'Team',
+        codeBuildLbl:'Can also build the schedule',
+        codeNoTeam:'no team', codeBuilds:'builds the schedule',
         codeLabelPh:'Cancha 1', codeValuePh:'A code they will remember',
         makeCode:'Make', turnOff:'Turn off', noCodes:'No codes made yet.',
         lastUsed:'last used', neverUsed:'never used',
@@ -953,7 +956,10 @@
         copiedAll:'Todas las categor\u00edas copiadas.',
         confirmDrop:'\u00bfQuitar a {T} de las inscripciones?',
         scoreCodes:'C\u00f3digos para poner marcadores',
-        scoreCodesNote:'Uno por cancha o mesa. Quien tenga un c\u00f3digo puede poner cualquier marcador, y cada marcador queda firmado con qui\u00e9n lo puso.',
+        scoreCodesNote:'Uno por cancha, mesa o coach. Si le pones equipo, s\u00f3lo sirve para ese equipo, y cada marcador que ponga queda firmado con su nombre.',
+        codeTeamAny:'Cualquier equipo (mesa de torneo)', codeTeamLbl:'Equipo',
+        codeBuildLbl:'Tambi\u00e9n puede armar el calendario',
+        codeNoTeam:'sin equipo', codeBuilds:'arma el calendario',
         codeLabelPh:'Cancha 1', codeValuePh:'Un c\u00f3digo que recuerden',
         makeCode:'Crear', turnOff:'Apagar', noCodes:'Todav\u00eda no hay c\u00f3digos.',
         lastUsed:'\u00faltima vez', neverUsed:'sin usar',
@@ -3838,6 +3844,8 @@
       try {
         const rows = await supabaseQuery('rpc/bw_codes_list', 'POST', {});
         const live = (rows || []).filter(r => r.active);
+        // Las campañas, para poder atar un código a un equipo al crearlo.
+        const camps = await supabaseQuery('campaigns', 'GET', null, '?select=id,name&order=name.asc') || [];
 
         box.innerHTML = `
           <div style="padding:14px;background:#140f1a;border:1px solid #ffffff14;
@@ -3852,7 +3860,9 @@
                               padding:8px 11px;background:#0e0a11;border:1px solid #ffffff10;
                               border-radius:8px;font-size:12px;">
                     <span><b>${escapeHtml(r.label)}</b>
-                      <span style="color:#888;"> · ${r.used
+                      <span style="color:#888;"> · ${r.campaign
+                        ? escapeHtml(r.campaign) : t('codeNoTeam')}${r.build
+                        ? ' · ' + t('codeBuilds') : ''} · ${r.used
                         ? t('lastUsed') + ' ' + new Date(r.used).toLocaleDateString()
                         : t('neverUsed')}</span></span>
                     <button class="btn alt" onclick="killCode('${r.id}','${escapeHtml(r.label)}')"
@@ -3873,6 +3883,23 @@
               <button class="btn" onclick="addCode()"
                       style="padding:7px 13px;font-size:11px;">${t('makeCode')}</button>
             </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:7px;">
+              <label style="flex:1 1 180px;color:#888;font-size:11px;">
+                ${t('codeTeamLbl')}
+                <select id="codeCampaign"
+                        style="width:100%;margin-top:3px;padding:7px 10px;border-radius:7px;
+                               border:1px solid #ffffff1d;background:#0e0a11;color:#fff;
+                               font-family:inherit;font-size:12px;">
+                  <option value="">${t('codeTeamAny')}</option>
+                  ${camps.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')}
+                </select>
+              </label>
+              <label style="flex:1 1 180px;color:#888;font-size:11px;display:flex;
+                            align-items:center;gap:7px;">
+                <input id="codeBuild" type="checkbox" style="width:15px;height:15px;">
+                ${t('codeBuildLbl')}
+              </label>
+            </div>
             <div style="color:#888;font-size:11px;margin-top:6px;">${t('codeHint')}</div>
           </div>`;
       } catch (error) {
@@ -3887,9 +3914,14 @@
       if (!label) { alert(t('needLabel')); return; }
       if (code.length < 4) { alert(t('needLongerCode')); return; }
 
+      const campEl  = document.getElementById('codeCampaign');
+      const buildEl = document.getElementById('codeBuild');
+      const camp  = campEl ? (campEl.value || null) : null;
+      const build = buildEl ? !!buildEl.checked : false;
+
       try {
         const r = await supabaseQuery('rpc/bw_code_add', 'POST',
-          { p_label: label, p_code: code });
+          { p_label: label, p_code: code, p_campaign: camp, p_build: build });
         if (!r || !r.ok) { alert(t('codeFailed')); return; }
         // Se enseña una vez: después sólo queda guardado cifrado.
         alert(t('codeMade').replace('{L}', label).replace('{C}', code));
