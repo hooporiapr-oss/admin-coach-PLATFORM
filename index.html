@@ -571,6 +571,8 @@
         codeTeamAny:'Any team (tournament table)', codeTeamLbl:'Team',
         codeBuildLbl:'Can also build the schedule',
         codeNoTeam:'no team', codeBuilds:'builds the schedule',
+        codeBtn:'Code', codeFor:'A code for {N} — they type it once on the team board, and then they can post scores and build the schedule. Choose something they will remember, at least 4 characters.',
+        codeHas:'{N} already has a code. Making another leaves the old one working — turn it off below if you are replacing it.',
         codeLabelPh:'Cancha 1', codeValuePh:'A code they will remember',
         makeCode:'Make', turnOff:'Turn off', noCodes:'No codes made yet.',
         lastUsed:'last used', neverUsed:'never used',
@@ -960,6 +962,8 @@
         codeTeamAny:'Cualquier equipo (mesa de torneo)', codeTeamLbl:'Equipo',
         codeBuildLbl:'Tambi\u00e9n puede armar el calendario',
         codeNoTeam:'sin equipo', codeBuilds:'arma el calendario',
+        codeBtn:'C\u00f3digo', codeFor:'Un c\u00f3digo para {N} \u2014 lo escribe una vez en el tablero del equipo, y con eso pone marcadores y arma el calendario. Que sea algo que recuerde, m\u00ednimo 4 caracteres.',
+        codeHas:'{N} ya tiene c\u00f3digo. Si haces otro, el viejo sigue sirviendo \u2014 ap\u00e1galo abajo si lo est\u00e1s reemplazando.',
         codeLabelPh:'Cancha 1', codeValuePh:'Un c\u00f3digo que recuerden',
         makeCode:'Crear', turnOff:'Apagar', noCodes:'Todav\u00eda no hay c\u00f3digos.',
         lastUsed:'\u00faltima vez', neverUsed:'sin usar',
@@ -4160,6 +4164,7 @@
                                                      : ' · ' + t('wholeRoster')}</span></span>
                         <span style="flex-shrink:0;">
                           <button onclick="editCoach('${x.id}','${x.email}','${x.grade || ''}','${(x.label || '').replace(/'/g, "\\'")}')" style="padding:2px 6px;background:#3a2647;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:10px;">${t('edit')}</button>
+                          <button onclick="makeCoachCode('${c.id}','${((x.name || x.email.split('@')[0]) || '').replace(/'/g, "\\'")}')" style="padding:2px 6px;background:#2d5b3a;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:10px;margin-left:4px;">${t('codeBtn')}</button>
                           <button onclick="removeCoach('${x.id}')" style="padding:2px 6px;background:#6b2131;border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:10px;margin-left:4px;">${t('remove')}</button>
                         </span>
                       </div>`).join('')
@@ -4187,6 +4192,36 @@
       } catch (error) {
         console.error('Error:', error);
         document.getElementById('campaignsContainer').innerHTML = '<p style="color:#f66;">Error loading campaigns</p>';
+      }
+    }
+
+    // El código del coach, hecho desde donde está el coach. Sale atado a
+    // su campaña y con permiso de calendario, que es lo que necesita para
+    // trabajar solo: poner marcadores y armar sus juegos.
+    async function makeCoachCode(campaignId, coachName) {
+      try {
+        const rows = await supabaseQuery('rpc/bw_codes_list', 'POST', {});
+        const ya = (rows || []).filter(r => r.active && r.campaign_id === campaignId
+                                         && (r.label || '') === coachName);
+        if (ya.length && !confirm(t('codeHas').replace('{N}', coachName))) return;
+      } catch (_) { /* si no se puede mirar, se sigue igual */ }
+
+      const code = prompt(t('codeFor').replace('{N}', coachName));
+      if (code === null) return;
+      if (code.trim().length < 4) { alert(t('needLongerCode')); return; }
+
+      try {
+        const r = await supabaseQuery('rpc/bw_code_add', 'POST', {
+          p_label: coachName, p_code: code.trim(),
+          p_campaign: campaignId, p_build: true
+        });
+        if (!r || !r.ok) { alert(t('codeFailed')); return; }
+        // Se enseña una vez: después sólo queda guardado cifrado.
+        alert(t('codeMade').replace('{L}', coachName).replace('{C}', code.trim()));
+        await loadCodes();
+      } catch (error) {
+        console.error('Coach code:', error);
+        alert('Error: ' + error.message);
       }
     }
 
