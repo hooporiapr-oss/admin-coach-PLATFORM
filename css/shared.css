@@ -234,3 +234,82 @@ label {
     letter-spacing: -2px;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   El teléfono. Este panel se usa de pie en una cancha tanto como
+   sentado, así que lo que importa aquí es el tamaño del dedo y que
+   tocar un campo no mueva la página.
+   Muchos botones traen su tamaño en el atributo style, y a eso sólo
+   se le gana con !important.
+   ───────────────────────────────────────────────────────────── */
+@media(max-width:560px) {
+  /* Un campo por debajo de 16px hace que el navegador acerque la
+     página al tocarlo, y después hay que alejarla a mano. */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* El título en su línea y las acciones debajo. En una sola fila el
+     título se estrangula y los botones quedan de 30px. */
+  .sechead {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .sechead h3 {
+    flex: 1 1 100%;
+  }
+  .sechead > span {
+    flex: 1 1 100%;
+    display: flex;
+    gap: 8px;
+  }
+  /* El refrescar es un carácter: que ocupe lo justo y el ancho se lo
+     lleve el botón que de verdad hace algo. */
+  .sechead > span .btn {
+    flex: 1 1 auto;
+  }
+  .sechead > span .btn.alt {
+    flex: 0 0 auto;
+    min-width: 56px;
+  }
+
+  /* Un dedo pide unos 44px. */
+  .btn {
+    min-height: 44px !important;
+    padding: 12px 15px !important;
+    font-size: 13px !important;
+  }
+  .tab {
+    min-height: 40px;
+    font-size: 13px;
+    padding: 10px 13px;
+  }
+  #langToggle,
+  #menuToggle {
+    min-height: 40px;
+    min-width: 44px;
+  }
+
+  /* Editar · Código · Quitar, en la fila de cada coach: tres botones
+     de 2px de alto uno al lado del otro no se pueden tocar. */
+  #campaignsContainer button,
+  #codeBox button {
+    min-height: 36px !important;
+    padding: 8px 11px !important;
+    font-size: 11px !important;
+  }
+
+  /* Menos aire perdido: el panel es largo y se navega con el pulgar. */
+  header {
+    padding: 28px 0 !important;
+  }
+  .wrap {
+    padding: 0 16px;
+  }
+  .panel {
+    padding: 14px;
+  }
+  h1 {
+    font-size: clamp(1.6rem, 8vw, 2.2rem);
+  }
+}
