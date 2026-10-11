@@ -2887,7 +2887,7 @@
       try {
         await supabaseQuery('campaigns', 'PATCH', { scored_games: pair.split(',') },
           `?id=eq.${campaignId}`);
-        loadTryoutPanel(campaignId);
+        loadTryout(campaignId);
       } catch (error) {
         console.error('Scored pair:', error);
         alert('Error: ' + error.message);
