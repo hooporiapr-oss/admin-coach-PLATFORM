@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cómo se maneja el dinero — Cada Punto</title>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Cada Punto">
+<meta property="og:url" content="https://cadapunto.com/custodia.html">
+<meta property="og:title" content="Cómo se maneja el dinero">
+<meta property="og:description" content="El dinero que recauda un programa pasa por Gostar Digital LLC antes de llegarle. Esta página dice cómo, cuándo, y qué pasa si algo sale mal.">
+<meta property="og:image" content="https://cadapunto.com/cadapunto-share.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="es_PR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cómo se maneja el dinero">
+<meta name="twitter:description" content="El dinero que recauda un programa pasa por Gostar Digital LLC antes de llegarle. Esta página dice cómo, cuándo, y qué pasa si algo sale mal.">
+<meta name="twitter:image" content="https://cadapunto.com/cadapunto-share.jpg">
+<meta name="description" content="El dinero que recauda un programa pasa por Gostar Digital LLC antes de llegarle. Esta página dice cómo, cuándo, y qué pasa si algo sale mal.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#12202E;--mute:#5A6B7C;--line:#D7E0E8;--tint:#F7FAFC;--accent:#A84200;
+      --good:#0B7A5A;--bad:#A8323F}
+*{box-sizing:border-box}
+html{background:#12202E}
+/* El teclado del teléfono no achica la página, achica lo que se ve de
+   ella. Con el alto clavado en 100dvh y el scroll metido en <main>, el
+   campo enfocado se iba debajo del teclado y el navegador no podía
+   subirlo. Rodando la página entera, sí puede. */
+body{margin:0;min-height:100dvh;display:flex;flex-direction:column;
+  font-family:Archivo,"Helvetica Neue",Helvetica,Arial,sans-serif;color:var(--ink);
+  background:#fff;line-height:1.55;-webkit-text-size-adjust:100%}
+.wrap{width:min(600px,93vw);margin:0 auto}
+
+header{flex:0 0 auto;background:#12202E;border-bottom:1px solid #0B1724;
+  padding-top:env(safe-area-inset-top,0px)}
+header .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0}
+.mark{font-weight:900;font-size:1.05rem;color:#fff;text-decoration:none}
+.mark em{font-style:normal;color:#FF8A2B}
+.mark i{font-style:normal;color:#6FD83C}
+.langb{border:1px solid #33465A;background:none;color:#C8D6E2;border-radius:999px;
+  padding:6px 13px;font:inherit;font-size:.72rem;font-weight:800;cursor:pointer}
+
+main{flex:1 1 auto;overflow-x:hidden}
+main .wrap{padding:clamp(20px,5vw,34px) 0 32px}
+
+footer{flex:0 0 auto;background:#12202E;color:#9FB3C4;border-top:1px solid #0B1724;
+  padding:15px 0 calc(15px + env(safe-area-inset-bottom,0px));text-align:center;font-size:.82rem}
+footer p{margin:0 0 7px}
+footer .f-co{color:#fff;font-weight:700}
+footer a{color:#8FA8C0;text-decoration:none}
+footer .f-legal{margin:7px 0 0;font-size:.78rem}
+footer .f-dot{padding:0 7px;opacity:.5}
+
+.kick{font-size:.64rem;font-weight:900;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:8px}
+h1{font-size:clamp(1.5rem,4.6vw,2rem);letter-spacing:-.03em;line-height:1.1;margin:0 0 10px;font-weight:900}
+.lede{color:var(--mute);margin:0 0 22px}
+h2{font-size:1.02rem;margin:26px 0 8px;font-weight:900;letter-spacing:-.02em}
+
+.how{display:grid;gap:10px;margin:0 0 24px}
+.how .s{border:1.5px solid var(--line);border-radius:4px;padding:13px 15px}
+.how .s b{display:block;font-size:.98rem}
+.how .s span{color:var(--mute);font-size:.92rem}
+
+label{display:block;font-size:.85rem;font-weight:700;margin:14px 0 5px}
+input{width:100%;padding:14px;border:2px solid var(--ink);border-radius:4px;
+  background:#fff;color:var(--ink);font:inherit;font-size:1.02rem}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(12,110,140,.15)}
+/* Cuando el navegador sube el campo enfocado, que no quede pegado al
+   borde: se ve su etiqueta y el campo de antes. */
+label,input{scroll-margin-top:64px;scroll-margin-bottom:24px}
+.hint{font-size:.82rem;color:var(--mute);margin:4px 0 0}
+.btn{display:block;width:100%;padding:16px;border:2px solid var(--ink);border-radius:4px;
+  background:var(--ink);color:#fff;font:inherit;font-weight:800;font-size:1.02rem;
+  cursor:pointer;text-align:center;text-decoration:none;margin-top:18px}
+.btn.line{background:#fff;color:var(--ink);margin-top:10px}
+.ok{display:flex;gap:10px;align-items:flex-start;margin-top:18px;
+  font-size:.88rem;font-weight:400;color:var(--mute)}
+.ok span{cursor:pointer}
+.ok input{width:20px;height:20px;flex:0 0 20px;margin-top:1px;accent-color:var(--accent);cursor:pointer}
+.ok a{color:var(--accent)}
+.msg{margin-top:12px;font-weight:700;font-size:.92rem;min-height:1.2em}
+.msg.bad{color:var(--bad)}
+.msg.ok{color:var(--good)}
+
+/* En el teléfono el pie es lo último que hace falta mientras se llena
+   un formulario: que ocupe lo justo. */
+@media(max-width:560px){
+  footer{padding:12px 0 calc(12px + env(safe-area-inset-bottom,0px));font-size:.76rem}
+  footer p{margin:0 0 4px}
+  footer .f-legal{margin:4px 0 0}
+  main .wrap{padding-bottom:20px}
+}
+
+.fine{border-left:4px solid var(--accent);background:var(--tint);padding:14px 16px;margin:22px 0 0}
+.fine b{display:block;margin-bottom:3px}
+.fine p{margin:0;color:var(--mute);font-size:.93rem}
+
+.done{text-align:center}
+.done .tick{font-size:2.8rem;line-height:1;margin-bottom:10px}
+</style>
+<style>
+/* La portada de las reglas: el nombre una vez, en grande. */
+.rtop{border-bottom:3px solid var(--ink);padding-bottom:16px;margin:0 0 24px}
+.rtop h1{font-size:clamp(1.6rem,6vw,2.4rem);margin:0 0 6px}
+.rtop .sub{color:var(--mute);margin:0;font-size:.95rem}
+
+/* Cada regla numerada, para que un entrenador pueda decir
+   "regla 3.2" en la cancha y todo el mundo busque lo mismo. */
+.sec{margin:0 0 26px}
+.sec h2{display:flex;gap:10px;align-items:baseline;margin:0 0 6px;font-size:1.06rem}
+.sec h2 .n{flex:0 0 auto;color:var(--accent);font-weight:900}
+.sec .cab{color:var(--mute);margin:0 0 10px;font-size:.95rem}
+.sec ol,.sec ul{margin:0;padding-left:0;list-style:none;counter-reset:r}
+.sec li{position:relative;padding:9px 0 9px 44px;border-top:1px solid var(--line);font-size:.95rem}
+.sec li:first-child{border-top:none}
+.sec li::before{counter-increment:r;content:attr(data-n);position:absolute;left:0;top:9px;
+  font-weight:900;font-size:.82rem;color:var(--mute);font-variant-numeric:tabular-nums}
+.sec .cierre{margin:10px 0 0;font-size:.95rem;font-weight:700}
+
+table.money{width:100%;border-collapse:collapse;margin:12px 0 0;font-size:.95rem}
+table.money th,table.money td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+table.money th{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);
+  border-bottom:2px solid var(--ink)}
+table.money td:nth-child(2),table.money th:nth-child(2),
+table.money td:nth-child(3),table.money th:nth-child(3){text-align:right;font-variant-numeric:tabular-nums}
+
+.pie{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+.pie a,.pie button{flex:1 1 180px;padding:14px;border:2px solid var(--ink);border-radius:4px;
+  background:#fff;color:var(--ink);font:inherit;font-weight:800;font-size:.95rem;
+  text-align:center;text-decoration:none;cursor:pointer}
+.pie a.solid{background:var(--ink);color:#fff}
+
+/* Un entrenador la va a imprimir y pegarla en la pared del gimnasio. */
+/* La hoja impresa tiene que decir de dónde salió. Alguien la pega en
+   la pared del gimnasio, otro entrenador le saca una foto, y si no
+   lleva la dirección esa foto no lleva a ningún sitio. */
+.pie-print{display:none}
+@media print{
+  .heroart,.why,.num{display:none !important}
+  header,footer,.pie,.langb{display:none !important}
+  html,body{background:#fff}
+  main .wrap{width:100%;padding:0}
+  .sec{break-inside:avoid;page-break-inside:avoid}
+  .rtop{border-bottom:2px solid #000}
+  a{text-decoration:none;color:#000}
+  .pie-print{display:block;margin-top:22px;padding-top:12px;
+    border-top:2px solid #000;font-size:.86rem;font-weight:700;
+    text-align:center;break-inside:avoid}
+  .pie-print span{display:block;font-weight:400;font-size:.8rem;margin-top:3px}
+}
+
+.heroart{display:block;width:100%;height:auto;margin:0 0 clamp(18px,4vw,26px);
+  border-radius:6px;border:1px solid rgba(255,138,43,.30);
+  box-shadow:0 14px 40px rgba(0,0,0,.28)}
+.why{display:grid;gap:10px;margin:0 0 26px}
+.why .w{border-left:4px solid var(--accent);background:var(--tint);padding:13px 15px}
+.why .w b{display:block;font-size:.98rem}
+.why .w span{color:var(--mute);font-size:.92rem}
+.num{display:grid;gap:10px;margin:0 0 26px;counter-reset:paso}
+.num .s{border:1.5px solid var(--line);border-radius:4px;padding:13px 15px 13px 46px;position:relative}
+.num .s::before{counter-increment:paso;content:counter(paso);position:absolute;left:14px;top:13px;
+  width:21px;height:21px;border-radius:50%;background:var(--ink);color:#fff;
+  font-size:.72rem;font-weight:900;display:flex;align-items:center;justify-content:center}
+.num .s b{display:block;font-size:.98rem}
+.num .s span{color:var(--mute);font-size:.92rem}
+.rulesH{margin-top:34px;padding-top:22px;border-top:3px solid var(--ink)}
+.rulesH h2{font-size:1.25rem;margin:0}
+.f-what{margin:7px 0 0;font-size:.74rem;line-height:1.5;opacity:.72;max-width:52ch;
+  margin-left:auto;margin-right:auto}
+</style>
+<style>
+.ackbox{border:3px solid var(--ink);border-radius:6px;padding:17px 19px;margin:30px 0 0}
+.ackbox h2{margin:0 0 7px;font-size:1.08rem}
+.ackbox p{margin:0;color:var(--mute);font-size:.96rem}
+.ackbox a{color:var(--accent);font-weight:800;text-decoration:none;display:inline-block;margin-top:12px;margin-right:18px;font-size:.92rem}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="mark" href="index.html">cada&nbsp;<em>punto</em>&nbsp;<i>cuenta</i></a>
+    <button class="langb" id="langBtn" onclick="toggleLang()">EN</button>
+  </div>
+</header>
+
+<main><div class="wrap" id="app"></div></main>
+
+<footer>
+  <div class="wrap">
+    <p class="f-co">© 2026 Gostar Digital LLC · Puerto Rico</p>
+<p class="f-what" id="fWhat"></p>
+<script>
+(function(){
+  var l = 'es';
+  try{ l = localStorage.getItem('cfh_lang') || localStorage.getItem('cp-lang') ||
+           localStorage.getItem('fc-lang') ||
+           ((navigator.language||'').toLowerCase().indexOf('es')===0 ? 'es':'en'); }catch(e){}
+  var el = document.getElementById('fWhat');
+  if (el) el.textContent = (l === 'es')
+    ? 'Cada Punto es una plataforma de Gostar Digital LLC, una empresa con fines de lucro. El programa recauda y recibe lo suyo completo; nosotros cobramos por el uso de la herramienta.'
+    : 'Cada Punto is a platform from Gostar Digital LLC, a for-profit company. The program raises the money and receives all of it; we charge for use of the tool.';
+})();
+</script>
+    <p><a href="mailto:gostardigital@gmail.com">gostardigital@gmail.com</a></p>
+    <p class="f-legal">
+      <a href="terms.html">Términos</a><span class="f-dot">·</span><a href="privacy.html">Privacidad</a>
+    </p>
+  </div>
+</footer>
+
+<script>
+var LANG='es';
+try{ LANG = localStorage.getItem('cfh_lang') || localStorage.getItem('cp-lang') || localStorage.getItem('fc-lang') ||
+  ((navigator.language||'').toLowerCase().indexOf('es')===0 ? 'es':'en'); }catch(e){}
+
+var S = {"es":{"kick": "Divulgación", "h1": "Cómo se maneja el dinero", "sub": "Gostar Digital LLC · Cada Punto · octubre 2026", "lede": "Lo que recauda un programa pasa por nosotros antes de llegarle. No lo escondemos en letra chiquita: esta página lo dice completo, y el programa la acepta al inscribirse.", "s1h": "Quién cobra", "s1c": "El pago del padrino no va directo al programa. Entra a una cuenta de Gostar Digital LLC y de ahí se le remite.", "s1": ["El cobro lo procesa Stripe, Inc. Nosotros no vemos ni guardamos números de tarjeta.", "El dinero cobrado queda en una cuenta de Gostar Digital LLC hasta que se remite.", "No somos un banco ni un fideicomiso. El dinero retenido no genera intereses para nadie y no está asegurado como un depósito bancario."], "s2h": "Cuándo le llega al programa", "s2c": "Dos veces al mes: el día 1 y el día 15. El 1 va lo cobrado del 16 al fin del mes anterior; el 15 va lo cobrado del 1 al 14.", "s2": ["Lo más que espera un pago son quince días. Uno que entra el 2 se remite el 15; uno que entra el 16 se remite el 1 del mes que viene.", "Se remite al método que el programa nos indique por escrito. Cambiarlo requiere avisarnos por escrito desde el correo de la campaña.", "Si el 1 o el 15 cae en feriado o fin de semana, se remite el próximo día laborable.", "Si por alguna razón no podemos remitir en esa fecha, se lo decimos al programa antes de que pase, con la razón y la fecha nueva."], "s3h": "Cuánto le llega", "s3c": "Todo lo que prometieron los padrinos. De ahí no sale nuestro cargo.", "s3": ["El programa recibe el 100% de lo prometido y cobrado.", "Nuestro 20% se le sumó al pago del padrino, encima de la promesa. Nunca se descuenta de lo del programa.", "Los cargos de procesamiento de Stripe también se añaden al pago del padrino, no se restan de lo del programa."], "s4h": "Devoluciones y disputas", "s4c": "Un padrino puede disputar un cargo con su banco después de que ya le remitimos al programa.", "s4": ["Si un marcador se registró mal, o el juego no se dio, devolvemos el dinero al padrino.", "Si un padrino disputa un cargo con su banco después de una remesa, ese monto se descuenta de la próxima remesa del programa.", "Si no hay próxima remesa de dónde descontarlo, se lo pedimos al programa por escrito, con el detalle del cargo disputado.", "Le avisamos al programa de cualquier disputa en cuanto la sepamos."], "s5h": "Lo que el programa puede ver", "s5c": "Nada de esto depende de que usted nos crea.", "s5": ["El panel del programa enseña lo prometido, lo cobrado y lo pendiente, al día.", "Puede pedirnos por escrito un estado de cuenta de cualquier periodo y se lo mandamos.", "Guardamos el registro de cada promesa, cada cobro y cada remesa mientras corra la campaña y después por el tiempo que exijan las reglas de contabilidad."], "s6h": "Si algo se detiene", "s6c": "Programas cierran, cuentas cambian, campañas se abandonan.", "s6": ["Si el programa deja de existir o no podemos localizarlo, retenemos lo cobrado e intentamos comunicarnos al correo de la campaña.", "Si pasan seis meses sin poder remitir, lo tratamos según lo que exija la ley de Puerto Rico para fondos no reclamados.", "Si el programa cierra su campaña con dinero cobrado sin remitir, se remite en la próxima fecha normal."], "s7h": "Impuestos", "s7c": "Cada programa responde por su propia situación contributiva.", "s7": ["No hacemos ninguna afirmación sobre cómo se trata una promesa o un pago para efectos contributivos.", "No emitimos recibos para impuestos y no decimos que una promesa sea deducible.", "Lo que el programa le diga a sus padrinos sobre impuestos es del programa, y el programa responde por eso."], "ackH": "Lo que acepta el programa", "ackP": "Al inscribir un equipo, el programa marca que leyó y acepta esta divulgación, además de los Términos de Uso y la Política de Privacidad. Si algo de esto no le sirve a su programa, no lo inscriba — escríbanos y lo hablamos antes.", "verT": "Términos de Uso →", "verP": "Política de Privacidad →", "print": "Imprimir", "back": "← Cada Punto", "pieP": "cadapunto.com/custodia.html", "pieS": "Cómo se maneja el dinero · Cada Punto · Gostar Digital LLC, Puerto Rico"},"en":{"kick": "Disclosure", "h1": "How the money is handled", "sub": "Gostar Digital LLC · Cada Punto · October 2026", "lede": "What a program raises passes through us before it reaches them. We are not burying this in fine print: this page says all of it, and a program accepts it when it signs up.", "s1h": "Who collects", "s1c": "A padrino’s payment does not go straight to the program. It lands in a Gostar Digital LLC account and is remitted from there.", "s1": ["Payments are processed by Stripe, Inc. We do not see or store card numbers.", "Money collected sits in a Gostar Digital LLC account until it is remitted.", "We are not a bank and not a trustee. Funds held earn no interest for anyone and are not insured as a bank deposit."], "s2h": "When the program is paid", "s2c": "Twice a month: on the 1st and on the 15th. The 1st covers what was collected from the 16th to the end of the prior month; the 15th covers the 1st to the 14th.", "s2": ["The longest any payment waits is fifteen days. One that arrives on the 2nd is remitted on the 15th; one that arrives on the 16th is remitted on the 1st of the following month.", "We remit to the method the program gives us in writing. Changing it requires written notice from the campaign’s email address.", "If the 1st or the 15th falls on a holiday or weekend, we remit the next business day.", "If for any reason we cannot remit on that date, we tell the program before it passes, with the reason and the new date."], "s3h": "How much the program receives", "s3c": "Everything the padrinos pledged. Our fee does not come out of it.", "s3": ["The program receives 100% of what was pledged and collected.", "Our 20% was added to the padrino’s payment, on top of the pledge. It is never deducted from the program’s share.", "Stripe’s processing charges are also added to the padrino’s payment, not subtracted from the program’s."], "s4h": "Refunds and disputes", "s4c": "A padrino can dispute a charge with their bank after we have already remitted to the program.", "s4": ["If a score was entered wrongly, or the game did not happen, we refund the padrino.", "If a padrino disputes a charge with their bank after a remittance, that amount is deducted from the program’s next remittance.", "If there is no next remittance to deduct it from, we ask the program for it in writing, with the detail of the disputed charge.", "We tell the program about any dispute as soon as we know of it."], "s5h": "What the program can see", "s5c": "None of this depends on taking our word for it.", "s5": ["The program’s panel shows what was pledged, what was collected and what is outstanding, up to date.", "The program can ask us in writing for a statement covering any period and we send it.", "We keep the record of every pledge, every payment and every remittance while the campaign runs and afterwards for as long as accounting rules require."], "s6h": "If something stops", "s6c": "Programs close, accounts change, campaigns get abandoned.", "s6": ["If a program ceases to exist or we cannot reach it, we hold what was collected and try the campaign’s email address.", "If six months pass without our being able to remit, we treat it as Puerto Rico law requires for unclaimed funds.", "If a program closes its campaign with money collected and not yet remitted, it is remitted on the next normal date."], "s7h": "Taxes", "s7c": "Each program is responsible for its own tax position.", "s7": ["We make no representation about how a pledge or a payment is treated for tax purposes.", "We do not issue tax receipts and we do not say a pledge is deductible.", "What a program tells its padrinos about taxes is the program’s own, and the program answers for it."], "ackH": "What the program accepts", "ackP": "When signing a team up, the program ticks that it has read and accepts this disclosure, along with the Terms of Use and the Privacy Policy. If any of this does not work for your program, do not sign up — write to us and we will talk it through first.", "verT": "Terms of Use →", "verP": "Privacy Policy →", "print": "Print", "back": "← Cada Punto", "pieP": "cadapunto.com/custodia.html", "pieS": "How the money is handled · Cada Punto · Gostar Digital LLC, Puerto Rico"}};
+function T(k){ return (S[LANG] && S[LANG][k]) !== undefined ? S[LANG][k] : (S.en[k]||''); }
+function esc(s){ return String(s==null?'':s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toggleLang(){
+  LANG = (LANG === 'es') ? 'en' : 'es';
+  try{ localStorage.setItem('cfh_lang', LANG), localStorage.setItem('cp-lang', LANG),
+       localStorage.setItem('fc-lang', LANG); }catch(e){}
+  paint();
+}
+function reglas(n, items){
+  var h = '<ol>';
+  for (var i=0;i<items.length;i++) h += '<li data-n="' + n + '.' + (i+1) + '">' + esc(items[i]) + '</li>';
+  return h + '</ol>';
+}
+function seccion(n){
+  return '<section class="sec">' +
+    '<h2><span class="n">' + n + '.</span> ' + esc(T('s'+n+'h')) + '</h2>' +
+    '<p class="cab">' + esc(T('s'+n+'c')) + '</p>' +
+    reglas(n, T('s'+n)) + '</section>';
+}
+function paint(){
+  document.documentElement.lang = LANG;
+  document.getElementById('langBtn').textContent = (LANG === 'es') ? 'EN' : 'ES';
+  document.title = (LANG === 'es') ? 'C\u00f3mo se maneja el dinero \u2014 Cada Punto'
+                                   : 'How the money is handled \u2014 Cada Punto';
+  var out =
+    '<div class="rtop">' +
+      '<p class="kick">' + esc(T('kick')) + '</p>' +
+      '<h1>' + esc(T('h1')) + '</h1>' +
+      '<p class="sub">' + esc(T('sub')) + '</p>' +
+    '</div>' +
+    '<p class="lede">' + esc(T('lede')) + '</p>';
+  for (var n=1; n<=7; n++) out += seccion(n);
+  out +=
+    '<div class="ackbox">' +
+      '<h2>' + esc(T('ackH')) + '</h2>' +
+      '<p>' + esc(T('ackP')) + '</p>' +
+      '<a href="terms.html">' + esc(T('verT')) + '</a>' +
+      '<a href="privacy.html">' + esc(T('verP')) + '</a>' +
+    '</div>' +
+    '<div class="pie">' +
+      '<button type="button" onclick="window.print()">' + esc(T('print')) + '</button>' +
+      '<a href="index.html">' + esc(T('back')) + '</a>' +
+    '</div>' +
+    '<p class="pie-print">' + esc(T('pieP')) + '<span>' + esc(T('pieS')) + '</span></p>';
+  document.getElementById('app').innerHTML = out;
+}
+paint();
+</script>
+</body>
+</html>
