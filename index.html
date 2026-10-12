@@ -613,6 +613,8 @@
         bracketOpened:'{N} bracket game(s) opened for pledges.',
         bracketDropped:'{N} bracket game(s) dropped — they lost.',
         noOppScore:'No opponent score entered, so nothing in the bracket moved. Open it by hand if they won.',
+        codeNoTeamWarn:'This code is not tied to any team. It will NOT open the schedule builder or the scoreboard for a program \u2014 it only works as a general code. Create it anyway?',
+        codeNoBuildWarn:'This code can enter scores but cannot create games. The coach will not be able to use the schedule builder. Create it anyway?',
         games:'Games', addGame:'Add a game', noGamesYet:'No games yet.',
         breakdown:'Where the money came from',
         bdPaid:'Padrinos paid', bdFee:'Platform fee (20%)', bdTeam:'Your program receives',
@@ -1004,6 +1006,8 @@
         bracketOpened:'{N} juego(s) del cuadro abiertos para promesas.',
         bracketDropped:'{N} juego(s) del cuadro se cayeron \u2014 perdieron.',
         noOppScore:'No pusiste el marcador del contrario, as\u00ed que el cuadro no se movi\u00f3. \u00c1brelo a mano si ganaron.',
+        codeNoTeamWarn:'Este c\u00f3digo no queda amarrado a ning\u00fan equipo. NO le va a abrir el calendario ni el marcador a un programa \u2014 s\u00f3lo sirve como c\u00f3digo general. \u00bfLo creo as\u00ed?',
+        codeNoBuildWarn:'Este c\u00f3digo puede poner marcadores pero no crear juegos. El entrenador no va a poder usar el calendario. \u00bfLo creo as\u00ed?',
         games:'Juegos', addGame:'A\u00f1adir juego', noGamesYet:'Todav\u00eda no hay juegos.',
         breakdown:'De d\u00f3nde sali\u00f3 el dinero',
         bdPaid:'Los padrinos pagaron', bdFee:'Cargo de plataforma (20%)', bdTeam:'Tu programa recibe',
@@ -3884,8 +3888,6 @@
                      style="flex:1 1 140px;padding:7px 10px;border-radius:7px;
                             border:1px solid #ffffff1d;background:#0e0a11;color:#fff;
                             font-family:inherit;font-size:12px;">
-              <button class="btn" onclick="addCode()"
-                      style="padding:7px 13px;font-size:11px;">${t('makeCode')}</button>
             </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:7px;">
               <label style="flex:1 1 180px;color:#888;font-size:11px;">
@@ -3904,6 +3906,8 @@
                 ${t('codeBuildLbl')}
               </label>
             </div>
+            <button class="btn" onclick="addCode()"
+                    style="margin-top:9px;width:100%;padding:10px 13px;font-size:12px;">${t('makeCode')}</button>
             <div style="color:#888;font-size:11px;margin-top:6px;">${t('codeHint')}</div>
           </div>`;
       } catch (error) {
@@ -3922,6 +3926,12 @@
       const buildEl = document.getElementById('codeBuild');
       const camp  = campEl ? (campEl.value || null) : null;
       const build = buildEl ? !!buildEl.checked : false;
+
+      // Un código sin equipo no abre el calendario ni el marcador de
+      // nadie: builder_check y score_check piden que la campaña cuadre.
+      // Se puede querer a propósito, pero no por no haber bajado.
+      if (!camp && !confirm(t('codeNoTeamWarn'))) return;
+      if (camp && !build && !confirm(t('codeNoBuildWarn'))) return;
 
       try {
         const r = await supabaseQuery('rpc/bw_code_add', 'POST',
