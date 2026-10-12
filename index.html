@@ -739,6 +739,7 @@
         confirmRemoveCoach:'Remove this coach? Their students stay on the roster — only their access goes.',
         payouts:'Payouts', teamShareTotal:'Team share', paidOut:'Paid out',
         outstanding:'Outstanding', recordPayment:'Record Payment', history:'History',
+        sendTo:'Send to', noDest:'No ATH account on file — send them cobro.html with their code',
         owedToTeams:'Owed to teams', paidToDate:'Paid to date', platformShare:'Your share',
         payoutAmount:'Amount paid to the team ($)', payoutMethod:'How was it paid? (ATH M\u00f3vil, check, transfer)',
         payoutReference:'Reference or confirmation number (optional)',
@@ -1132,6 +1133,7 @@
         confirmRemoveCoach:'\u00bfQuitar este coach? Sus estudiantes se quedan en la lista — solo se va su acceso.',
         payouts:'Pagos', teamShareTotal:'Parte del equipo', paidOut:'Pagado',
         outstanding:'Pendiente', recordPayment:'Registrar pago', history:'Historial',
+        sendTo:'Enviar a', noDest:'No han dicho a dónde — mándales cobro.html con su código',
         owedToTeams:'Se les debe a los equipos', paidToDate:'Pagado hasta hoy', platformShare:'Tu parte',
         payoutAmount:'Cantidad pagada al equipo ($)', payoutMethod:'\u00bfC\u00f3mo se pag\u00f3? (ATH M\u00f3vil, cheque, transferencia)',
         payoutReference:'N\u00famero de referencia o confirmaci\u00f3n (opcional)',
@@ -4345,6 +4347,15 @@
         const cards = await supabaseQuery('cards', 'GET', null, '?select=campaign_id,team_amount,platform_amount');
         const paid = await supabaseQuery('payouts', 'GET', null, '?select=campaign_id,amount');
 
+        // A dónde se le manda a cada uno. Vive en su propia tabla, a la
+        // que no se llega por REST; esto es lo único que la enseña, y
+        // sólo si is_admin() dice que sí.
+        const destOf = {};
+        try {
+          const dests = await supabaseQuery('rpc/payout_destinations', 'POST', {});
+          (dests || []).forEach(d => { destOf[d.campaign] = d; });
+        } catch (e) { console.error('Destinations:', e); }
+
         // Pledges are where the money comes from now, and a pledge is
         // only owed to a program once it has actually been collected.
         const chs = await supabaseQuery('challenges', 'GET', null, '?select=id,campaign_id');
@@ -4384,6 +4395,15 @@
           const outstanding = owed - already;
           totalOwed += owed; totalPaid += already; totalPlatform += platformBy[c.id] || 0;
 
+          // Lo que hace falta el día 1 y el 15: a qué ATH va esto.
+          const d = destOf[c.id];
+          const dest = (d && d.listo)
+            ? `<p style="margin:6px 0 0 0;font-size:12px;color:#aaa;">
+                 ${t('sendTo')}: <strong style="color:#fff;">${escapeHtml(d.ath)}</strong>
+                 · <strong style="color:#fff;">${escapeHtml(String(d.telefono || '').replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3'))}</strong>
+               </p>`
+            : `<p style="margin:6px 0 0 0;font-size:12px;color:var(--gold);">${t('noDest')}</p>`;
+
           return `
             <div style="padding:14px;background:#0e0a11;border-radius:9px;margin:10px 0;border:1px solid #ffffff14;">
               <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;">
@@ -4396,6 +4416,7 @@
                   <p style="margin:6px 0 0 0;font-size:15px;font-weight:950;color:${outstanding > 0.005 ? 'var(--gold)' : '#6f6'};">
                     ${t('outstanding')}: ${money(outstanding)}
                   </p>
+                  ${dest}
                 </div>
                 <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
                   <button class="btn" onclick="recordPayout('${c.id}', ${outstanding.toFixed(2)})" style="padding:6px 10px;font-size:11px;">${t('recordPayment')}</button>
