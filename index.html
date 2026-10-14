@@ -575,7 +575,9 @@
         codeHas:'{N} already has a code. Making another leaves the old one working — turn it off below if you are replacing it.',
         codeLabelPh:'Cancha 1', codeValuePh:'A code they will remember',
         makeCode:'Make', turnOff:'Turn off', noCodes:'No codes made yet.',
-        delCode:'Delete', offCodes:'Turned off',
+        delCode:'Delete', offCodes:'Turned off', turnOn:'Turn back on',
+        confirmOn:'Turn the code for {L} back on? It is the same code as before \u2014 whoever had it can use it again.',
+        onFailed:'Could not turn that code back on.',
         confirmDelCode:'Delete the code for {L} for good? If anyone is still using it, they lose access immediately. Turning it off is usually enough — delete is for codes made by mistake.',
         delCodeFailed:'Could not delete that code.',
         lastUsed:'last used', neverUsed:'never used',
@@ -972,7 +974,9 @@
         codeHas:'{N} ya tiene c\u00f3digo. Si haces otro, el viejo sigue sirviendo \u2014 ap\u00e1galo abajo si lo est\u00e1s reemplazando.',
         codeLabelPh:'Cancha 1', codeValuePh:'Un c\u00f3digo que recuerden',
         makeCode:'Crear', turnOff:'Apagar', noCodes:'Todav\u00eda no hay c\u00f3digos.',
-        delCode:'Borrar', offCodes:'Apagados',
+        delCode:'Borrar', offCodes:'Apagados', turnOn:'Prender',
+        confirmOn:'\u00bfPrender otra vez el c\u00f3digo de {L}? Es el mismo de antes \u2014 quien lo tuviera lo puede volver a usar.',
+        onFailed:'No se pudo prender ese c\u00f3digo.',
         confirmDelCode:'\u00bfBorrar el c\u00f3digo de {L} para siempre? Si alguien todav\u00eda lo usa, se queda fuera en el acto. Apagarlo casi siempre basta \u2014 borrar es para los que se crearon por error.',
         delCodeFailed:'No se pudo borrar ese c\u00f3digo.',
         lastUsed:'\u00faltima vez', neverUsed:'sin usar',
@@ -3906,8 +3910,12 @@
                     <span><b>${escapeHtml(r.label)}</b>
                       <span style="color:#888;"> · ${r.campaign
                         ? escapeHtml(r.campaign) : t('codeNoTeam')}</span></span>
-                    <button class="btn alt" onclick="dropCode('${r.id}','${escapeHtml(r.label)}')"
-                            style="padding:3px 9px;font-size:10px;color:#f87171;">${t('delCode')}</button>
+                    <span style="display:flex;gap:5px;flex:0 0 auto;">
+                      <button class="btn alt" onclick="wakeCode('${r.id}','${escapeHtml(r.label)}')"
+                              style="padding:3px 9px;font-size:10px;">${t('turnOn')}</button>
+                      <button class="btn alt" onclick="dropCode('${r.id}','${escapeHtml(r.label)}')"
+                              style="padding:3px 9px;font-size:10px;color:#f87171;">${t('delCode')}</button>
+                    </span>
                   </div>`).join('')}
               </div>` : ''}
 
@@ -3982,10 +3990,29 @@
     // verdad se usó: queda constancia. Borrar la quita — para el que se
     // creó por error, y para poder deshacerse de una campaña de prueba,
     // porque mientras exista un código agarrado a ella no se deja borrar.
+    // Apagar era de ida y sin vuelta. Un dedo flojo dejaba a un coach
+    // fuera y no había más remedio que hacerle otro código. El código no
+    // se vuelve a enseñar — sólo está guardado cifrado — pero es el mismo
+    // y el coach ya lo tiene.
+    async function wakeCode(id, label) {
+      if (!confirm(t('confirmOn').replace('{L}', label))) return;
+      try {
+        const r = await supabaseQuery('rpc/bw_code_on', 'POST', { p_id: id });
+        if (!r || !r.ok) { alert(t('onFailed')); return; }
+        await loadCodes();
+      } catch (error) {
+        console.error('Wake code:', error);
+        alert(t('onFailed'));
+      }
+    }
+
     async function dropCode(id, label) {
       if (!confirm(t('confirmDelCode').replace('{L}', label))) return;
       try {
-        await supabaseQuery(`bw_codes?id=eq.${id}`, 'DELETE');
+        // Por RPC, no por la tabla: el admin entra como usuario firmado,
+        // y sobre bw_codes no hay regla que le deje borrar directo.
+        const r = await supabaseQuery('rpc/bw_code_del', 'POST', { p_id: id });
+        if (!r || !r.ok) { alert(t('delCodeFailed')); return; }
         await loadCodes();
       } catch (error) {
         console.error('Delete code:', error);
