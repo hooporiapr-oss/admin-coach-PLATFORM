@@ -575,6 +575,9 @@
         codeHas:'{N} already has a code. Making another leaves the old one working — turn it off below if you are replacing it.',
         codeLabelPh:'Cancha 1', codeValuePh:'A code they will remember',
         makeCode:'Make', turnOff:'Turn off', noCodes:'No codes made yet.',
+        delCode:'Delete', offCodes:'Turned off',
+        confirmDelCode:'Delete the code for {L} for good? If anyone is still using it, they lose access immediately. Turning it off is usually enough — delete is for codes made by mistake.',
+        delCodeFailed:'Could not delete that code.',
         lastUsed:'last used', neverUsed:'never used',
         codeHint:'The code is shown once. After that only they have it.',
         needLabel:'Give it a label — which court or table.',
@@ -969,6 +972,9 @@
         codeHas:'{N} ya tiene c\u00f3digo. Si haces otro, el viejo sigue sirviendo \u2014 ap\u00e1galo abajo si lo est\u00e1s reemplazando.',
         codeLabelPh:'Cancha 1', codeValuePh:'Un c\u00f3digo que recuerden',
         makeCode:'Crear', turnOff:'Apagar', noCodes:'Todav\u00eda no hay c\u00f3digos.',
+        delCode:'Borrar', offCodes:'Apagados',
+        confirmDelCode:'\u00bfBorrar el c\u00f3digo de {L} para siempre? Si alguien todav\u00eda lo usa, se queda fuera en el acto. Apagarlo casi siempre basta \u2014 borrar es para los que se crearon por error.',
+        delCodeFailed:'No se pudo borrar ese c\u00f3digo.',
         lastUsed:'\u00faltima vez', neverUsed:'sin usar',
         codeHint:'El c\u00f3digo se ense\u00f1a una vez. Despu\u00e9s s\u00f3lo lo tienen ellos.',
         needLabel:'Ponle nombre \u2014 qu\u00e9 cancha o mesa.',
@@ -3854,6 +3860,10 @@
       try {
         const rows = await supabaseQuery('rpc/bw_codes_list', 'POST', {});
         const live = (rows || []).filter(r => r.active);
+        // Un código apagado no se enseñaba en ningún sitio — pero la fila
+        // sigue ahí, y sigue agarrada a su campaña, así que la campaña no
+        // se deja borrar y no hay forma de ver por qué. Ahora se ven.
+        const off  = (rows || []).filter(r => !r.active);
         // Las campañas, para poder atar un código a un equipo al crearlo.
         const camps = await supabaseQuery('campaigns', 'GET', null, '?select=id,name&order=name.asc') || [];
 
@@ -3875,11 +3885,31 @@
                         ? ' · ' + t('codeBuilds') : ''} · ${r.used
                         ? t('lastUsed') + ' ' + new Date(r.used).toLocaleDateString()
                         : t('neverUsed')}</span></span>
-                    <button class="btn alt" onclick="killCode('${r.id}','${escapeHtml(r.label)}')"
-                            style="padding:3px 9px;font-size:10px;">${t('turnOff')}</button>
+                    <span style="display:flex;gap:5px;flex:0 0 auto;">
+                      <button class="btn alt" onclick="killCode('${r.id}','${escapeHtml(r.label)}')"
+                              style="padding:3px 9px;font-size:10px;">${t('turnOff')}</button>
+                      <button class="btn alt" onclick="dropCode('${r.id}','${escapeHtml(r.label)}')"
+                              style="padding:3px 9px;font-size:10px;color:#f87171;">${t('delCode')}</button>
+                    </span>
                   </div>`).join('')}
               </div>`
               : `<p style="color:#888;font-size:12px;margin:0 0 12px;">${t('noCodes')}</p>`}
+
+            ${off.length ? `
+              <div style="color:#888;font-size:11px;margin:0 0 6px;font-weight:900;
+                          letter-spacing:.1em;text-transform:uppercase;">${t('offCodes')}</div>
+              <div style="display:grid;gap:5px;margin-bottom:12px;opacity:.55;">
+                ${off.map(r => `
+                  <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;
+                              padding:8px 11px;background:#0e0a11;border:1px solid #ffffff10;
+                              border-radius:8px;font-size:12px;">
+                    <span><b>${escapeHtml(r.label)}</b>
+                      <span style="color:#888;"> · ${r.campaign
+                        ? escapeHtml(r.campaign) : t('codeNoTeam')}</span></span>
+                    <button class="btn alt" onclick="dropCode('${r.id}','${escapeHtml(r.label)}')"
+                            style="padding:3px 9px;font-size:10px;color:#f87171;">${t('delCode')}</button>
+                  </div>`).join('')}
+              </div>` : ''}
 
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               <input id="codeLabel" type="text" placeholder="${t('codeLabelPh')}"
@@ -3945,6 +3975,21 @@
       } catch (error) {
         console.error('Add code:', error);
         alert('Error: ' + error.message);
+      }
+    }
+
+    // Apagar guarda la fila, que es lo correcto para un código que de
+    // verdad se usó: queda constancia. Borrar la quita — para el que se
+    // creó por error, y para poder deshacerse de una campaña de prueba,
+    // porque mientras exista un código agarrado a ella no se deja borrar.
+    async function dropCode(id, label) {
+      if (!confirm(t('confirmDelCode').replace('{L}', label))) return;
+      try {
+        await supabaseQuery(`bw_codes?id=eq.${id}`, 'DELETE');
+        await loadCodes();
+      } catch (error) {
+        console.error('Delete code:', error);
+        alert(t('delCodeFailed'));
       }
     }
 
