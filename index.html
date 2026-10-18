@@ -177,16 +177,26 @@
           </div>
 
           <!-- ══════════════════════════════════════════════════════
-               LOS RETOS, ESCONDIDOS — 18 de octubre de 2026
+               LOS RETOS — 18 de octubre de 2026, por la tarde
 
-               El Fortress sale del producto "por ahora", asi que su
-               seccion se esconde en vez de borrarse: el formulario,
-               el selector de juego y la lista siguen enteros debajo
-               de este display:none, y vuelven quitando una linea.
+               Esta seccion estuvo escondida unas horas esta misma
+               manana, con un display:none y un comentario que decia
+               "el Fortress sale del producto por ahora". Por la tarde
+               el Fortress ES el producto: se llama Anotado y tiene su
+               propio sitio.
 
-               Si el Fortress no vuelve, esto se borra de verdad.
+               Volvio quitando esa linea, que es exactamente por lo
+               que se escondio en vez de borrarse. Si se hubiera
+               borrado habria que rehacer el formulario, el selector
+               de juego y la lista, y nadie se acuerda de los detalles
+               de un formulario que borro ayer.
+
+               Y sin esta seccion no hay forma de abrir un reto, o
+               sea que Anotado no tiene como empezar un evento: el
+               reporte, el tablero y las promesas cuelgan todos de que
+               exista un reto.
                ══════════════════════════════════════════════════════ -->
-          <div style="display:none">
+          <div>
           <div class="sechead" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h3 style="margin:0;" data-i18n="challenges">Challenges</h3>
             <span style="display:flex;gap:6px;"><button class="btn alt" onclick="loadChallenges()" title="Refresh" style="padding:5px 9px;font-size:11px;">↻</button><button class="btn" onclick="toggleForm('createChallengeForm')" data-i18n="newChallenge">+ New Challenge</button></span>
