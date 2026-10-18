@@ -156,6 +156,48 @@
             <label data-i18n="campaignName">Campaign Name</label>
             <input type="text" id="campaignName" data-i18n-ph="campaignNamePh" placeholder="Enter campaign name">
 
+            <!-- De qué producto es. Se escoge aquí porque una campaña se da de
+
+
+                 alta a mano, no desde la solicitud, así que no hay de dónde
+
+
+                 heredarlo. Quien la crea tiene delante la solicitud con su
+
+
+                 etiqueta, que es el momento en que se sabe.
+
+
+            
+
+
+                 Decide a qué dominio apuntan TODOS los enlaces que luego se le
+
+
+                 dan al entrenador. Equivocarse aquí manda a los nenes al otro
+
+
+                 producto, así que sale en la lista de campañas a la vista. -->
+
+
+            <label data-i18n="campaignProduct">Product</label>
+
+
+            <select id="campaignProduct">
+
+
+              <option value="cada-punto">Cada Punto (cadapunto.com)</option>
+
+
+              <option value="anotado">Hooporia (hooporia.com)</option>
+
+
+            </select>
+
+
+            
+
+
             <label data-i18n="teamLogo">Team Logo URL (optional)</label>
             <input type="text" id="campaignLogo" placeholder="https://...">
 
@@ -407,6 +449,7 @@
 
         campaigns:'Campaigns', newCampaign:'+ New Campaign', createCampaignTitle:'Create New Campaign',
         campaignName:'Campaign Name', campaignNamePh:'Enter campaign name',
+        campaignProduct:'Product',
         description:'Description', descriptionPh:'Campaign description', createCampaignBtn:'Create Campaign',
 
         badPassword:'Invalid password', loggedOut:'Logged out',
@@ -484,6 +527,7 @@
         supportTeamBody:'Every card is half to the team. Buy one, use the coupons, help them reach their goal.',
         ourPlayers:'Our players', ourPlayersBody:'Tap a player to support them directly.',
         shareTeamLink:'Share this page', teamLink:'Team Link',
+        teamLinkNA:'This program is on Hooporia, where every padrino pledges for one player. Use the Player link instead.',
         teamPageSales:'Team page sales',
         chooseCards:'Cards', chooseCardsBody:'Tick the cards this team can sell.',
         noCardsForTeam:'No cards are set up for this team yet. Please check back soon.',
@@ -809,6 +853,7 @@
 
         campaigns:'Campañas', newCampaign:'+ Nueva campaña', createCampaignTitle:'Crear nueva campaña',
         campaignName:'Nombre de la campaña', campaignNamePh:'Entra el nombre',
+        campaignProduct:'Producto',
         description:'Descripción', descriptionPh:'Descripción de la campaña', createCampaignBtn:'Crear campaña',
 
         badPassword:'Contraseña incorrecta', loggedOut:'Sesión cerrada',
@@ -886,6 +931,7 @@
         supportTeamBody:'La mitad de cada tarjeta es para el equipo. Compra una, usa los cupones y ay\u00fadalos a llegar a su meta.',
         ourPlayers:'Nuestros jugadores', ourPlayersBody:'Toca un jugador para apoyarlo directamente.',
         shareTeamLink:'Compartir esta p\u00e1gina', teamLink:'Enlace del equipo',
+        teamLinkNA:'Este programa es de Hooporia, donde cada padrino promete por UN jugador. Usa el enlace del jugador.',
         teamPageSales:'Ventas de la p\u00e1gina del equipo',
         chooseCards:'Tarjetas', chooseCardsBody:'Marca las tarjetas que este equipo puede vender.',
         noCardsForTeam:'Todav\u00eda no hay tarjetas asignadas a este equipo. Vuelve pronto.',
@@ -2670,7 +2716,7 @@
     }
 
     function copyTryoutLink(campaignId) {
-      const link = SITES.school + '/challenges.html?tryout=' + campaignId;
+      const link = sitioDe(campaignId, null) + '/challenges.html?tryout=' + campaignId;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(link).then(() => alert(t('copied') + '\n\n' + link)).catch(() => prompt(t('copy'), link));
       } else {
@@ -2686,7 +2732,7 @@
         const rows = await supabaseQuery('campaigns', 'GET', null,
           `?id=eq.${campaignId}&select=name`);
         const name = (rows && rows[0] && rows[0].name) || '';
-        const link = SITES.school + '/challenges.html?tryout=' + campaignId;
+        const link = sitioDe(campaignId, null) + '/challenges.html?tryout=' + campaignId;
 
         // drawn by a public QR service, so nothing has to be bundled
         const img = 'https://api.qrserver.com/v1/create-qr-code/?size=900x900&margin=0&data='
@@ -3639,6 +3685,7 @@
         const campaign = await supabaseQuery('campaigns', 'POST', {
           name,
           description: desc,
+            product: (document.getElementById('campaignProduct') || {}).value || 'cada-punto',
           admin_code: adminCode,
           logo_url: document.getElementById('campaignLogo').value.trim() || null,
           slug
@@ -3657,6 +3704,7 @@
         document.getElementById('campaignName').value = '';
         document.getElementById('campaignDesc').value = '';
         document.getElementById('campaignLogo').value = '';
+          var _pr = document.getElementById('campaignProduct'); if (_pr) _pr.value = 'cada-punto';
         document.getElementById('createCampaignForm').style.display = 'none';
         
         alert('Campaign created!\nCoach Code: ' + coachCode);
@@ -4121,20 +4169,35 @@
 
         /* La etiqueta sólo sale cuando de verdad hay dos productos en
            la lista. Con una sola, etiquetar cada fila con lo mismo es
-           ruido que no dice nada. */
+           ruido que no dice nada.
+
+           ── El valor guardado se llama 'anotado'; la etiqueta dice
+              HOOPORIA, y es a propósito ─────────────────────────────
+           El producto se llamaba Anotado cuando se creó la columna.
+           Al cambiar la marca a Hooporia se cambió lo que LEE un
+           humano y no lo que hay escrito en la base: renombrar el
+           valor es una migración —actualizar todas las filas, cambiar
+           la comprobación de request_product, y acertar las dos cosas
+           el mismo minuto o las solicitudes nuevas entran con un
+           producto que la función rechaza— y todo eso para que una
+           cadena que nadie ve diga otra cosa.
+
+           Así que aquí se traduce y se queda traducido. Si algún día
+           aparece un tercer producto, esto pide un mapa de verdad
+           ({ anotado:'HOOPORIA', ... }) en vez de un ternario. */
         const marcas = [...new Set(Object.values(producto).filter(Boolean))];
         const hayDos = marcas.length > 1;
         const etiqueta = (id) => {
           const p = producto[id];
           if (!p || !hayDos) return '';
-          const esAnotado = p === 'anotado';
+          const esHooporia = p === 'anotado';
           return `<span style="display:inline-block;margin-left:7px;padding:1px 7px;
                     border-radius:999px;font-size:9px;font-weight:900;
                     letter-spacing:.1em;vertical-align:middle;
-                    background:${esAnotado ? '#ff7a1822' : '#ffffff10'};
-                    color:${esAnotado ? '#ff9c4d' : '#9aa6b2'};
-                    border:1px solid ${esAnotado ? '#ff7a1855' : '#ffffff1f'};"
-                  >${esAnotado ? 'ANOTADO' : 'CADA PUNTO'}</span>`;
+                    background:${esHooporia ? '#ff7a1822' : '#ffffff10'};
+                    color:${esHooporia ? '#ff9c4d' : '#9aa6b2'};
+                    border:1px solid ${esHooporia ? '#ff7a1855' : '#ffffff1f'};"
+                  >${esHooporia ? 'HOOPORIA' : 'CADA PUNTO'}</span>`;
         };
 
         box.innerHTML = `
@@ -4203,6 +4266,7 @@
         await loadCodes();
         await loadEntries();
         const campaigns = await supabaseQuery('campaigns', 'GET', null, '?order=created_at.desc');
+        (campaigns || []).forEach(c => recordarProducto(c.id, c.product));
         
         if (!campaigns || campaigns.length === 0) {
           document.getElementById('campaignsContainer').innerHTML = '<p style="color:#aaa;">' + t('noCampaigns') + '</p>';
@@ -4219,7 +4283,10 @@
             <div style="padding:14px;background:#0e0a11;border-radius:9px;margin:10px 0;border:1px solid #ffffff14;">
               <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;">
                 <div style="flex:1;">
-                  <p style="margin:0;font-weight:950;font-size:16px;">${c.name}</p>
+                  <p style="margin:0;font-weight:950;font-size:16px;">${c.name}${
+                    c.product === 'anotado'
+                      ? ` <span style="display:inline-block;margin-left:7px;padding:1px 7px;border-radius:999px;font-size:9px;font-weight:900;letter-spacing:.1em;vertical-align:middle;background:#ff7a1822;color:#ff9c4d;border:1px solid #ff7a1855;">HOOPORIA</span>`
+                      : ''}</p>
                   <p style="margin:4px 0 0 0;font-size:12px;color:#aaa;">${t('goal')}: $${c.goal}</p>
                   <p style="margin:4px 0 0 0;font-size:12px;color:#888;">${c.description || t('noDescription')}</p>
                   <div style="margin:8px 0 0 0;padding:10px;background:#1a1420;border-radius:6px;font-size:11px;border:1px solid #ffffff1a;">
@@ -4477,23 +4544,94 @@
     // Every Point for the school challenges.
     const SITES = {
       basketball: 'https://hoops.cash',
-      school: 'https://cadapunto.com'
+      school: 'https://cadapunto.com',
+        hooporia: 'https://hooporia.com'
     };
     const BASKETBALL_GAMES = ['cashrack', 'spots'];
 
-    function siteFor(game) {
-      return BASKETBALL_GAMES.indexOf(game) !== -1 ? SITES.basketball : SITES.school;
+      /* ── De qué producto es cada campaña ──────────────────────────
+         Esto existe porque el enlace con el que un nene entra a jugar
+         su corrida oficial se construía mirando el JUEGO, y 'fortress'
+         no está en BASKETBALL_GAMES: todo enlace de Fortress salía
+         apuntando a cadapunto.com. Para un reto de Hooporia, el
+         entrenador copiaba el enlace y mandaba a su jugador al otro
+         producto.
+
+         Por el juego no se puede distinguir —los dos productos usan
+         los mismos—, así que ahora se mira la campaña, que lleva
+         columna product desde hooporia-producto-campana.sql.
+
+         Se guarda aquí según se van cargando campañas y retos, para no
+         pedir la misma fila cada vez que alguien copia un enlace. Una
+         campaña que no esté en el mapa se trata como cada-punto, que
+         es lo que eran todas antes de que existiera la columna. */
+      const PRODUCTO_CAMPANA = {};
+
+      function recordarProducto(campaignId, product) {
+        if (campaignId && product) PRODUCTO_CAMPANA[campaignId] = product;
+      }
+
+      function productoDe(campaignId) {
+        return PRODUCTO_CAMPANA[campaignId] || 'cada-punto';
+      }
+
+      /* El sitio de una campaña. Cash Rack y The Spots se juegan en una
+         cancha de verdad y tienen su propio sitio, así que ésos mandan
+         sea cual sea el producto. */
+      function sitioDe(campaignId, game) {
+        if (BASKETBALL_GAMES.indexOf(game) !== -1) return SITES.basketball;
+        return productoDe(campaignId) === 'anotado' ? SITES.hooporia : SITES.school;
+      }
+
+      /* ── Y la RUTA, que tampoco es la misma ───────────────────────
+         No basta con cambiar el dominio: los dos productos no tienen
+         las mismas páginas.
+
+         Cada Punto lo hace todo desde challenges.html, que es a la vez
+         donde se promete y desde donde se entra a jugar.
+
+         Hooporia no tiene challenges.html. Ahí se promete en
+         prometer.html y se juega entrando directamente al fichero del
+         juego —fortress.html y sus hermanos—, que es quien lee c, p y
+         k y llama a record_official_run.
+
+         Con sólo cambiar el dominio, cada enlace de Hooporia habría
+         sido un 404 en hooporia.com/challenges.html: mejor que mandar
+         al nene al otro producto, pero no mucho. */
+      function rutaPromesa(campaignId) {
+        return productoDe(campaignId) === 'anotado' ? '/prometer.html' : '/challenges.html';
+      }
+
+      function rutaCorrida(campaignId, game) {
+        if (productoDe(campaignId) !== 'anotado') return '/challenges.html';
+        // En Hooporia se entra al juego directo. Sólo están los tres
+        // Fortress; cualquier otro juego es de Cada Punto y no tiene
+        // fichero aquí.
+        const suyos = ['fortress', 'fortress131', 'fortress-vr'];
+        return '/' + (suyos.indexOf(game) !== -1 ? game : 'fortress') + '.html';
+      }
+
+      /* Hooporia no tiene enlace de equipo: ahí un padrino promete
+         siempre por UN jugador, así que prometer.html pide c y p. Un
+         enlace sin jugador no lleva a ninguna parte, y es mejor
+         decirlo que copiar algo roto. */
+      function hayEnlaceDeEquipo(campaignId) {
+        return productoDe(campaignId) !== 'anotado';
+      }
+
+    function siteFor(game, campaignId) {
+      return sitioDe(campaignId, game);
     }
 
     // The pledge pages sit at the root on the school site and at
     // /pledge.html on the basketball one, where the root is the
     // Cash Rack rules.
-    function pledgeBase(game) {
+    function pledgeBase(game, campaignId) {
       // Neither site serves pledges from its root now — both roots are
       // the pitch, and the challenges live on their own page.
       return BASKETBALL_GAMES.indexOf(game) !== -1
         ? SITES.basketball + '/pledge.html'
-        : SITES.school + '/challenges.html';
+        : sitioDe(campaignId, game) + rutaPromesa(campaignId);
     }
 
     function pointsFor(level) {
@@ -4585,7 +4723,10 @@
         }
 
         const rows = await supabaseQuery('challenges', 'GET', null,
-          '?select=*,campaigns(name)&order=created_at.desc');
+          '?select=*,campaigns(name,product)&order=created_at.desc');
+        // El producto de cada campaña, para que los enlaces de abajo
+        // sepan a qué dominio apuntan.
+        (rows || []).forEach(r => recordarProducto(r.campaign_id, r.campaigns && r.campaigns.product));
 
         if (!rows || rows.length === 0) {
           box.innerHTML = `<p style="color:#aaa;">${t('noChallenges')}</p>`;
@@ -4610,7 +4751,7 @@
                 </label>
               </div>
               <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-                <button class="btn" onclick="copyChallengeLink('${ch.id}','${ch.game}')" style="padding:6px 10px;font-size:11px;">${t('teamLink')}</button>
+                <button class="btn" onclick="copyChallengeLink('${ch.id}','${ch.game}','${ch.campaign_id}')" style="padding:6px 10px;font-size:11px;">${t('teamLink')}</button>
                 <button class="btn alt" onclick="toggleChallengeDetail('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('detail')}</button>
                 ${isManual(ch.game) ? `
                   <button class="btn" onclick="copyScoringLink('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('scoringLink')}</button>
@@ -4628,8 +4769,9 @@
       }
     }
 
-    function copyChallengeLink(challengeId, game) {
-      const link = pledgeBase(game) + '?c=' + challengeId;
+    function copyChallengeLink(challengeId, game, campaignId) {
+      if (!hayEnlaceDeEquipo(campaignId)) { alert(t('teamLinkNA')); return; }
+      const link = pledgeBase(game, campaignId) + '?c=' + challengeId;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(link).then(() => alert(t('copied') + '\n\n' + link)).catch(() => prompt(t('copy'), link));
       } else {
@@ -4637,8 +4779,8 @@
       }
     }
 
-    function copyPlayerChallengeLink(challengeId, playerId, game) {
-      const link = pledgeBase(game) + '?c=' + challengeId + '&p=' + playerId;
+    function copyPlayerChallengeLink(challengeId, playerId, game, campaignId) {
+      const link = pledgeBase(game, campaignId) + '?c=' + challengeId + '&p=' + playerId;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(link).then(() => alert(t('copied') + '\n\n' + link)).catch(() => prompt(t('copy'), link));
       } else {
@@ -4649,7 +4791,7 @@
     // The player's own link carries their run key, so only they can
     // start the official run. Hand it to the player; hand the sponsor
     // link to everyone else.
-    async function copyPlayerRunLink(challengeId, playerId, game) {
+    async function copyPlayerRunLink(challengeId, playerId, game, campaignId) {
       try {
         // The key comes from the database, which decides whether the
         // person asking looks after this player. A coach never reads
@@ -4675,7 +4817,8 @@
         }
 
         const key = await res.json();
-        const link = pledgeBase(game) + '?c=' + challengeId + '&p=' + playerId + '&k=' + key;
+        const link = sitioDe(campaignId, game) + rutaCorrida(campaignId, game)
+                     + '?c=' + challengeId + '&p=' + playerId + '&k=' + key;
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(link).then(() => alert(t('playerLinkCopied') + '\n\n' + link)).catch(() => prompt(t('copy'), link));
         } else {
@@ -4737,9 +4880,10 @@
 
       try {
         const chRows = await supabaseQuery('challenges', 'GET', null,
-          `?id=eq.${challengeId}&select=campaign_id,team_share_pct,game`);
+          `?id=eq.${challengeId}&select=campaign_id,team_share_pct,game,campaigns(product)`);
         if (!chRows || chRows.length === 0) return;
         const ch = chRows[0];
+        recordarProducto(ch.campaign_id, ch.campaigns && ch.campaigns.product);
 
         const [players, runs, practice, pledges] = await Promise.all([
           supabaseQuery('players', 'GET', null, `?campaign_id=eq.${ch.campaign_id}&select=id,name,grade&order=name.asc`),
@@ -4819,7 +4963,7 @@
                   <span style="flex-shrink:0;display:flex;align-items:center;gap:8px;">
                     ${run ? `<strong style="color:var(--gold);">${run.points} ${t('pointsWord')}</strong>` : `<span style="color:#666;">${t('noScore')}</span>`}
                     ${locked ? `<span style="color:#888;font-size:10px;">${t('lockedWord')}</span>` : ''}
-                    <button class="btn alt" onclick="copyPlayerChallengeLink('${challengeId}','${p.id}','${ch.game}')" style="padding:4px 9px;font-size:10px;">${t('sponsorLink')}</button>
+                    <button class="btn alt" onclick="copyPlayerChallengeLink('${challengeId}','${p.id}','${ch.game}','${ch.campaign_id}')" style="padding:4px 9px;font-size:10px;">${t('sponsorLink')}</button>
                   </span>
                 </div>
                 ${locked ? '' : `
@@ -4844,8 +4988,8 @@
                 </span>
               </span>
               <span style="display:flex;gap:6px;flex-shrink:0;">
-                <button class="btn alt" onclick="copyPlayerChallengeLink('${challengeId}','${p.id}','${ch.game}')" style="padding:4px 9px;font-size:10px;">${t('sponsorLink')}</button>
-                <button class="btn" onclick="copyPlayerRunLink('${challengeId}','${p.id}','${ch.game}')" style="padding:4px 9px;font-size:10px;">${t('playerLink')}</button>
+                <button class="btn alt" onclick="copyPlayerChallengeLink('${challengeId}','${p.id}','${ch.game}','${ch.campaign_id}')" style="padding:4px 9px;font-size:10px;">${t('sponsorLink')}</button>
+                <button class="btn" onclick="copyPlayerRunLink('${challengeId}','${p.id}','${ch.game}','${ch.campaign_id}')" style="padding:4px 9px;font-size:10px;">${t('playerLink')}</button>
               </span>
             </div>`;
         }).join('');
@@ -5377,6 +5521,7 @@
         
         const campaigns = await supabaseQuery('campaigns', 'GET', null, `?id=eq.${campaignId}`);
         if (!campaigns || campaigns.length === 0) return;
+        recordarProducto(campaignId, campaigns[0].product);
         
         // Crest beside the campaign name, so a coach can see at a glance
         // they are in the right campaign.
@@ -5515,8 +5660,8 @@
             </div>
             <span style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
               ${COACH_CHALLENGE_ID ? `
-                <button class="btn alt" onclick="copyPlayerChallengeLink('${COACH_CHALLENGE_ID}','${p.id}','${(COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID) || {}).game || 'fortress'}')" style="padding:5px 10px;font-size:11px;">${t('sponsorLink')}</button>
-                <button class="btn" onclick="copyPlayerRunLink('${COACH_CHALLENGE_ID}','${p.id}','${(COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID) || {}).game || 'fortress'}')" style="padding:5px 10px;font-size:11px;">${t('playerLink')}</button>` : ''}
+                <button class="btn alt" onclick="copyPlayerChallengeLink('${COACH_CHALLENGE_ID}','${p.id}','${(COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID) || {}).game || 'fortress'}','${campaignId}')" style="padding:5px 10px;font-size:11px;">${t('sponsorLink')}</button>
+                <button class="btn" onclick="copyPlayerRunLink('${COACH_CHALLENGE_ID}','${p.id}','${(COACH_CHALLENGES.find(c => c.id === COACH_CHALLENGE_ID) || {}).game || 'fortress'}','${campaignId}')" style="padding:5px 10px;font-size:11px;">${t('playerLink')}</button>` : ''}
               <button class="btn alt" data-id="${p.id}" data-name="${encodeURIComponent(p.name)}" data-grade="${p.grade || ''}"
                       onclick="editPlayer(this,'coach')" style="padding:5px 10px;font-size:11px;">${t('edit')}</button>
               ${p.pin_hash ? `<button class="btn alt" onclick="resetPin('${p.id}','coach')" style="padding:5px 10px;font-size:11px;">${t('resetPin')}</button>` : ''}
@@ -5550,7 +5695,7 @@
                   <select onchange="COACH_CHALLENGE_ID=this.value;loadCoachDashboard()" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;margin-bottom:8px;">
                     ${COACH_CHALLENGES.map(c => `<option value="${c.id}"${c.id === COACH_CHALLENGE_ID ? ' selected' : ''}>${c.name}</option>`).join('')}
                   </select>` : `<p style="margin:0 0 8px 0;font-size:13px;"><strong>${cur.name}</strong></p>`}
-                <button class="btn alt" onclick="copyChallengeLink('${COACH_CHALLENGE_ID}','${cur.game}')" style="padding:6px 12px;font-size:11px;">${t('teamLink')}</button>
+                <button class="btn alt" onclick="copyChallengeLink('${COACH_CHALLENGE_ID}','${cur.game}','${campaignId}')" style="padding:6px 12px;font-size:11px;">${t('teamLink')}</button>
                 <p style="margin:8px 0 0 0;font-size:11px;color:#888;">${t('cdLinksBody')}</p>
               </div>`;
           }
