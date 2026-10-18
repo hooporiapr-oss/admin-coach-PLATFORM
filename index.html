@@ -4082,6 +4082,51 @@
 
         if (!rows || !rows.length) { box.innerHTML = ''; return; }
 
+        /* ── De qué producto es cada solicitud ────────────────────
+           Los dos productos escriben en bw_requests, así que sin
+           esto una solicitud de Anotado se ve idéntica a una de Cada
+           Punto y se le contesta del producto equivocado.
+
+           El producto se lee de la tabla y no de bw_requests_pending:
+           esa función ya existía y no devuelve la columna, y
+           recrearla a ciegas —sin tener su definición delante— es
+           como se pierde lógica que nadie recuerda que estaba ahí.
+           Una consulta más, por los ids que ya tenemos.
+
+           Y va en su propio try: si la columna todavía no existe
+           —el SQL es anotado-producto.sql— la lista de solicitudes
+           sigue saliendo igual, sin la etiqueta. */
+        const producto = {};
+        try {
+          const ids = rows.map(r => r.id).filter(Boolean);
+          if (ids.length) {
+            const marcas = await supabaseQuery(
+              'bw_requests', 'GET', null,
+              `?select=id,product&id=in.(${ids.join(',')})`);
+            (marcas || []).forEach(m => { producto[m.id] = m.product; });
+          }
+        } catch (e) {
+          console.warn('product column not there yet:', e.message);
+        }
+
+        /* La etiqueta sólo sale cuando de verdad hay dos productos en
+           la lista. Con una sola, etiquetar cada fila con lo mismo es
+           ruido que no dice nada. */
+        const marcas = [...new Set(Object.values(producto).filter(Boolean))];
+        const hayDos = marcas.length > 1;
+        const etiqueta = (id) => {
+          const p = producto[id];
+          if (!p || !hayDos) return '';
+          const esAnotado = p === 'anotado';
+          return `<span style="display:inline-block;margin-left:7px;padding:1px 7px;
+                    border-radius:999px;font-size:9px;font-weight:900;
+                    letter-spacing:.1em;vertical-align:middle;
+                    background:${esAnotado ? '#ff7a1822' : '#ffffff10'};
+                    color:${esAnotado ? '#ff9c4d' : '#9aa6b2'};
+                    border:1px solid ${esAnotado ? '#ff7a1855' : '#ffffff1f'};"
+                  >${esAnotado ? 'ANOTADO' : 'CADA PUNTO'}</span>`;
+        };
+
         box.innerHTML = `
           <div style="padding:14px;background:#1a1420;border:1px solid #facc1540;
                       border-radius:10px;margin-bottom:16px;">
@@ -4093,7 +4138,7 @@
                 <div style="padding:10px 12px;background:#0e0a11;border:1px solid #ffffff14;
                             border-radius:8px;font-size:12px;">
                   <div style="font-weight:800;font-size:13px;">${escapeHtml(r.team_name)}
-                    <span style="color:#888;font-weight:400;"> → ${escapeHtml(r.program)}</span></div>
+                    <span style="color:#888;font-weight:400;"> → ${escapeHtml(r.program)}</span>${etiqueta(r.id)}</div>
                   <div style="color:#888;margin-top:3px;">
                     ${escapeHtml(r.coach_name)} · ${escapeHtml(r.coach_email)}
                     ${r.phone ? ' · ' + escapeHtml(r.phone) : ''}
