@@ -170,14 +170,24 @@
 
           <div id="campaignsList" class="panel">
             <div id="reqBox"></div>
-            <div id="billBox"></div>
             <div id="linkBox"></div>
             <div id="codeBox"></div>
             <div id="entryBox"></div>
             <div id="campaignsContainer" style="margin-top:4px;">—</div>
           </div>
 
-                    <div class="sechead" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <!-- ══════════════════════════════════════════════════════
+               LOS RETOS, ESCONDIDOS — 18 de octubre de 2026
+
+               El Fortress sale del producto "por ahora", asi que su
+               seccion se esconde en vez de borrarse: el formulario,
+               el selector de juego y la lista siguen enteros debajo
+               de este display:none, y vuelven quitando una linea.
+
+               Si el Fortress no vuelve, esto se borra de verdad.
+               ══════════════════════════════════════════════════════ -->
+          <div style="display:none">
+          <div class="sechead" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h3 style="margin:0;" data-i18n="challenges">Challenges</h3>
             <span style="display:flex;gap:6px;"><button class="btn alt" onclick="loadChallenges()" title="Refresh" style="padding:5px 9px;font-size:11px;">↻</button><button class="btn" onclick="toggleForm('createChallengeForm')" data-i18n="newChallenge">+ New Challenge</button></span>
           </div>
@@ -223,14 +233,6 @@
           <div class="panel" style="margin-bottom:26px;">
             <div id="challengesContainer">—</div>
           </div>
-
-          <div class="sechead" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-            <h3 style="margin:0;" data-i18n="payouts">Payouts</h3>
-            <button class="btn alt" onclick="loadPayouts()" title="Refresh" style="padding:5px 9px;font-size:11px;">↻</button>
-          </div>
-
-          <div class="panel" style="margin-bottom:26px;">
-            <div id="payoutsContainer">—</div>
           </div>
 
           <div class="sechead" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
@@ -680,6 +682,7 @@
         sendLinks:'Send links', remind:'Remind',
         confirmRemind:'Send a reminder to anyone who has not paid yet? One goes out at seven days and one at twenty-one — nobody is nudged twice in the same week, and nothing is sent after thirty days.',
         remindersSent:'Reminders sent', notDueYet:'Not due yet', remindDone:'Done being chased',
+        remindGone:'Reminders are gone. Cada Punto Cuenta asks no padrino for money — one notice goes out when the game closes, and that is all.',
         linkCopied:'Payment link copied.', copyLink:'Copy link', remindedOnce:'reminded once', remindedTwice:'reminded twice',
         expiryTitle:'What is still live',
         expiryBody:'Everything sold, grouped by what it was. Nothing to set up — a card takes its expiry date when it is bought.',
@@ -692,6 +695,8 @@
         mCollected:'Collected', mProgramShare:"Programs' share", mOurFees:'Our fees',
         mPaidOut:'Paid out', mOwed:'Still owed to programs',
         mPledgeBreak:'Pledges', mPledged:'Pledged', mPledgedSub:'What padrinos promised',
+        mPledgeCount:'Pledges made', mPledgeCountSub:'How many padrinos committed',
+        mPerPadrino:'Per padrino', mNoteNoMoney:'Pledged is not collected. Cada Punto Cuenta records pledges and calculates totals; the money is collected and managed by each program, so nothing here says what came in or who paid.',
         mInvoiced:'Billed', mInvoicedSub:'Links sent, against real scores',
         mCollectedRow:'Collected', mOfInvoiced:'of what was billed',
         mOutstanding:'Outstanding', mOutstandingSub:'Sent, not yet paid',
@@ -1079,6 +1084,7 @@
         sendLinks:'Enviar enlaces', remind:'Recordar',
         confirmRemind:'\u00bfEnviar recordatorio a quien no ha pagado? Uno sale a los siete d\u00edas y otro a los veintiuno — nadie recibe dos en la misma semana, y no se manda nada despu\u00e9s de treinta d\u00edas.',
         remindersSent:'Recordatorios enviados', notDueYet:'Todav\u00eda no toca', remindDone:'Ya no se persigue',
+        remindGone:'Los recordatorios se fueron. Cada Punto Cuenta no le pide dinero a ning\u00fan padrino: sale un aviso al cerrar el juego, y ya.',
         linkCopied:'Enlace de pago copiado.', copyLink:'Copiar enlace', remindedOnce:'recordado una vez', remindedTwice:'recordado dos veces',
         expiryTitle:'Lo que sigue activo',
         expiryBody:'Todo lo vendido, agrupado por lo que era. Nada que configurar — una tarjeta toma su fecha de vencimiento al comprarse.',
@@ -1091,6 +1097,8 @@
         mCollected:'Cobrado', mProgramShare:'Parte de los programas', mOurFees:'Nuestros cargos',
         mPaidOut:'Pagado', mOwed:'Pendiente a los programas',
         mPledgeBreak:'Promesas', mPledged:'Prometido', mPledgedSub:'Lo que prometieron los padrinos',
+        mPledgeCount:'Promesas hechas', mPledgeCountSub:'Cuántos padrinos se comprometieron',
+        mPerPadrino:'Por padrino', mNoteNoMoney:'Lo prometido no es lo recaudado. Cada Punto Cuenta anota promesas y calcula totales; el dinero lo cobra y lo maneja cada programa, así que aquí no hay nada de lo que entró ni de quién pagó.',
         mInvoiced:'Facturado', mInvoicedSub:'Enlaces enviados, sobre puntuaciones reales',
         mCollectedRow:'Cobrado', mOfInvoiced:'de lo facturado',
         mOutstanding:'Pendiente', mOutstandingSub:'Enviado, sin pagar',
@@ -1733,42 +1741,31 @@
     }
 
 
-    // ---- 1 · Money ----
-    // Where every dollar is, right now. The one you would open if a
-    // program rang asking where their money was.
+    // ---- 1 · Promesas ----
+    // Lo prometido, y nada mas. Antes esta vista decia donde estaba
+    // cada dolar: cobrado, nuestros cargos, pagado a los programas y
+    // lo que les debiamos. Ya no recibimos dinero, asi que ninguno de
+    // esos numeros existe — y uno inventado aqui seria peor que no
+    // tener la vista.
     function reportMoney(d) {
       const sums = pledgeSums(d.pledges);
-
-      let cardTeam = 0, cardFee = 0;
-      d.cards.forEach(c => { cardTeam += Number(c.team_amount || 0); cardFee += Number(c.platform_amount || 0); });
-
-      const paidOut = d.payouts.reduce((n, p) => n + Number(p.amount || 0), 0);
-      const owedToPrograms = (sums.collected + cardTeam) - paidOut;
+      const n    = d.pledges.length;
+      const prom = n ? sums.pledged / n : 0;
 
       return `
         ${rGrid([
-          rStat(t('mCollected'), money(sums.collected + cardTeam), true),
-          rStat(t('mProgramShare'), money(sums.collected + cardTeam)),
-          rStat(t('mOurFees'), money(sums.fees + cardFee)),
-          rStat(t('mPaidOut'), money(paidOut)),
-          rStat(t('mOwed'), money(owedToPrograms), owedToPrograms > 0),
+          rStat(t('mPledged'), money(sums.pledged), true),
+          rStat(t('mPledgeCount'), String(n)),
+          rStat(t('mPerPadrino'), money(prom)),
         ])}
 
         ${rHead(t('mPledgeBreak'))}
         ${rRow(t('mPledged'), money(sums.pledged), t('mPledgedSub'))}
-        ${rRow(t('mInvoiced'), money(sums.invoiced), t('mInvoicedSub'))}
-        ${rRow(t('mCollectedRow'), money(sums.collected), pct(sums.collected, sums.invoiced) + ' ' + t('mOfInvoiced'))}
-        ${rRow(t('mOutstanding'), money(sums.outstanding), t('mOutstandingSub'))}
+        ${rRow(t('mPledgeCount'), String(n), t('mPledgeCountSub'))}
 
-        ${cardTeam ? rHead(t('mFromProducts')) + rRow(t('mProductSales'), money(cardTeam), `${d.cards.length} ${t('cardsPlural')}`) : ''}
-
-        ${rHead(t('mPayoutsMade'))}
-        ${d.payouts.length
-          ? d.payouts.slice(0, 12).map(p => {
-              const c = d.campaigns.find(x => x.id === p.campaign_id);
-              return rRow(c ? c.name : '—', money(p.amount), `${p.paid_on || ''} ${p.method ? '· ' + p.method : ''}`);
-            }).join('')
-          : `<p style="color:#888;font-size:12px;">${t('mNoPayouts')}</p>`}
+        <p style="color:#888;font-size:12px;line-height:1.7;margin-top:14px;">
+          ${t('mNoteNoMoney')}
+        </p>
       `;
     }
 
@@ -1877,12 +1874,7 @@
               · ${perParticipant.toFixed(1)} ${t('chPerParticipant')}
               · ${money(ppv)} ${t('chAvgPPV')}
               · ${avgPoints} ${t('chAvgPoints')}<br>
-              ${t('mInvoiced')}: ${money(sums.invoiced)}
-              · ${t('mCollectedRow')}: ${money(sums.collected)}
-              · <strong>${pct(sums.collected, sums.invoiced)} ${t('chCollectionRate')}</strong><br>
-              ${unpaid.length
-                ? `<span style="color:var(--gold);">${unpaid.length} ${t('chUnpaid')} · ${money(unpaidValue)}</span>`
-                : `<span style="color:#888;">${t('chAllSettled')}</span>`}
+              ${t('mPledged')}: <strong>${money(sums.pledged)}</strong>
             </div>
 
             ${gradeKeys.length > 1 ? `
@@ -3783,71 +3775,11 @@
       }
     }
 
+        /* La facturacion al padrino se fue con la custodia. Misma
+       razon que loadPayouts para dejarla vacia en vez de borrarla. */
     async function loadBillable() {
-      const box = document.getElementById('billBox');
-      if (!box) return;
-
-      try {
-        const [games, pledges, camps] = await Promise.all([
-          supabaseQuery('games', 'GET', null,
-            '?status=eq.played&select=id,campaign_id,opponent,plays_on,team_points,home'),
-          supabaseQuery('game_pledges', 'GET', null,
-            '?invoice_status=eq.open&select=game_id,team_amount'),
-          supabaseQuery('campaigns', 'GET', null, '?select=id,name')
-        ]);
-
-        const open = {};
-        (pledges || []).forEach(p => {
-          const o = open[p.game_id] = open[p.game_id] || { n: 0, due: 0 };
-          o.n++;
-          o.due += Number(p.team_amount || 0);
-        });
-
-        const names = {};
-        (camps || []).forEach(c => { names[c.id] = c.name; });
-
-        const ready = (games || [])
-          .filter(g => open[g.id])
-          .sort((a, b) => String(a.plays_on || '').localeCompare(String(b.plays_on || '')));
-
-        if (!ready.length) { box.innerHTML = ''; return; }
-
-        const total = ready.reduce((n, g) => n + open[g.id].due, 0);
-        const pledgeCount = ready.reduce((n, g) => n + open[g.id].n, 0);
-
-        box.innerHTML = `
-          <div style="padding:14px;background:#0f1a14;border:1px solid #4ade8050;
-                      border-radius:10px;margin-bottom:16px;">
-            <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;">
-              <div style="font-weight:900;color:#4ade80;">
-                ${t('readyToBill')} (${ready.length})
-              </div>
-              <div style="font-size:12px;color:#888;">
-                ${pledgeCount} ${t('pledgesWord')} · <b style="color:#fff;">$${total.toFixed(2)}</b>
-              </div>
-            </div>
-
-            <div style="display:grid;gap:6px;margin-top:10px;">
-              ${ready.map(g => `
-                <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;
-                            padding:8px 11px;background:#0e0a11;border:1px solid #ffffff14;
-                            border-radius:8px;font-size:12px;flex-wrap:wrap;">
-                  <span>
-                    <b>${escapeHtml(names[g.campaign_id] || '—')}</b>
-                    <span style="color:#888;"> · ${g.home ? '' : '@ '}${escapeHtml(g.opponent)}</span>
-                    <span style="color:#888;"> · ${g.plays_on || ''}</span>
-                    · <b>${g.team_points}</b> ${t('pointsWord')}
-                    · <span style="color:#facc15;">$${open[g.id].due.toFixed(2)}</span>
-                  </span>
-                  <button class="btn" onclick="sendGameInvoices('${g.campaign_id}','${g.id}')"
-                          style="padding:5px 10px;font-size:11px;">${t('sendBills')}</button>
-                </div>`).join('')}
-            </div>
-          </div>`;
-      } catch (error) {
-        console.error('Billable:', error);
-        box.innerHTML = '';
-      }
+      var _c = document.getElementById('billBox');
+      if (_c) _c.innerHTML = '';
     }
 
 
@@ -4404,126 +4336,13 @@
 
     // ===== PAYOUTS =====
 
+        /* Los desembolsos ya no existen: no recibimos dinero y no le
+       pagamos a nadie, asi que no hay nada que listar. Se deja la
+       funcion vacia y no borrada porque la llaman desde varios
+       sitios; vaciarla es mas seguro que perseguir cada llamada. */
     async function loadPayouts() {
-      const box = document.getElementById('payoutsContainer');
-      if (!box) return;
-
-      try {
-        const campaigns = await supabaseQuery('campaigns', 'GET', null, '?select=id,name&order=created_at.desc');
-        if (!campaigns || campaigns.length === 0) {
-          box.innerHTML = `<p style="color:#aaa;">${t('noCampaigns')}</p>`;
-          return;
-        }
-
-        // one read each, then totalled per campaign in the browser
-        const cards = await supabaseQuery('cards', 'GET', null, '?select=campaign_id,team_amount,platform_amount');
-        const paid = await supabaseQuery('payouts', 'GET', null, '?select=campaign_id,amount');
-
-        // A dónde se le manda a cada uno. Vive en su propia tabla, a la
-        // que no se llega por REST; esto es lo único que la enseña, y
-        // sólo si is_admin() dice que sí.
-        const destOf = {};
-        try {
-          const dests = await supabaseQuery('rpc/payout_destinations', 'POST', {});
-          (dests || []).forEach(d => { destOf[d.campaign] = d; });
-        } catch (e) { console.error('Destinations:', e); }
-
-        // Pledges are where the money comes from now, and a pledge is
-        // only owed to a program once it has actually been collected.
-        const chs = await supabaseQuery('challenges', 'GET', null, '?select=id,campaign_id');
-        const campaignOf = {};
-        (chs || []).forEach(c => { campaignOf[c.id] = c.campaign_id; });
-
-        const pledges = await supabaseQuery('pledges', 'GET', null,
-          '?select=challenge_id,team_amount,platform_amount,invoice_status');
-
-        const owedBy = {}, platformBy = {}, paidBy = {};
-
-        (pledges || []).forEach(p => {
-          if (p.invoice_status !== 'paid') return;
-          const cid = campaignOf[p.challenge_id];
-          if (!cid) return;
-          owedBy[cid] = (owedBy[cid] || 0) + Number(p.team_amount || 0);
-          platformBy[cid] = (platformBy[cid] || 0) + Number(p.platform_amount || 0);
-        });
-
-        (cards || []).forEach(c => {
-          owedBy[c.campaign_id] = (owedBy[c.campaign_id] || 0) + Number(c.team_amount || 0);
-          platformBy[c.campaign_id] = (platformBy[c.campaign_id] || 0) + Number(c.platform_amount || 0);
-        });
-        (paid || []).forEach(p => {
-          paidBy[p.campaign_id] = (paidBy[p.campaign_id] || 0) + Number(p.amount || 0);
-        });
-
-        let totalOwed = 0, totalPaid = 0, totalPlatform = 0;
-
-        // Only campaigns with money moving through them. A campaign
-        // that has sold nothing is not a payout waiting to happen.
-        const active = campaigns.filter(c => (owedBy[c.id] || 0) > 0 || (paidBy[c.id] || 0) > 0);
-
-        const rows = active.map(c => {
-          const owed = owedBy[c.id] || 0;
-          const already = paidBy[c.id] || 0;
-          const outstanding = owed - already;
-          totalOwed += owed; totalPaid += already; totalPlatform += platformBy[c.id] || 0;
-
-          // Lo que hace falta el día 1 y el 15: a qué ATH va esto.
-          const d = destOf[c.id];
-          const dest = (d && d.listo)
-            ? `<p style="margin:6px 0 0 0;font-size:12px;color:#aaa;">
-                 ${t('sendTo')}: <strong style="color:#fff;">${escapeHtml(d.ath)}</strong>
-                 · <strong style="color:#fff;">${escapeHtml(String(d.telefono || '').replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3'))}</strong>
-               </p>`
-            : `<p style="margin:6px 0 0 0;font-size:12px;color:var(--gold);">${t('noDest')}</p>`;
-
-          return `
-            <div style="padding:14px;background:#0e0a11;border-radius:9px;margin:10px 0;border:1px solid #ffffff14;">
-              <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;">
-                <div style="flex:1;">
-                  <p style="margin:0;font-weight:950;font-size:15px;">${c.name}</p>
-                  <p style="margin:6px 0 0 0;font-size:12px;color:#aaa;">
-                    ${t('teamShareTotal')}: <strong style="color:#fff;">${money(owed)}</strong> ·
-                    ${t('paidOut')}: <strong style="color:#fff;">${money(already)}</strong>
-                  </p>
-                  <p style="margin:6px 0 0 0;font-size:15px;font-weight:950;color:${outstanding > 0.005 ? 'var(--gold)' : '#6f6'};">
-                    ${t('outstanding')}: ${money(outstanding)}
-                  </p>
-                  ${dest}
-                </div>
-                <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-                  <button class="btn" onclick="recordPayout('${c.id}', ${outstanding.toFixed(2)})" style="padding:6px 10px;font-size:11px;">${t('recordPayment')}</button>
-                  <button class="btn alt" onclick="viewPayoutHistory('${c.id}', '${String(c.name).replace(/'/g, "\\'")}')" style="padding:6px 10px;font-size:11px;">${t('history')}</button>
-                </div>
-              </div>
-              <div id="payoutHistory-${c.id}" style="display:none;margin-top:10px;"></div>
-            </div>`;
-        }).join('');
-
-        if (active.length === 0) {
-          box.innerHTML = `<p style="color:#aaa;">${t('noSalesYet')}</p>`;
-          return;
-        }
-
-        box.innerHTML = `
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px;">
-            <div style="padding:14px;background:#ffffff08;border-radius:12px;border:1px solid #ffffff14;">
-              <p style="margin:0;font-size:12px;color:#aaa;">${t('owedToTeams')}</p>
-              <p style="margin:6px 0 0 0;font-size:24px;font-weight:950;color:var(--gold);">${money(totalOwed - totalPaid)}</p>
-            </div>
-            <div style="padding:14px;background:#ffffff08;border-radius:12px;border:1px solid #ffffff14;">
-              <p style="margin:0;font-size:12px;color:#aaa;">${t('paidToDate')}</p>
-              <p style="margin:6px 0 0 0;font-size:24px;font-weight:950;">${money(totalPaid)}</p>
-            </div>
-            <div style="padding:14px;background:#ffffff08;border-radius:12px;border:1px solid #ffffff14;">
-              <p style="margin:0;font-size:12px;color:#aaa;">${t('platformShare')}</p>
-              <p style="margin:6px 0 0 0;font-size:24px;font-weight:950;">${money(totalPlatform)}</p>
-            </div>
-          </div>
-          ${rows}`;
-      } catch (error) {
-        console.error('Payouts:', error);
-        box.innerHTML = '<p style="color:#f66;">Error: ' + error.message + '</p>';
-      }
+      var _c = document.getElementById('payoutsContainer');
+      if (_c) _c.innerHTML = '';
     }
 
     async function recordPayout(campaignId, suggested) {
@@ -5050,34 +4869,13 @@
     // can verify who is asking — the browser never gets to decide.
     // Invoicing chased people for us; links do not. This does — one
     // nudge at seven days, one at twenty-one, then the books close.
-    async function sendReminders(challengeId) {
-      if (!confirm(t('confirmRemind'))) return;
-
-      const token = await currentToken();
-      if (!token) { alert(t('signInFirst')); return; }
-
-      try {
-        const res = await fetch(`${PAYMENT_SERVER}/send-reminders`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ challenge_id: challengeId })
-        });
-
-        const data = await res.json();
-        if (!res.ok) { alert(t('invoiceError') + ' ' + (data.error || res.status)); return; }
-
-        let summary = `${t('remindersSent')}: ${data.sent}`;
-        if (data.notDue) summary += `\n${t('notDueYet')}: ${data.notDue}`;
-        if (data.done) summary += `\n${t('remindDone')}: ${data.done}`;
-        if (data.failed) summary += `\n${t('invoicesFailed')}: ${data.failed}`;
-        if (data.errors && data.errors.length) summary += '\n\n' + data.errors.join('\n');
-
-        alert(summary);
-        loadChallengeDetail(challengeId);
-      } catch (error) {
-        console.error('Reminders:', error);
-        alert('Error: ' + error.message);
-      }
+    /* Los recordatorios de cobro se fueron con la custodia: no le
+       pedimos dinero a ningun padrino. El servidor contesta 410 a
+       /send-reminders, asi que esto ni lo intenta. Se deja la funcion
+       porque el boton vive dentro de la seccion de retos, que esta
+       escondida y no borrada. */
+    async function sendReminders() {
+      alert(t('remindGone'));
     }
 
     // Half of these get paid because a coach sent the link on WhatsApp
