@@ -45,7 +45,7 @@ vm.createContext(contexto);
 vm.runInContext(html.slice(desde, hasta), contexto, { filename: 'index.html (enlaces)' });
 
 const { recordarProducto, pledgeBase, sitioDe, rutaCorrida, rutaPromesa,
-        hayEnlaceDeEquipo, siteFor } = contexto;
+        hayEnlaceDeEquipo, hayCalendario, siteFor } = contexto;
 
 /* Dos campañas, una de cada producto, y una que el admin no ha
    cargado todavía — que es lo que pasa si alguien copia un enlace
@@ -134,6 +134,30 @@ eq(enlaceAlta(HOO), 'https://hooporia.com/jugador.html?c=' + HOO,
    'un jugador de Hooporia se da de alta en hooporia.com');
 eq(enlaceAlta(CP), 'https://cadapunto.com/jugador.html?c=' + CP,
    'y uno de Cada Punto en cadapunto.com');
+
+console.log('\n4c · El calendario, que es de un solo producto\n');
+/* Cada Punto tiene calendario: su evento es un partido de verdad y
+   el padrino promete por los puntos del equipo esa noche. Hooporia
+   no — su evento es la corrida de un jugador dentro de una ventana,
+   sin rival y sin fecha que poner.
+
+   Y el admin se lo ofrecía a los dos, con el tablero apuntando a
+   cadapunto.com/scoreboard.html, que en hooporia.com ni existe. No
+   era un enlace equivocado: era una función entera del otro
+   producto puesta en el suyo. */
+eq(hayCalendario(CP), true, 'Cada Punto tiene calendario');
+eq(hayCalendario(HOO), false, 'Hooporia no');
+eq(hayCalendario(NUEVA), true, 'y una sin cargar se trata como Cada Punto');
+
+/* "Su enlace", el que el jugador manda a su familia: el mismo botón
+   y dos páginas, porque son dos productos. */
+const suEnlace = (camp) => hayCalendario(camp)
+  ? sitioDe(camp) + '/scoreboard.html?c=' + camp + '&p=J1'
+  : pledgeBase(null, camp) + '?c=' + camp + '&p=J1';
+eq(suEnlace(CP), 'https://cadapunto.com/scoreboard.html?c=' + CP + '&p=J1',
+   'en Cada Punto es el calendario filtrado por él');
+eq(suEnlace(HOO), 'https://hooporia.com/prometer.html?c=' + HOO + '&p=J1',
+   'y en Hooporia su página de prometer, que es la que existe allí');
 
 console.log('\n5 · Una campaña que todavía no se ha cargado\n');
 eq(sitioDe(NUEVA, 'fortress'), 'https://cadapunto.com',
