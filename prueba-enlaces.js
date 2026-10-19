@@ -106,11 +106,20 @@ eq(enlaceOficial('R2', 'J2', 'fortress-vr', HOO, 'K'),
 eq(/official=1/.test(enlaceOficial('R1', 'J1', 'fortress', CP, 'K')), true,
    'y Cada Punto la lleva igual, que su juego la mira también');
 
-console.log('\n4 · Cash Rack manda sobre el producto\n');
-// Se juega en una cancha de verdad y tiene su propio sitio.
-eq(sitioDe(HOO, 'cashrack'), 'https://hoops.cash',
-   'una campaña de Hooporia jugando Cash Rack sigue yendo a hoops.cash');
-eq(sitioDe(CP, 'spots'), 'https://hoops.cash', 'y una de Cada Punto también');
+/* Aquí se comprobaba que Cash Rack mandara sobre el producto: dos
+   juegos que iban a un tercer sitio propio, hoops.cash, fuera cual
+   fuera la campaña. Ese producto se retiró y la excepción salió del
+   admin, así que la prueba se va con ella — una prueba que defiende
+   algo que ya no existe es una prueba que impide quitarlo.
+
+   Lo que queda en su sitio es lo contrario, y vale la pena dejarlo
+   dicho: el dominio lo decide el producto de la campaña y nada más.
+   Ningún juego vuelve a mandar sobre él. */
+console.log('\n4 · Ningún juego manda ya sobre el producto\n');
+eq(sitioDe(HOO, 'rebound'), 'https://hooporia.com',
+   'una campaña de Hooporia va a hooporia.com juegue lo que juegue');
+eq(sitioDe(CP, 'fortress-vr'), 'https://cadapunto.com',
+   'y una de Cada Punto a cadapunto.com, igual');
 
 console.log('\n5 · Una campaña que todavía no se ha cargado\n');
 eq(sitioDe(NUEVA, 'fortress'), 'https://cadapunto.com',
