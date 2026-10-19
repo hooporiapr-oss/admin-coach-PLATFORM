@@ -139,8 +139,6 @@
               <button class="btn alt" onclick="showReport('money')" id="rTabMoney" data-i18n="rMoney">Money</button>
               <button class="btn alt" onclick="showReport('campaigns')" id="rTabCampaigns" data-i18n="rCampaigns">Campaigns</button>
               <button class="btn alt" onclick="showReport('challenges')" id="rTabChallenges" data-i18n="rChallenges">Challenges</button>
-              <button class="btn alt" onclick="showReport('products')" id="rTabProducts" data-i18n="rProducts">Products</button>
-              <button class="btn alt" onclick="showReport('ledger')" id="rTabLedger" data-i18n="rLedger">Ledger</button>
             </div>
             <div id="reportBody" class="panel">—</div>
           </div>
@@ -313,113 +311,11 @@
           </div>
           </div>
 
-          <div class="sechead" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-            <h3 style="margin:0;" data-i18n="merchants">Merchants</h3>
-            <span style="display:flex;gap:6px;"><button class="btn alt" onclick="loadMerchants()" title="Refresh" style="padding:5px 9px;font-size:11px;">↻</button><button class="btn" onclick="toggleForm('createMerchantForm')" data-i18n="newMerchant">+ New Merchant</button></span>
-          </div>
-
-          <div id="createMerchantForm" class="panel" style="display:none;margin-bottom:20px;">
-            <h3 data-i18n="addMerchant">Add Merchant</h3>
-
-            <label data-i18n="businessName">Business Name</label>
-            <input type="text" id="merchantName" data-i18n-ph="businessNamePh" placeholder="e.g. Domino's Pizza">
-
-            <label data-i18n="logoUrl">Logo URL (optional)</label>
-            <input type="text" id="merchantLogo" placeholder="https://...">
-
-            <label data-i18n="contactName">Contact Name (optional)</label>
-            <input type="text" id="merchantContact" data-i18n-ph="contactNamePh" placeholder="Contact person">
-
-            <label data-i18n="contactEmail">Contact Email (optional)</label>
-            <input type="text" id="merchantEmail" placeholder="name@business.com">
-
-            <div style="display:flex;gap:10px;margin-top:12px;">
-              <button class="btn" onclick="createMerchant()" data-i18n="saveMerchant">Save Merchant</button>
-              <button class="btn alt" onclick="toggleForm('createMerchantForm')" data-i18n="cancel">Cancel</button>
-            </div>
-          </div>
-
-          <div class="panel" style="margin-bottom:26px;">
-            <div id="merchantsContainer">—</div>
-          </div>
-
-          <div class="sechead" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-            <h3 style="margin:0;" data-i18n="bogoCards">Products for sale</h3>
-            <span style="display:flex;gap:6px;"><button class="btn alt" onclick="loadDesigns()" title="Refresh" style="padding:5px 9px;font-size:11px;">↻</button><button class="btn" onclick="toggleForm('createDesignForm')" data-i18n="newCard">+ New product</button></span>
-          </div>
-
-          <div id="createDesignForm" class="panel" style="display:none;margin-bottom:20px;">
-            <h3 data-i18n="createBogoCard">Create a product</h3>
-
-            <label data-i18n="merchant">Merchant</label>
-            <select id="designMerchant" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;margin-top:6px;font-family:inherit;">
-              <option value="" data-i18n="selectMerchantOpt">Select a merchant...</option>
-            </select>
-
-            <label data-i18n="sells">What it sells</label>
-            <select id="designKind" onchange="toggleKindFields()" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;margin-top:6px;font-family:inherit;">
-              <option value="bogo" data-i18n="kindBogo">BOGO coupon card</option>
-              <option value="license" data-i18n="kindLicense">One year access license</option>
-            </select>
-
-            <div id="licenseFields" style="display:none;">
-              <label data-i18n="licenseProduct">Product code</label>
-              <input type="text" id="designProduct" data-i18n-ph="licenseProductPh" placeholder="hooporia">
-
-              <label data-i18n="redeemUrl">Where they use it</label>
-              <input type="text" id="designRedeem" placeholder="https://...">
-            </div>
-
-            <label data-i18n="cardName">Card Name</label>
-            <input type="text" id="designName" data-i18n-ph="cardNamePh" placeholder="e.g. Domino's 16-Tab BOGO">
-
-            <div id="bogoFields">
-            <label data-i18n="numTabs">Number of Coupon Tabs</label>
-            <select id="designTabs" style="width:100%;padding:12px;border-radius:9px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;margin-top:6px;font-family:inherit;">
-              <option value="8" data-i18n="tabs8">8 tabs</option>
-              <option value="16" selected data-i18n="tabs16">16 tabs</option>
-              <option value="32" data-i18n="tabs32">32 tabs</option>
-            </select>
-            </div>
-
-            <label data-i18n="price">Price ($)</label>
-            <input type="number" id="designPrice" value="20" step="0.01">
-
-            <label data-i18n="teamSharePct">Team Share (%)</label>
-            <input type="number" id="designShare" value="50" min="0" max="100">
-            <p style="margin:6px 0 0 0;font-size:11px;color:#888;" id="splitPreview"></p>
-
-            <label data-i18n="offerText">Offer Text</label>
-            <input type="text" id="designOffer" data-i18n-ph="offerTextPh" placeholder="e.g. Buy one large pizza, get one free" value="Buy One Get One Free">
-            <p style="margin:6px 0 0 0;font-size:11px;color:#888;" data-i18n="offerTextHint">Write it the way a cashier will read it. Name the item and the size.</p>
-
-            <label data-i18n="validWhen">When it can be used (optional)</label>
-            <input type="text" id="designWhen" data-i18n-ph="validWhenPh" placeholder="e.g. Tuesdays only, or before 5pm">
-
-            <label data-i18n="terms">Terms (optional)</label>
-            <input type="text" id="designTerms" data-i18n-ph="termsPh" placeholder="One per visit. Not valid with other offers.">
-
-            <label data-i18n="expiresOn">Expires On (optional)</label>
-            <input type="date" id="designExpires">
-
-            <div style="display:flex;gap:10px;margin-top:12px;">
-              <button class="btn" onclick="createDesign()" data-i18n="createCardBtn">Create Card</button>
-              <button class="btn alt" onclick="toggleForm('createDesignForm')" data-i18n="cancel">Cancel</button>
-            </div>
-          </div>
-
-          <div class="panel" style="margin-bottom:26px;">
-            <div id="designsContainer">—</div>
-          </div>
-
-          <div class="sechead" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-            <h3 style="margin:0;" data-i18n="expiryTitle">What is still live</h3>
-          </div>
-
-          <div class="panel" style="margin-bottom:26px;">
-            <p style="margin:0 0 10px 0;font-size:11px;color:#888;" data-i18n="expiryBody">Everything sold, grouped by what it was. Nothing to set up — a card takes its expiry date when it is bought.</p>
-            <div id="expiryContainer">—</div>
-          </div>
+          <!-- Aquí vivían Comerciantes, Productos a la venta y Lo
+               que sigue vivo: las tres de BOGO. BOGO se retiró como
+               producto, así que eran tres secciones que pedían datos
+               de un negocio que ya no existe — y la primera cosa que
+               veía cualquiera al bajar por el panel. -->
 
 <button class="btn red" onclick="adminLogout()" style="margin-top:20px;width:100%;" data-i18n="logout">Logout</button>
         </div>
@@ -764,7 +660,6 @@
         noTryouts:'Nobody has played yet.', bestFit:'Best fit', perPlayer:'Per player',
         noScore:'No score yet', lockedWord:'locked', saveScore:'Save',
         attShort:'Shots', threeShort:'3s made', foulShort:'FTs made',
-        cashRackNote:'Enter shots attempted, threes made and foul shots made. Every attempt scores 1, a made three adds 3, a made foul shot adds 2. Scores can be changed until you invoice.',
         needAttempts:'Enter how many shots were attempted.',
         moreMadeThanTaken:'More shots made than attempted — check the numbers.',
         scoringLink:'Scoring link', boardLink:'Board',
@@ -790,7 +685,6 @@
         expiryBody:'Everything sold, grouped by what it was. Nothing to set up — a card takes its expiry date when it is bought.',
         reports:'Reports', openReports:'Open', closeReports:'Close',
         rMoney:'Money', rCampaigns:'Campaigns', rChallenges:'Challenges',
-        rProducts:'Products', rLedger:'Ledger',
         rNothing:'Nothing here yet.', refresh:'Refresh', exportCsv:'Export CSV',
         refreshAll:'\u21bb Refresh all', refreshing:'Refreshing\u2026',
 
@@ -1190,7 +1084,6 @@
         noTryouts:'Todav\u00eda no ha jugado nadie.', bestFit:'Mejor opci\u00f3n', perPlayer:'Por jugador',
         noScore:'Sin puntuaci\u00f3n', lockedWord:'fijo', saveScore:'Guardar',
         attShort:'Tiros', threeShort:'Triples', foulShort:'Libres',
-        cashRackNote:'Entra los tiros intentados, los triples anotados y los tiros libres anotados. Cada intento vale 1, un triple suma 3, un tiro libre suma 2. Las puntuaciones se pueden cambiar hasta que factures.',
         needAttempts:'Entra cu\u00e1ntos tiros se intentaron.',
         moreMadeThanTaken:'M\u00e1s tiros anotados que intentados — revisa los n\u00fameros.',
         scoringLink:'Enlace de anotaci\u00f3n', boardLink:'Tablero',
@@ -1216,7 +1109,6 @@
         expiryBody:'Todo lo vendido, agrupado por lo que era. Nada que configurar — una tarjeta toma su fecha de vencimiento al comprarse.',
         reports:'Informes', openReports:'Abrir', closeReports:'Cerrar',
         rMoney:'Dinero', rCampaigns:'Campa\u00f1as', rChallenges:'Retos',
-        rProducts:'Productos', rLedger:'Registro',
         rNothing:'Todav\u00eda no hay nada.', refresh:'Actualizar', exportCsv:'Exportar CSV',
         refreshAll:'\u21bb Actualizar todo', refreshing:'Actualizando\u2026',
 
@@ -1620,9 +1512,6 @@
     }
 
     function loadAdminData() {
-      loadMerchants();
-      loadExpiry();
-      loadDesigns();
       loadPayouts();
       loadChallenges();
       loadCampaigns();
@@ -1635,115 +1524,12 @@
 
     // ===== MERCHANTS =====
 
-    async function createMerchant() {
-      const name = document.getElementById('merchantName').value.trim();
-      if (!name) { alert(t('enterBusiness')); return; }
-
-      try {
-        await supabaseQuery('merchants', 'POST', {
-          name,
-          logo_url: document.getElementById('merchantLogo').value.trim() || null,
-          contact_name: document.getElementById('merchantContact').value.trim() || null,
-          contact_email: document.getElementById('merchantEmail').value.trim() || null
-        }, '?select=*');
-
-        document.getElementById('merchantName').value = '';
-        document.getElementById('merchantLogo').value = '';
-        document.getElementById('merchantContact').value = '';
-        document.getElementById('merchantEmail').value = '';
-        document.getElementById('createMerchantForm').style.display = 'none';
-
-        loadMerchants();
-        alert(t('merchantAdded'));
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error: ' + error.message);
-      }
-    }
 
     const MERCHANT_LOGOS = {};
 
-    async function loadMerchants() {
-      try {
-        const merchants = await supabaseQuery('merchants', 'GET', null, '?order=created_at.desc');
-        const box = document.getElementById('merchantsContainer');
-
-        // keep the card-design dropdown in sync
-        (merchants || []).forEach(m => { MERCHANT_LOGOS[m.id] = m.logo_url || null; });
-
-        const select = document.getElementById('designMerchant');
-        if (select) {
-          select.innerHTML = '<option value="">Select a merchant...</option>' +
-            (merchants || []).map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-        }
-
-        if (!merchants || merchants.length === 0) {
-          box.innerHTML = '<p style="color:#aaa;">' + t('noMerchants') + '</p>';
-          return;
-        }
-
-        box.innerHTML = merchants.map(m => `
-          <div style="padding:12px;background:#0e0a11;border-radius:9px;margin:8px 0;border:1px solid #ffffff14;">
-            <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;">
-              <div style="display:flex;align-items:center;gap:10px;flex:1;">
-                ${m.logo_url ? `<img src="${m.logo_url}" alt="" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">` : ''}
-                <div>
-                  <p style="margin:0;font-weight:950;">${m.name}</p>
-                  <p style="margin:3px 0 0 0;font-size:11px;color:#888;">${m.contact_email || t('noContact')}</p>
-                </div>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-                <button class="btn alt" onclick="editMerchant('${m.id}')" style="padding:6px 10px;font-size:11px;">${t('edit')}</button>
-                <button class="btn red" onclick="deleteMerchant('${m.id}')" style="padding:6px 10px;font-size:11px;">${t('delete')}</button>
-              </div>
-            </div>
-            <div id="merchantStats-${m.id}" style="margin-top:8px;font-size:12px;color:#888;">—</div>
-            <div id="merchantLocations-${m.id}" style="display:none;margin-top:10px;"></div>
-          </div>
-        `).join('');
-        merchants.forEach(m => loadMerchantNumbers(m.id));
-      } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('merchantsContainer').innerHTML = '<p style="color:#f66;">Error loading merchants</p>';
-      }
-    }
 
     // Redemption figures per merchant — the numbers you show them
     // when it is time to renew.
-    async function loadMerchantNumbers(merchantId) {
-      const box = document.getElementById('merchantStats-' + merchantId);
-      if (!box) return;
-
-      try {
-        const designs = await supabaseQuery('card_designs', 'GET', null,
-          `?merchant_id=eq.${merchantId}&select=id`);
-        if (!designs || designs.length === 0) {
-          box.textContent = t('noMerchantCards');
-          return;
-        }
-
-        const ids = designs.map(d => d.id).join(',');
-        const cards = await supabaseQuery('cards', 'GET', null,
-          `?design_id=in.(${ids})&select=id,card_tabs(status)`);
-        const list = cards || [];
-
-        let sealed = 0, peeled = 0, redeemed = 0;
-        list.forEach(c => (c.card_tabs || []).forEach(tab => {
-          if (tab.status === 'sealed') sealed++;
-          else if (tab.status === 'peeled') peeled++;
-          else if (tab.status === 'redeemed') redeemed++;
-        }));
-
-        const total = sealed + peeled + redeemed;
-        const rate = total ? Math.round((redeemed / total) * 100) : 0;
-
-        box.innerHTML = redeemed || peeled
-          ? `${list.length} ${t('cardsPlural')} · ${redeemed} ${t('couponsRedeemed').toLowerCase()} · ${rate}% ${t('redemptionRate').toLowerCase()}`
-          : `${list.length} ${t('cardsPlural')}`;
-      } catch (error) {
-        box.textContent = '—';
-      }
-    }
 
     async function deleteMerchant(id) {
       if (!confirm(t('confirmDeleteMerchant'))) return;
@@ -1817,7 +1603,7 @@
       try {
         const d = await loadReportData();
         const fn = { money: reportMoney, campaigns: reportCampaigns, challenges: reportChallenges,
-                     products: reportProducts, ledger: reportLedger }[REPORT_VIEW];
+                     }[REPORT_VIEW];
         box.innerHTML = fn(d) +
           `<div style="margin-top:16px;padding-top:12px;border-top:1px solid #ffffff14;display:flex;gap:6px;flex-wrap:wrap;">
              <button class="btn alt" onclick="REPORT_DATA=null;renderReport()" style="padding:6px 12px;font-size:11px;">${t('refresh')}</button>
@@ -2014,92 +1800,9 @@
     }
 
     // ---- 4 · Products ----
-    function reportProducts(d) {
-      const byDesign = {};
-      d.cards.forEach(c => {
-        if (!byDesign[c.design_id]) byDesign[c.design_id] = { n: 0, gross: 0, team: 0, fee: 0 };
-        byDesign[c.design_id].n++;
-        byDesign[c.design_id].gross += Number(c.price_paid || 0);
-        byDesign[c.design_id].team += Number(c.team_amount || 0);
-        byDesign[c.design_id].fee += Number(c.platform_amount || 0);
-      });
-
-      const sold = d.designs.filter(x => byDesign[x.id]);
-      const unsold = d.designs.filter(x => !byDesign[x.id]);
-
-      return `
-        ${rGrid([
-          rStat(t('pUnitsSold'), d.cards.length, true),
-          rStat(t('pGross'), money(d.cards.reduce((n,c) => n + Number(c.price_paid||0), 0))),
-          rStat(t('pProducts'), d.designs.length),
-          rStat(t('merchants'), d.merchants.length),
-        ])}
-
-        ${rHead(t('pSold'))}
-        ${sold.length ? sold.map(x => {
-          const b = byDesign[x.id];
-          const m = d.merchants.find(y => y.id === x.merchant_id);
-          return rRow(
-            `${x.name} <span style="color:#888;">· ${x.kind || 'coupon'}</span>`,
-            `<strong>${money(b.team)}</strong>`,
-            `${m ? m.name + ' · ' : ''}${b.n} ${t('pUnits')} · ${t('mOurFees')}: ${money(b.fee)}`
-          );
-        }).join('') : `<p style="color:#888;font-size:12px;">${t('pNoneSold')}</p>`}
-
-        ${unsold.length ? rHead(t('pNotSold')) + unsold.map(x => {
-          const m = d.merchants.find(y => y.id === x.merchant_id);
-          return rRow(`${x.name} <span style="color:#888;">· ${x.kind || 'coupon'}</span>`,
-                      x.active ? t('pActive') : t('pInactive'),
-                      m ? m.name : '');
-        }).join('') : ''}
-      `;
-    }
 
     // ---- 5 · Ledger ----
     // Every pledge, whole life. The row is the audit trail.
-    function reportLedger(d) {
-      if (!d.pledges.length) return `<p style="color:#888;font-size:12px;">${t('rNothing')}</p>`;
-
-      const rows = d.pledges.slice().sort((a,b) =>
-        new Date(b.created_at || 0) - new Date(a.created_at || 0));
-
-      return `
-        <p style="margin:0 0 10px 0;font-size:11px;color:#888;">${t('lBody')}</p>
-        <div style="overflow-x:auto;">
-          <table style="width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap;">
-            <thead><tr style="color:#888;text-align:left;">
-              <th style="padding:6px 10px 6px 0;">${t('lPadrino')}</th>
-              <th style="padding:6px 10px 6px 0;">${t('lOn')}</th>
-              <th style="padding:6px 10px 6px 0;text-align:right;">${t('lRate')}</th>
-              <th style="padding:6px 10px 6px 0;text-align:right;">${t('lPoints')}</th>
-              <th style="padding:6px 10px 6px 0;text-align:right;">${t('lPledged')}</th>
-              <th style="padding:6px 10px 6px 0;text-align:right;">${t('lFee')}</th>
-              <th style="padding:6px 10px 6px 0;text-align:right;">${t('lBilled')}</th>
-              <th style="padding:6px 10px 6px 0;">${t('lStatus')}</th>
-            </tr></thead>
-            <tbody>
-              ${rows.map(p => {
-                const pl = d.players.find(x => x.id === p.player_id);
-                const ch = d.challenges.find(x => x.id === p.challenge_id);
-                return `<tr style="border-top:1px solid #ffffff10;">
-                  <td style="padding:7px 10px 7px 0;">${p.sponsor_name || '—'}</td>
-                  <td style="padding:7px 10px 7px 0;">${pl ? pl.name : t('lWholeTeam')}
-                      <span style="color:#666;">${ch ? '· ' + ch.name : ''}</span></td>
-                  <td style="padding:7px 10px 7px 0;text-align:right;">${money(p.rate_per_point)}</td>
-                  <td style="padding:7px 10px 7px 0;text-align:right;">${p.points_at_invoice ?? '—'}</td>
-                  <td style="padding:7px 10px 7px 0;text-align:right;">${p.team_amount != null ? money(p.team_amount) : '—'}</td>
-                  <td style="padding:7px 10px 7px 0;text-align:right;color:#888;">${p.platform_amount != null ? money(p.platform_amount) : '—'}</td>
-                  <td style="padding:7px 10px 7px 0;text-align:right;">${p.amount != null ? money(p.amount) : '—'}</td>
-                  <td style="padding:7px 10px 7px 0;${p.invoice_status === 'paid' ? 'color:var(--gold);' : ''}">
-                    ${t('st_' + (p.invoice_status || 'pending'), p.invoice_status || 'pending')}
-                    ${p.reminder_count ? `<span style="color:#666;"> ·${p.reminder_count}</span>` : ''}
-                  </td>
-                </tr>`;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>`;
-    }
 
     // ---- export ----
     // Eventually somebody wants it in a spreadsheet.
@@ -3402,44 +3105,6 @@
 
     // ===== EDITING MERCHANTS AND CAMPAIGNS =====
 
-    async function editMerchant(id) {
-      try {
-        const rows = await supabaseQuery('merchants', 'GET', null, `?id=eq.${id}`);
-        if (!rows || rows.length === 0) return;
-        const m = rows[0];
-
-        const name = prompt(t('businessName'), m.name || '');
-        if (name === null) return;
-        const logo = prompt(t('logoUrl'), m.logo_url || '');
-        if (logo === null) return;
-        const contact = prompt(t('contactName'), m.contact_name || '');
-        if (contact === null) return;
-        const email = prompt(t('contactEmail'), m.contact_email || '');
-        if (email === null) return;
-
-        await supabaseQuery(`merchants?id=eq.${id}`, 'PATCH', {
-          name: name.trim() || m.name,
-          logo_url: logo.trim() || null,
-          contact_name: contact.trim() || null,
-          contact_email: email.trim() || null
-        });
-
-        // Card designs carry their own copy of the brand so a sold card
-        // keeps what it was sold with. Changing the merchant here is a
-        // deliberate rebrand, so the designs are re-synced to match.
-        await supabaseQuery(`card_designs?merchant_id=eq.${id}`, 'PATCH', {
-          display_name: name.trim() || m.name,
-          display_logo: logo.trim() || null
-        });
-
-        loadMerchants();
-        loadDesigns();
-        alert(t('saved'));
-      } catch (error) {
-        console.error('Edit merchant:', error);
-        alert('Error: ' + error.message);
-      }
-    }
 
     async function editCampaign(id) {
       try {
@@ -3560,178 +3225,14 @@
     // ===== CARD EXPIRY =====
     // What is still live, and when a merchant's exposure actually ends.
 
-    async function loadExpiry() {
-      const box = document.getElementById('expiryContainer');
-      if (!box) return;
-
-      try {
-        const cards = await supabaseQuery('cards', 'GET', null,
-          '?select=expires_on,card_designs(display_name,name)');
-        const list = cards || [];
-
-        if (list.length === 0) {
-          box.innerHTML = `<p style="color:#aaa;">${t('noCardsYet')}</p>`;
-          return;
-        }
-
-        const today = new Date().toISOString().slice(0, 10);
-        const in30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
-
-        const byBrand = {};
-        list.forEach(c => {
-          const d = c.card_designs || {};
-          const brand = d.display_name || d.name || t('merchantWord');
-          if (!byBrand[brand]) byBrand[brand] = { live: 0, soon: 0, expired: 0, last: null };
-          const g = byBrand[brand];
-
-          if (!c.expires_on) { g.live++; return; }
-          if (c.expires_on < today) { g.expired++; return; }
-
-          g.live++;
-          if (c.expires_on <= in30) g.soon++;
-          if (!g.last || c.expires_on > g.last) g.last = c.expires_on;
-        });
-
-        box.innerHTML = Object.keys(byBrand).sort().map(name => {
-          const g = byBrand[name];
-          return `
-            <div style="padding:12px;background:#0e0a11;border-radius:9px;margin:8px 0;border:1px solid #ffffff14;">
-              <p style="margin:0;font-weight:950;">${name}</p>
-              <p style="margin:6px 0 0 0;font-size:12px;color:#aaa;">
-                <strong style="color:var(--gold);">${g.live}</strong> ${t('liveCards')}${g.soon > 0 ? ` · <strong>${g.soon}</strong> ${t('expiringSoon')}` : ''}${g.expired > 0 ? ` · ${g.expired} ${t('expiredWord').toLowerCase()}` : ''}
-              </p>
-              ${g.last ? `<p style="margin:5px 0 0 0;font-size:12px;color:#888;">${t('lastCardExpires')} ${g.last}</p>` : ''}
-            </div>`;
-        }).join('');
-      } catch (error) {
-        console.error('Expiry view:', error);
-        box.innerHTML = '<p style="color:#f66;">Error: ' + error.message + '</p>';
-      }
-    }
 
     // ===== CARD DESIGNS =====
 
-    function updateSplitPreview() {
-      const price = parseFloat(document.getElementById('designPrice').value) || 0;
-      const share = parseFloat(document.getElementById('designShare').value) || 0;
-      const team = price * (share / 100);
-      const el = document.getElementById('splitPreview');
-      if (el) el.textContent = `${t('teamKeeps')} ${money(team)} · ${t('platformKeeps')} ${money(price - team)}`;
-    }
 
-    function toggleKindFields() {
-      const kind = document.getElementById('designKind').value;
-      document.getElementById('licenseFields').style.display = kind === 'license' ? 'block' : 'none';
-      document.getElementById('bogoFields').style.display = kind === 'license' ? 'none' : 'block';
-    }
 
-    async function createDesign() {
-      const merchantId = document.getElementById('designMerchant').value;
-      const name = document.getElementById('designName').value.trim();
-      const price = parseFloat(document.getElementById('designPrice').value);
-      const shareRaw = document.getElementById('designShare').value.trim();
-      const share = shareRaw === '' ? 0 : parseInt(shareRaw, 10);
 
-      if (!merchantId) { alert(t('selectMerchant')); return; }
-      if (!name) { alert(t('enterCardName')); return; }
-      if (!price || price <= 0) { alert(t('enterPrice')); return; }
-      if (isNaN(share) || share < 0 || share > 100) { alert(t('enterShare')); return; }
 
-      try {
-        const chosen = document.getElementById('designMerchant');
-        const merchantName = chosen.options[chosen.selectedIndex] ? chosen.options[chosen.selectedIndex].text : '';
-        const merchantLogo = MERCHANT_LOGOS[merchantId] || null;
 
-        const kind = document.getElementById('designKind').value;
-
-        await supabaseQuery('card_designs', 'POST', {
-          merchant_id: merchantId,
-          kind,
-          license_product: kind === 'license' ? (document.getElementById('designProduct').value.trim() || null) : null,
-          redeem_url: kind === 'license' ? (document.getElementById('designRedeem').value.trim() || null) : null,
-          display_name: merchantName || null,
-          display_logo: merchantLogo,
-          name,
-          tab_count: kind === 'license' ? 1 : (parseInt(document.getElementById('designTabs').value, 10) || 1),
-          price,
-          team_share_pct: share,
-          offer_text: document.getElementById('designOffer').value.trim() || 'Buy One Get One Free',
-          valid_when: document.getElementById('designWhen').value.trim() || null,
-          terms: document.getElementById('designTerms').value.trim() || null,
-          expires_on: document.getElementById('designExpires').value || null
-        }, '?select=*');
-
-        document.getElementById('designName').value = '';
-        document.getElementById('designTerms').value = '';
-        document.getElementById('designWhen').value = '';
-        document.getElementById('createDesignForm').style.display = 'none';
-
-        loadDesigns();
-        alert(t('cardCreated'));
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Error: ' + error.message);
-      }
-    }
-
-    async function loadDesigns() {
-      try {
-        const designs = await supabaseQuery('card_designs', 'GET', null,
-          '?select=*,merchants(name)&order=created_at.desc');
-        const box = document.getElementById('designsContainer');
-
-        if (!designs || designs.length === 0) {
-          box.innerHTML = '<p style="color:#aaa;">' + t('noDesigns') + '</p>';
-          return;
-        }
-
-        box.innerHTML = designs.map(d => {
-          const team = Number(d.price) * (d.team_share_pct / 100);
-          return `
-            <div style="padding:14px;background:#0e0a11;border-radius:9px;margin:10px 0;border:1px solid #ffffff14;">
-              <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;">
-                <div style="flex:1;">
-                  <p style="margin:0;font-weight:950;font-size:16px;">${d.name}</p>
-                  <p style="margin:4px 0 0 0;font-size:12px;color:#aaa;">${d.merchants ? d.merchants.name : t('merchantWord')} · ${d.kind === 'license' ? t('kindLicense') : d.tab_count + ' ' + t('tabsWord')} · ${d.offer_text}${d.valid_when ? ' · ' + d.valid_when : ''}</p>
-                  <p style="margin:6px 0 0 0;font-size:13px;">
-                    <span style="color:var(--gold);font-weight:950;">${money(d.price)}</span>
-                    <span style="color:#888;"> — ${t('teamWord')} ${money(team)} / ${t('platformWord')} ${money(Number(d.price) - team)}</span>
-                  </p>
-                  ${d.expires_on ? `<p style="margin:4px 0 0 0;font-size:11px;color:#888;">${t('expires')} ${d.expires_on}</p>` : ''}
-                  <p style="margin:6px 0 0 0;font-size:11px;color:${d.active === false ? '#f66' : '#6f6'};">${d.active === false ? t('inactive') : t('active')}</p>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-                  <button class="btn alt" onclick="toggleDesignActive('${d.id}', ${d.active === false})" style="padding:6px 10px;font-size:11px;">${d.active === false ? t('activate') : t('deactivate')}</button>
-                  <button class="btn red" onclick="deleteDesign('${d.id}')" style="padding:6px 10px;font-size:11px;">${t('delete')}</button>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('designsContainer').innerHTML = '<p style="color:#f66;">Error loading cards</p>';
-      }
-    }
-
-    async function toggleDesignActive(id, makeActive) {
-      try {
-        await supabaseQuery(`card_designs?id=eq.${id}`, 'PATCH', { active: makeActive });
-        loadDesigns();
-      } catch (error) {
-        alert('Error: ' + error.message);
-      }
-    }
-
-    async function deleteDesign(id) {
-      if (!confirm(t('confirmDeleteDesign'))) return;
-      try {
-        await supabaseQuery(`card_designs?id=eq.${id}`, 'DELETE');
-        loadDesigns();
-      } catch (error) {
-        alert(t('designHasCards'));
-      }
-    }
 
     // ===== CAMPAIGNS =====
 
@@ -4613,16 +4114,18 @@
     // its links point at — Basketball Money for the court events,
     // Every Point for the school challenges.
     const SITES = {
-      basketball: 'https://hoops.cash',
       school: 'https://cadapunto.com',
-        hooporia: 'https://hooporia.com'
+      hooporia: 'https://hooporia.com'
     };
-    const BASKETBALL_GAMES = ['cashrack', 'spots'];
+    /* Aquí había una lista de juegos que mandaban a un tercer sitio
+       propio. Ese producto se retiró: quedan dos sitios, y el
+       producto de la campaña decide cuál, sin excepciones por
+       juego. */
 
       /* ── De qué producto es cada campaña ──────────────────────────
          Esto existe porque el enlace con el que un nene entra a jugar
          su corrida oficial se construía mirando el JUEGO, y 'fortress'
-         no está en BASKETBALL_GAMES: todo enlace de Fortress salía
+         no estaba en aquella lista: todo enlace de Fortress salía
          apuntando a cadapunto.com. Para un reto de Hooporia, el
          entrenador copiaba el enlace y mandaba a su jugador al otro
          producto.
@@ -4645,11 +4148,11 @@
         return PRODUCTO_CAMPANA[campaignId] || 'cada-punto';
       }
 
-      /* El sitio de una campaña. Cash Rack y The Spots se juegan en una
-         cancha de verdad y tienen su propio sitio, así que ésos mandan
-         sea cual sea el producto. */
+      /* El sitio de una campaña: lo decide su producto y nada más.
+         El juego ya no manda sobre el dominio — eso era para Cash
+         Rack, que se jugaba en una cancha de verdad y tenía sitio
+         propio. */
       function sitioDe(campaignId, game) {
-        if (BASKETBALL_GAMES.indexOf(game) !== -1) return SITES.basketball;
         return productoDe(campaignId) === 'anotado' ? SITES.hooporia : SITES.school;
       }
 
@@ -4693,15 +4196,12 @@
       return sitioDe(campaignId, game);
     }
 
-    // The pledge pages sit at the root on the school site and at
-    // /pledge.html on the basketball one, where the root is the
-    // Cash Rack rules.
+    /* Dónde se promete. Ninguno de los dos sitios promete desde su
+       raíz: las dos raíces son la presentación, y prometer vive en su
+       propia página — challenges.html en Cada Punto, prometer.html en
+       Hooporia. */
     function pledgeBase(game, campaignId) {
-      // Neither site serves pledges from its root now — both roots are
-      // the pitch, and the challenges live on their own page.
-      return BASKETBALL_GAMES.indexOf(game) !== -1
-        ? SITES.basketball + '/pledge.html'
-        : sitioDe(campaignId, game) + rutaPromesa(campaignId);
+      return sitioDe(campaignId, game) + rutaPromesa(campaignId);
     }
 
     function pointsFor(level) {
@@ -4718,22 +4218,10 @@
       fortress131: 'The Fortress 1-3-1',
       recall: 'The Recall',
       replay: 'The Replay',
-      recognition: 'Recognition',
-      cashrack: 'Cash Rack',
-      spots: 'The Spots'
+      recognition: 'Recognition'
     };
 
-    // Cash Rack is run on a real court, so there is no link to share
-    // and no game to play — the coach's scorekeepers count, and the
-    // numbers are entered here afterwards.
-    function isManual(game) { return game === 'cashrack'; }
 
-    // Every attempt scores 1. A made three adds 3 more, a made foul
-    // shot adds 2 more. Eighteen shots, so 69 is the most anyone can
-    // score and 18 the least for a completed run.
-    function cashRackPoints(att, threes, fouls) {
-      return (att || 0) + (threes || 0) * 3 + (fouls || 0) * 2;
-    }
     function gameLabel(key) { return GAME_LABELS[key] || GAME_LABELS.fortress; }
 
     /* ── Qué juegos se pueden escoger al crear un reto ───────────────
@@ -5078,14 +4566,9 @@
               <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
                 <button class="btn" onclick="copyChallengeLink('${ch.id}','${ch.game}','${ch.campaign_id}')" style="padding:6px 10px;font-size:11px;">${t('teamLink')}</button>
                 <button class="btn alt" onclick="toggleChallengeDetail('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('detail')}</button>
-                ${isManual(ch.game) ? `
-                  <button class="btn" onclick="copyScoringLink('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('scoringLink')}</button>
-                  <button class="btn alt" onclick="openBoard('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('boardLink')}</button>` : ''}
                 ${LIC[ch.id] ? '' : `
                   <button class="btn alt" onclick="facturarLicencia('${ch.id}')"
                           style="padding:6px 10px;font-size:11px;">${t('licBtn')}</button>`}
-                <button class="btn" onclick="sendChallengeInvoices('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('sendLinks')}</button>
-                <button class="btn alt" onclick="sendReminders('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('remind')}</button>
                 <button class="btn red" onclick="deleteChallenge('${ch.id}','${String(ch.name).replace(/'/g, "\\'")}')" style="padding:6px 10px;font-size:11px;">${t('delete')}</button>
               </div>
             </div>
@@ -5164,40 +4647,10 @@
       }
     }
 
-    // Cash Rack lives on its own site, because it is an event rather
-    // than a page on the platform.
 
 
-    // The scoring link carries a key only the scorekeeper gets —
-    // those numbers decide what sponsors are billed.
-    async function copyScoringLink(challengeId) {
-      try {
-        let rows = await supabaseQuery('challenge_scorer_keys', 'GET', null,
-          `?challenge_id=eq.${challengeId}&select=scorer_key`);
-
-        if (!rows || rows.length === 0) {
-          const key = (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '') : String(Math.random()).slice(2)).slice(0, 18);
-          await supabaseQuery('challenge_scorer_keys', 'POST',
-            { challenge_id: challengeId, scorer_key: key }, '?select=*');
-          rows = [{ scorer_key: key }];
-        }
-
-        const link = `${SITES.basketball}/score.html?c=${challengeId}&k=${rows[0].scorer_key}`;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(link).then(() => alert(t('scoringCopied') + '\n\n' + link)).catch(() => prompt(t('copy'), link));
-        } else {
-          prompt(t('copy'), link);
-        }
-      } catch (error) {
-        console.error('Scoring link:', error);
-        alert('Error: ' + error.message);
-      }
-    }
 
     // The board reads only, so it needs no key — anyone can see it.
-    function openBoard(challengeId) {
-      window.open(`${SITES.basketball}/board.html?c=${challengeId}`, '_blank');
-    }
 
     async function toggleChallengeDetail(challengeId) {
       const box = document.getElementById('challengeDetail-' + challengeId);
@@ -5270,7 +4723,6 @@
         // appears in these figures.
         const teamCut = collected;
 
-        const manual = isManual(ch.game);
 
         const rosterRows = (players || []).map(p => {
           const run = runBy[p.id];
@@ -5282,33 +4734,6 @@
           // invoice wrong.
           const invoiced = (pledges || []).some(x => x.player_id === p.id && x.invoiced_at);
 
-          if (manual) {
-            const a = run ? run.attempts : '';
-            const th = run ? run.threes : '';
-            const ft = run ? run.fouls : '';
-            const locked = invoiced && run;
-            return `
-              <div style="padding:10px;background:#1a1420;border-radius:8px;margin:5px 0;font-size:12px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:${locked ? '0' : '8px'};">
-                  <span>
-                    <strong>${p.name}</strong>${gradeTag(p)}
-                    <span style="color:#888;"> · ${pledgeCount} ${pledgeCount === 1 ? t('pledgeOne') : t('pledgeMany')}</span>
-                  </span>
-                  <span style="flex-shrink:0;display:flex;align-items:center;gap:8px;">
-                    ${run ? `<strong style="color:var(--gold);">${run.points} ${t('pointsWord')}</strong>` : `<span style="color:#666;">${t('noScore')}</span>`}
-                    ${locked ? `<span style="color:#888;font-size:10px;">${t('lockedWord')}</span>` : ''}
-                    <button class="btn alt" onclick="copyPlayerChallengeLink('${challengeId}','${p.id}','${ch.game}','${ch.campaign_id}')" style="padding:4px 9px;font-size:10px;">${t('sponsorLink')}</button>
-                  </span>
-                </div>
-                ${locked ? '' : `
-                  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                    <input type="number" min="0" max="18" id="att-${p.id}" value="${a}" placeholder="${t('attShort')}" style="width:82px;padding:6px 8px;border-radius:7px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
-                    <input type="number" min="0" max="15" id="th-${p.id}" value="${th}" placeholder="${t('threeShort')}" style="width:82px;padding:6px 8px;border-radius:7px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
-                    <input type="number" min="0" max="3" id="ft-${p.id}" value="${ft}" placeholder="${t('foulShort')}" style="width:82px;padding:6px 8px;border-radius:7px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;font-size:12px;">
-                    <button class="btn" onclick="saveCashRack('${challengeId}','${p.id}')" style="padding:6px 12px;font-size:11px;">${t('saveScore')}</button>
-                  </div>`}
-              </div>`;
-          }
 
           return `
             <div style="padding:9px 10px;background:#1a1420;border-radius:8px;margin:5px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;">
@@ -5386,7 +4811,6 @@
           <p style="margin:0 0 6px 0;font-size:11px;color:#888;">${t('projectedNote')}</p>
 
           <p style="margin:14px 0 6px 0;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#888;">${t('rosterAndRuns')}</p>
-          ${manual ? `<p style="margin:0 0 8px 0;font-size:11px;color:#888;">${t('cashRackNote')}</p>` : ''}
           ${rosterRows || `<p style="color:#aaa;font-size:12px;">${t('noPlayers')}</p>`}
 
           <p style="margin:14px 0 6px 0;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#888;">${t('pledgesWord')}</p>
@@ -5407,9 +4831,6 @@
        /send-reminders, asi que esto ni lo intenta. Se deja la funcion
        porque el boton vive dentro de la seccion de retos, que esta
        escondida y no borrada. */
-    async function sendReminders() {
-      alert(t('remindGone'));
-    }
 
     // Half of these get paid because a coach sent the link on WhatsApp
     // rather than because an email arrived.
@@ -5458,82 +4879,7 @@
       }
     }
 
-    async function sendChallengeInvoices(challengeId) {
-      if (!confirm(t('confirmInvoices'))) return;
 
-      const token = await currentToken();
-      if (!token) { alert(t('signInFirst')); return; }
-
-      try {
-        const res = await fetch(`${PAYMENT_SERVER}/challenge-invoices`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify({ challenge_id: challengeId })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          alert(t('invoiceError') + ' ' + (data.error || res.status));
-          return;
-        }
-
-        let summary = `${t('linksSent')}: ${data.sent}`;
-        if (data.skipped) summary += `\n${t('alreadyInvoiced')}: ${data.skipped}`;
-        if (data.zero) summary += `\n${t('nothingOwed')}: ${data.zero}`;
-        if (data.failed) summary += `\n${t('invoicesFailed')}: ${data.failed}`;
-        if (data.errors && data.errors.length) summary += '\n\n' + data.errors.join('\n');
-
-        alert(summary);
-        loadChallengeDetail(challengeId);
-      } catch (error) {
-        console.error('Invoicing:', error);
-        alert(t('invoiceError') + ' ' + error.message);
-      }
-    }
-
-    // Writes a Cash Rack score. Editable until the pledges behind it
-    // have been invoiced — after that a sponsor has been billed on
-    // the number, so it is fixed.
-    async function saveCashRack(challengeId, playerId) {
-      const att = parseInt(document.getElementById('att-' + playerId).value, 10);
-      const threes = parseInt(document.getElementById('th-' + playerId).value, 10) || 0;
-      const fouls = parseInt(document.getElementById('ft-' + playerId).value, 10) || 0;
-
-      if (isNaN(att) || att < 0) { alert(t('needAttempts')); return; }
-      if (threes + fouls > att) { alert(t('moreMadeThanTaken')); return; }
-
-      const points = cashRackPoints(att, threes, fouls);
-
-      try {
-        const existing = await supabaseQuery('challenge_runs', 'GET', null,
-          `?challenge_id=eq.${challengeId}&player_id=eq.${playerId}&select=player_id`);
-
-        if (existing && existing.length) {
-          await supabaseQuery('challenge_runs',
-            'PATCH',
-            { attempts: att, threes, fouls, points, level_reached: 0 },
-            `?challenge_id=eq.${challengeId}&player_id=eq.${playerId}`);
-        } else {
-          await supabaseQuery('challenge_runs', 'POST', {
-            challenge_id: challengeId,
-            player_id: playerId,
-            game: 'cashrack',
-            level_reached: 0,
-            attempts: att, threes, fouls,
-            points
-          }, '?select=*');
-        }
-
-        loadChallengeDetail(challengeId);
-      } catch (error) {
-        console.error('Cash Rack score:', error);
-        alert('Error: ' + error.message);
-      }
-    }
 
     async function deleteChallenge(id, name) {
       if (!confirm(t('confirmDeleteChallenge') + '\n\n' + name)) return;
@@ -7072,11 +6418,6 @@
       applyLang();
       initAdmin();
       initCoach();
-
-      ['designPrice', 'designShare'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('input', updateSplitPreview);
-      });
 
       if (params.get('purchase') === 'cancelled') {
         alert(t('checkoutCancelled'));
