@@ -589,6 +589,18 @@
         switchTeam:'Switch team',
         challenges:'Challenges', newChallenge:'+ New Challenge', createChallenge:'Create a Challenge',
         gameNote:'A school challenge is scored on The Replay and The Recall together, whichever you pick here — this only sets which game the practice button opens. A basketball challenge is scored on the game you pick.',
+        licBtn:'Invoice the licence',
+        licConfirm:'Invoice the licence for this event?\n\n{M} to {E}\n\nRoster: {R} · Pledges recorded: {P}\nDue in {D} days.',
+        licLive:'LIVE MODE — this sends a real invoice by email, to a real customer.',
+        licTest:'Test mode — no real money moves.',
+        licDone:'Invoiced. Stripe has emailed {M} to {E}.',
+        licAlready:'This event already has a licence. An event is only ever invoiced once.',
+        licNoPledges:'This event recorded no pledges, so there is nothing to invoice. No pledges, no fee \u2014 that is what the programme accepted.',
+        licNoEmail:'No email on file for this programme, so there is nobody to invoice. Add the email to the coach on this campaign first.',
+        licStripe:'Stripe refused the invoice, so nothing was billed and nothing was recorded. You can try again.',
+        licNoEndpoint:'That payment server does not have the licence endpoint. Check which Render service this admin points at.',
+        licUnreachable:'Could not reach the payment server. Nothing was invoiced.',
+        licSent:'Licence invoiced', licPaid:'Licence paid', licSeeInvoice:'see invoice',
         windowTitle:'Game window', opensAt:'Opens', closesAt:'Closes',
         windowNote:'Pledging closes the moment the window opens, and quarters only save inside it. A challenge with no window cannot be played, live or not.',
         startLive:'Live now — players and sponsors can see their links',
@@ -1003,6 +1015,18 @@
         switchTeam:'Cambiar equipo',
         challenges:'Retos', newChallenge:'+ Nuevo reto', createChallenge:'Crear un reto',
         gameNote:'Un reto escolar se punt\u00faa con The Replay y The Recall juntos, escojas lo que escojas aqu\u00ed — esto solo fija qu\u00e9 juego abre el bot\u00f3n de pr\u00e1ctica. Un reto de baloncesto se punt\u00faa con el juego que escojas.',
+        licBtn:'Facturar la licencia',
+        licConfirm:'\u00bfFacturar la licencia de este evento?\n\n{M} a {E}\n\nPlantilla: {R} \u00b7 Promesas anotadas: {P}\nSe paga en {D} d\u00edas.',
+        licLive:'MODO PRODUCCI\u00d3N \u2014 esto manda una factura de verdad, por correo, a un cliente de verdad.',
+        licTest:'Modo de prueba \u2014 no se mueve dinero de verdad.',
+        licDone:'Facturada. Stripe le mand\u00f3 {M} a {E}.',
+        licAlready:'Este evento ya tiene licencia. Un evento se factura una sola vez.',
+        licNoPledges:'Este evento no recogi\u00f3 ni una promesa, as\u00ed que no hay nada que facturar. Sin promesas, sin cargo \u2014 es lo que acept\u00f3 el programa.',
+        licNoEmail:'No hay correo de este programa, as\u00ed que no hay a qui\u00e9n facturarle. Ponle el correo al entrenador de esta campa\u00f1a primero.',
+        licStripe:'Stripe no acept\u00f3 la factura, as\u00ed que no se cobr\u00f3 nada y no qued\u00f3 nada apuntado. Se puede volver a intentar.',
+        licNoEndpoint:'Ese servidor de pagos no tiene el endpoint de la licencia. Mira a qu\u00e9 servicio de Render apunta este admin.',
+        licUnreachable:'No se pudo llegar al servidor de pagos. No se factur\u00f3 nada.',
+        licSent:'Licencia facturada', licPaid:'Licencia pagada', licSeeInvoice:'ver factura',
         windowTitle:'Ventana del juego', opensAt:'Abre', closesAt:'Cierra',
         windowNote:'Las promesas cierran en cuanto la ventana abre, y los cuartos s\u00f3lo se guardan dentro de ella. Un reto sin ventana no se puede jugar, est\u00e9 vivo o no.',
         startLive:'Vivo ya — jugadores y padrinos ven sus enlaces',
@@ -4859,6 +4883,79 @@
       }
     }
 
+    // ══════════════════════════════════════════════════════
+    //  FACTURAR LA LICENCIA DE UN EVENTO
+    //
+    //  El único cobro de Hooporia, y lo paga el programa: $49 por
+    //  equipo y evento, $29 bajo ocho, y nada si el evento no
+    //  recogió ni una promesa.
+    //
+    //  Dos pasos a propósito. El primero NO factura: le pregunta al
+    //  servidor qué saldría y a quién, y lo enseña. El segundo
+    //  confirma. La llave de Stripe es de producción, así que un
+    //  botón de un solo clic es una factura real a un cliente real
+    //  mientras se prueba — y una factura de más no se arregla con
+    //  una disculpa.
+    //
+    //  El importe no se calcula aquí ni se manda desde aquí: sale de
+    //  licencia_calculo() en la base. Lo que el navegador manda es
+    //  qué reto, y nada más.
+    // ══════════════════════════════════════════════════════
+    const centavos = (c) => '$' + ((c || 0) / 100).toFixed(2);
+
+    function licenciaProblema(r) {
+      const j = r.j || {};
+      if (r.code === 404) return t('licNoEndpoint');
+      if (j.error === 'ya_facturada') return t('licAlready');
+      if (j.error === 'sin_promesas') return t('licNoPledges');
+      if (j.error === 'sin_correo')   return t('licNoEmail');
+      if (j.error === 'stripe')       return t('licStripe') + '\n\n' + (j.why || '');
+      if (r.code === 403)             return t('notSaved');
+      return 'Error: ' + (j.error || r.code);
+    }
+
+    async function facturarLicencia(challengeId) {
+      const token = await currentToken();
+      if (!token) { alert(t('notSaved')); return; }
+
+      async function pedir(confirmar) {
+        const res = await fetch(`${PAYMENT_SERVER}/licencia`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json',
+                     'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ challenge_id: challengeId, confirmar })
+        });
+        let j = null;
+        try { j = await res.json(); } catch (e) {}
+        return { code: res.status, j };
+      }
+
+      try {
+        const vista = await pedir(false);
+        if (vista.code !== 200) { alert(licenciaProblema(vista)); return; }
+
+        const v = vista.j;
+        const aviso = t('licConfirm')
+          .replace('{M}', centavos(v.amount_cents))
+          .replace('{E}', v.program_email || '—')
+          .replace('{P}', v.promesas)
+          .replace('{R}', v.roster)
+          .replace('{D}', v.dias)
+          + '\n\n' + (v.modo === 'live' ? t('licLive') : t('licTest') + ' (' + v.modo + ')');
+
+        if (!confirm(aviso)) return;
+
+        const hecho = await pedir(true);
+        if (hecho.code !== 200) { alert(licenciaProblema(hecho)); loadChallenges(); return; }
+        alert(t('licDone').replace('{M}', centavos(hecho.j.amount_cents))
+                          .replace('{E}', hecho.j.program_email));
+        loadChallenges();
+      } catch (e) {
+        console.error('Licencia:', e);
+        alert(t('licUnreachable') + '\n\n' + String(e.message || e));
+      }
+    }
+
     /* La ventana, ya creado el reto. Antes esto era entrar al editor
        de SQL — y el día de un partido, con los nenes esperando, eso
        no es una opción. */
@@ -4909,6 +5006,18 @@
 
         const rows = await supabaseQuery('challenges', 'GET', null,
           '?select=*,campaigns(name,product)&order=created_at.desc');
+
+        /* Qué retos ya tienen licencia, para no ofrecer facturar lo
+           que ya se facturó. Si esto falla —RLS, red, la tabla aún
+           sin crear— la lista se pinta igual: saber el estado de las
+           licencias es útil, pero no es para lo que se abre esta
+           pestaña. */
+        const LIC = {};
+        try {
+          const ls = await supabaseQuery('licencias', 'GET', null,
+            '?select=challenge_id,estado,amount_cents,stripe_hosted_url&estado=neq.anulada');
+          (ls || []).forEach(l => { LIC[l.challenge_id] = l; });
+        } catch (e) { console.error('licencias:', e); }
         // El producto de cada campaña, para que los enlaces de abajo
         // sepan a qué dominio apuntan.
         (rows || []).forEach(r => recordarProducto(r.campaign_id, r.campaigns && r.campaigns.product));
@@ -4953,6 +5062,18 @@
                 </div>
                 ${(!ch.opens_at || !ch.closes_at) ? `
                   <p style="margin:6px 0 0 0;font-size:11px;color:#FFB020;">${t('noWindowYet')}</p>` : ''}
+
+                <!-- La licencia de este evento, si ya tiene. El
+                     enlace es el de Stripe, para mirar la factura
+                     sin salir a buscarla. -->
+                ${LIC[ch.id] ? `
+                  <p style="margin:8px 0 0 0;font-size:11px;color:${LIC[ch.id].estado === 'pagada' ? '#6FD83C' : '#9aa'};">
+                    ${LIC[ch.id].estado === 'pagada' ? t('licPaid') : t('licSent')}
+                    · ${centavos(LIC[ch.id].amount_cents)}
+                    ${LIC[ch.id].stripe_hosted_url
+                      ? ` · <a href="${LIC[ch.id].stripe_hosted_url}" target="_blank" rel="noopener" style="color:inherit;">${t('licSeeInvoice')}</a>`
+                      : ''}
+                  </p>` : ''}
               </div>
               <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
                 <button class="btn" onclick="copyChallengeLink('${ch.id}','${ch.game}','${ch.campaign_id}')" style="padding:6px 10px;font-size:11px;">${t('teamLink')}</button>
@@ -4960,6 +5081,9 @@
                 ${isManual(ch.game) ? `
                   <button class="btn" onclick="copyScoringLink('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('scoringLink')}</button>
                   <button class="btn alt" onclick="openBoard('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('boardLink')}</button>` : ''}
+                ${LIC[ch.id] ? '' : `
+                  <button class="btn alt" onclick="facturarLicencia('${ch.id}')"
+                          style="padding:6px 10px;font-size:11px;">${t('licBtn')}</button>`}
                 <button class="btn" onclick="sendChallengeInvoices('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('sendLinks')}</button>
                 <button class="btn alt" onclick="sendReminders('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('remind')}</button>
                 <button class="btn red" onclick="deleteChallenge('${ch.id}','${String(ch.name).replace(/'/g, "\\'")}')" style="padding:6px 10px;font-size:11px;">${t('delete')}</button>
