@@ -261,7 +261,7 @@
               <option value="fortress-vr">The Fortress — scrimmage, 4 quarters</option>
               <option value="fortress131">The Fortress 1-3-1</option>
             </select>
-            <p style="margin:6px 0 0 0;font-size:11px;color:#888;" data-i18n="gameNote">
+            <p id="gameNote" style="margin:6px 0 0 0;font-size:11px;color:#888;" data-i18n="gameNote">
               A school challenge is scored on The Replay and The Recall together, whichever you pick here — this only sets which game the practice button opens. A basketball challenge is scored on the game you pick.
             </p>
 
@@ -562,6 +562,7 @@
         switchTeam:'Switch team',
         challenges:'Challenges', newChallenge:'+ New Challenge', createChallenge:'Create a Challenge',
         gameNote:'A school challenge is scored on The Replay and The Recall together, whichever you pick here — this only sets which game the practice button opens. A basketball challenge is scored on the game you pick.',
+        gameNoteAnotado:'A Hooporia challenge is the four-quarter scrimmage. It is the board the site shows and the only one that records quarter by quarter, so it is the only one offered here.',
         challengeCampaign:'Campaign', selectCampaign:'Select a campaign...', challengeName:'Challenge Name',
         challengeNamePh:'e.g. Fall Fortress Challenge', pledgeDeadline:'Pledges Close', runDeadline:'Runs Close',
         createChallengeBtn:'Create Challenge', enterChallengeName:'Enter a challenge name',
@@ -966,6 +967,7 @@
         switchTeam:'Cambiar equipo',
         challenges:'Retos', newChallenge:'+ Nuevo reto', createChallenge:'Crear un reto',
         gameNote:'Un reto escolar se punt\u00faa con The Replay y The Recall juntos, escojas lo que escojas aqu\u00ed — esto solo fija qu\u00e9 juego abre el bot\u00f3n de pr\u00e1ctica. Un reto de baloncesto se punt\u00faa con el juego que escojas.',
+        gameNoteAnotado:'Un reto de Hooporia es el scrimmage de cuatro cuartos. Es el tablero que el sitio ense\u00f1a y el \u00fanico que guarda cuarto a cuarto, as\u00ed que es el \u00fanico que se ofrece aqu\u00ed.',
         challengeCampaign:'Campa\u00f1a', selectCampaign:'Selecciona una campa\u00f1a...', challengeName:'Nombre del reto',
         challengeNamePh:'ej. Reto Fortress de Oto\u00f1o', pledgeDeadline:'Cierran las promesas', runDeadline:'Cierran las corridas',
         createChallengeBtn:'Crear reto', enterChallengeName:'Entra el nombre del reto',
@@ -4665,6 +4667,61 @@
     }
     function gameLabel(key) { return GAME_LABELS[key] || GAME_LABELS.fortress; }
 
+    /* ── Qué juegos se pueden escoger al crear un reto ───────────────
+       Los dos productos comparten este admin pero no comparten los
+       juegos. Hooporia enseña un solo tablero en su portada —el
+       scrimmage de cuatro cuartos— y es el único que guarda cuarto a
+       cuarto, con cp_record_quarter. Los demás escriben una sola
+       corrida con record_official_run.
+
+       Mientras la lista fue la misma para todo el mundo, un reto de
+       Hooporia se podía crear sobre un camino que no se ha andado
+       nunca de punta a punta: el enlace abre, el nene juega, y lo que
+       se guarda no es lo que el informe sabe leer. Ofrecer una sola
+       cosa es más barato que arreglar eso después.
+
+       Cada Punto no se toca: sus retos siguen con sus seis juegos. */
+    const JUEGOS_RETO = {
+      'cada-punto': [
+        ['fortress',    'The Fortress'],
+        ['recall',      'The Recall'],
+        ['replay',      'The Replay'],
+        ['rebound',     'The Rebound'],
+        ['fortress-vr', 'The Fortress — scrimmage, 4 quarters'],
+        ['fortress131', 'The Fortress 1-3-1']
+      ],
+      anotado: [
+        ['fortress-vr', 'The Fortress — scrimmage, 4 quarters']
+      ]
+    };
+
+    function pintarJuegosDelReto() {
+      const campo = document.getElementById('challengeGame');
+      const camp  = document.getElementById('challengeCampaign');
+      if (!campo || !camp) return;
+
+      const producto = productoDe(camp.value);
+      const lista = JUEGOS_RETO[producto] || JUEGOS_RETO['cada-punto'];
+
+      /* Si lo que ya estaba escogido sigue en la lista, se respeta:
+         cambiar de campaña no tiene por qué cambiarle el juego a
+         quien ya lo había puesto. */
+      const antes = campo.value;
+      campo.innerHTML = lista
+        .map(j => '<option value="' + j[0] + '">' + j[1] + '</option>').join('');
+      if (lista.some(j => j[0] === antes)) campo.value = antes;
+
+      /* La nota se cambia por su llave y no por su texto: applyLang
+         repinta todo lo que lleva data-i18n, así que escribirle el
+         texto a mano aquí duraría hasta el primer cambio de idioma. */
+      const nota = document.getElementById('gameNote');
+      if (nota) {
+        const llave = producto === 'anotado' ? 'gameNoteAnotado' : 'gameNote';
+        nota.setAttribute('data-i18n', llave);
+        nota.textContent = t(llave);
+      }
+    }
+
     async function createChallenge() {
       const campaignId = document.getElementById('challengeCampaign').value;
       const name = document.getElementById('challengeName').value.trim();
@@ -4715,11 +4772,21 @@
 
       try {
         // keep the campaign dropdown in step with the campaigns list
-        const campaigns = await supabaseQuery('campaigns', 'GET', null, '?select=id,name&order=created_at.desc');
+        /* El producto viene en esta misma consulta a propósito. Antes
+           sólo se aprendía de los retos que ya existían o de haber
+           pasado por la pestaña de campañas, así que una campaña
+           recién creada —que es justo la que se va a usar— contaba
+           como cada-punto: lista de juegos equivocada, y enlaces
+           apuntando al otro dominio. */
+        const campaigns = await supabaseQuery('campaigns', 'GET', null, '?select=id,name,product&order=created_at.desc');
+        (campaigns || []).forEach(c => recordarProducto(c.id, c.product));
         const select = document.getElementById('challengeCampaign');
         if (select) {
           select.innerHTML = `<option value="">${t('selectCampaign')}</option>` +
             (campaigns || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+          // La lista de juegos sigue a la campaña escogida.
+          select.onchange = pintarJuegosDelReto;
+          pintarJuegosDelReto();
         }
 
         const rows = await supabaseQuery('challenges', 'GET', null,
