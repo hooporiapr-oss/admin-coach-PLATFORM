@@ -2425,11 +2425,18 @@
     }
 
 
-    // El enlace que el coach manda al grupo del equipo. Cada jugador
-    // se añade con su nombre y su categoría, y sale con su propio
-    // enlace de padrinos.
+    /* El enlace que el coach manda al grupo. Cada jugador se añade
+       con su nombre y sale con su propio enlace de padrinos.
+
+       El dominio salía escrito a mano: cadapunto.com, siempre. Para
+       una campaña de Hooporia eso manda a los nenes al otro producto
+       — y el fallo es invisible, porque el enlace funciona: los dos
+       sitios hablan con la misma base, así que la página abre y la
+       campaña existe. Simplemente no es su sitio. Es el mismo fallo
+       que ya se arregló en el enlace de jugar y en el de prometer;
+       éste se quedó porque no pasaba por sitioDe(). */
     function copyJoinLink(campaignId) {
-      const url = `https://cadapunto.com/jugador.html?c=${campaignId}`;
+      const url = `${sitioDe(campaignId)}/jugador.html?c=${campaignId}`;
       navigator.clipboard.writeText(url)
         .then(() => alert(t('joinCopied') + '\n\n' + url))
         .catch(() => prompt(t('copyManually'), url));
@@ -2449,7 +2456,7 @@
     }
 
     function sharePlayers(campaignId) {
-      const url = `https://cadapunto.com/jugador.html?c=${campaignId}`;
+      const url = `${sitioDe(campaignId)}/jugador.html?c=${campaignId}`;
       waShare(
         '¡Jugadores! Abran este enlace y pongan su nombre. Les da su propio enlace para ' +
         'mandarle a su familia — lo que prometan queda apuntado a su nombre, y todo va al programa.' +
