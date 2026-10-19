@@ -121,6 +121,20 @@ eq(sitioDe(HOO, 'rebound'), 'https://hooporia.com',
 eq(sitioDe(CP, 'fortress-vr'), 'https://cadapunto.com',
    'y una de Cada Punto a cadapunto.com, igual');
 
+console.log('\n4b · El enlace con el que un jugador se da de alta\n');
+/* Éste se quedó atrás cuando se arregló todo lo demás: el dominio
+   iba escrito a mano, cadapunto.com, para las dos campañas. Y es el
+   peor sitio donde tenerlo, porque es el primer enlace que sale del
+   admin — el que el coach manda al grupo entero— y porque no se ve:
+   los dos sitios hablan con la misma base, así que la página abre y
+   la campaña existe. El nene se da de alta en el producto
+   equivocado y nadie se entera hasta que algo más no cuadra. */
+const enlaceAlta = (camp) => sitioDe(camp) + '/jugador.html?c=' + camp;
+eq(enlaceAlta(HOO), 'https://hooporia.com/jugador.html?c=' + HOO,
+   'un jugador de Hooporia se da de alta en hooporia.com');
+eq(enlaceAlta(CP), 'https://cadapunto.com/jugador.html?c=' + CP,
+   'y uno de Cada Punto en cadapunto.com');
+
 console.log('\n5 · Una campaña que todavía no se ha cargado\n');
 eq(sitioDe(NUEVA, 'fortress'), 'https://cadapunto.com',
    'cae en cada-punto, que es lo que eran todas antes de la columna');
