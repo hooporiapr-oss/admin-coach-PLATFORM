@@ -274,6 +274,33 @@
             <label data-i18n="runDeadline">Runs Close</label>
             <input type="date" id="challengeRunDeadline">
 
+            <!-- ══════════════════════════════════════════════════════
+                 LA VENTANA DEL JUEGO
+
+                 Sin esto el reto no existe para nadie: cp_reto_vivo
+                 pide live = true Y las dos horas puestas, y hasta que
+                 no están, el enlace del jugador y el del padrino no
+                 hacen nada y no dicen por qué. Se ponía a mano en SQL.
+                 ══════════════════════════════════════════════════ -->
+            <label data-i18n="windowTitle" style="margin-top:16px;">Game window</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:150px;">
+                <small style="color:#888;font-size:11px;" data-i18n="opensAt">Opens</small>
+                <input type="datetime-local" id="challengeOpensAt" style="width:100%;">
+              </div>
+              <div style="flex:1;min-width:150px;">
+                <small style="color:#888;font-size:11px;" data-i18n="closesAt">Closes</small>
+                <input type="datetime-local" id="challengeClosesAt" style="width:100%;">
+              </div>
+            </div>
+            <p style="margin:6px 0 0 0;font-size:11px;color:#888;" data-i18n="windowNote">
+              Pledging closes the moment the window opens, and quarters only save inside it. A challenge with no window cannot be played, live or not.
+            </p>
+
+            <label style="display:flex;align-items:center;gap:9px;margin-top:14px;cursor:pointer;">
+              <input type="checkbox" id="challengeLive" style="width:16px;height:16px;">
+              <span data-i18n="startLive">Live now — players and sponsors can see their links</span>
+            </label>
 
             <div style="display:flex;gap:10px;margin-top:12px;">
               <button class="btn" onclick="createChallenge()" data-i18n="createChallengeBtn">Create Challenge</button>
@@ -562,6 +589,15 @@
         switchTeam:'Switch team',
         challenges:'Challenges', newChallenge:'+ New Challenge', createChallenge:'Create a Challenge',
         gameNote:'A school challenge is scored on The Replay and The Recall together, whichever you pick here — this only sets which game the practice button opens. A basketball challenge is scored on the game you pick.',
+        windowTitle:'Game window', opensAt:'Opens', closesAt:'Closes',
+        windowNote:'Pledging closes the moment the window opens, and quarters only save inside it. A challenge with no window cannot be played, live or not.',
+        startLive:'Live now — players and sponsors can see their links',
+        saveWindow:'Save window', windowSaved:'Window saved.',
+        noWindowYet:'No game window set — nobody can play this yet.',
+        windowNeedsBoth:'Set both ends — opens and closes. A window with one end missing does not open the challenge.',
+        windowBackwards:'Closes has to be after opens. With the two the other way round nobody can play and the pledges close themselves at zero.',
+        liveNeedsWindow:'Set the game window first. Live with no window means the links still do nothing.',
+        notSaved:'Nothing was saved. You may be signed out, or this campaign may not be yours.',
         gameNoteAnotado:'A Hooporia challenge is the four-quarter scrimmage. It is the board the site shows and the only one that records quarter by quarter, so it is the only one offered here.',
         challengeCampaign:'Campaign', selectCampaign:'Select a campaign...', challengeName:'Challenge Name',
         challengeNamePh:'e.g. Fall Fortress Challenge', pledgeDeadline:'Pledges Close', runDeadline:'Runs Close',
@@ -967,6 +1003,15 @@
         switchTeam:'Cambiar equipo',
         challenges:'Retos', newChallenge:'+ Nuevo reto', createChallenge:'Crear un reto',
         gameNote:'Un reto escolar se punt\u00faa con The Replay y The Recall juntos, escojas lo que escojas aqu\u00ed — esto solo fija qu\u00e9 juego abre el bot\u00f3n de pr\u00e1ctica. Un reto de baloncesto se punt\u00faa con el juego que escojas.',
+        windowTitle:'Ventana del juego', opensAt:'Abre', closesAt:'Cierra',
+        windowNote:'Las promesas cierran en cuanto la ventana abre, y los cuartos s\u00f3lo se guardan dentro de ella. Un reto sin ventana no se puede jugar, est\u00e9 vivo o no.',
+        startLive:'Vivo ya — jugadores y padrinos ven sus enlaces',
+        saveWindow:'Guardar ventana', windowSaved:'Ventana guardada.',
+        noWindowYet:'Sin ventana de juego — todav\u00eda no puede jugar nadie.',
+        windowNeedsBoth:'Pon las dos horas, la de abrir y la de cerrar. Una ventana a medias no abre el reto.',
+        windowBackwards:'La de cerrar tiene que ser despu\u00e9s de la de abrir. Al rev\u00e9s nadie puede jugar y las promesas se cierran solas en cero.',
+        liveNeedsWindow:'Pon primero la ventana del juego. Vivo y sin ventana es que los enlaces siguen sin hacer nada.',
+        notSaved:'No se guard\u00f3 nada. Puede que no hayas iniciado sesi\u00f3n, o que esa campa\u00f1a no sea tuya.',
         gameNoteAnotado:'Un reto de Hooporia es el scrimmage de cuatro cuartos. Es el tablero que el sitio ense\u00f1a y el \u00fanico que guarda cuarto a cuarto, as\u00ed que es el \u00fanico que se ofrece aqu\u00ed.',
         challengeCampaign:'Campa\u00f1a', selectCampaign:'Selecciona una campa\u00f1a...', challengeName:'Nombre del reto',
         challengeNamePh:'ej. Reto Fortress de Oto\u00f1o', pledgeDeadline:'Cierran las promesas', runDeadline:'Cierran las corridas',
@@ -4722,12 +4767,44 @@
       }
     }
 
+    /* ── La ventana del juego, de la pantalla a la base y al revés ───
+       Los <input type="datetime-local"> hablan en hora local y sin
+       zona: "2026-10-19T19:30". new Date() de esa cadena la lee en la
+       zona del navegador, que es la del que está poniendo la hora, y
+       toISOString() la manda en UTC, que es lo que la columna guarda.
+       Pasar la cadena tal cual sería mandar la hora de Puerto Rico
+       haciéndola pasar por UTC: cuatro horas de corrimiento y un
+       partido que abre cuando ya terminó. */
+    function ventanaAISO(v) { return v ? new Date(v).toISOString() : null; }
+    function ventanaALocal(iso) {
+      if (!iso) return '';
+      const d = new Date(iso), p = (n) => String(n).padStart(2, '0');
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
+             'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+
+    /* Lo que no puede salir de aquí hacia la base. El último es el
+       guardia que ya existe en la base (challenges_ventana_coherente):
+       mejor decirlo con palabras aquí que dejar que suba un error de
+       Postgres a un alert. */
+    function ventanaMal(abre, cierra, vivo) {
+      if (vivo && !(abre && cierra)) return t('liveNeedsWindow');
+      if ((abre && !cierra) || (cierra && !abre)) return t('windowNeedsBoth');
+      if (abre && cierra && new Date(cierra) <= new Date(abre)) return t('windowBackwards');
+      return null;
+    }
+
     async function createChallenge() {
       const campaignId = document.getElementById('challengeCampaign').value;
       const name = document.getElementById('challengeName').value.trim();
+      const abre = document.getElementById('challengeOpensAt').value;
+      const cierra = document.getElementById('challengeClosesAt').value;
+      const vivo = document.getElementById('challengeLive').checked;
 
       if (!campaignId) { alert(t('selectCampaign')); return; }
       if (!name) { alert(t('enterChallengeName')); return; }
+      const problema = ventanaMal(abre, cierra, vivo);
+      if (problema) { alert(problema); return; }
 
       try {
         const slug = name.toLowerCase().trim()
@@ -4741,10 +4818,16 @@
           game: document.getElementById('challengeGame').value,
           pledge_deadline: document.getElementById('challengePledgeDeadline').value || null,
           run_deadline: document.getElementById('challengeRunDeadline').value || null,
+          opens_at: ventanaAISO(abre),
+          closes_at: ventanaAISO(cierra),
+          live: vivo,
           team_share_pct: 100
         }, '?select=*');
 
         document.getElementById('challengeName').value = '';
+        document.getElementById('challengeOpensAt').value = '';
+        document.getElementById('challengeClosesAt').value = '';
+        document.getElementById('challengeLive').checked = false;
         document.getElementById('createChallengeForm').style.display = 'none';
         loadChallenges();
         alert(t('challengeCreated'));
@@ -4756,12 +4839,47 @@
 
     // Whether students can see their own padrino links yet. Off until
     // you say so, so nothing goes out before pledging opens.
+    /* Una PATCH que RLS no deja pasar no es un error: la base
+       responde 200 con una lista vacía, o sea "no actualicé nada" sin
+       decir que no pudo. Pedimos la fila de vuelta —Prefer ya va en
+       representation— y si no viene ninguna, se dice. Esto es lo que
+       hacía que marcar un reto como vivo pareciera no hacer nada:
+       la casilla volvía sola a su sitio y en pantalla no pasaba nada. */
+    function seGuardo(filas) { return Array.isArray(filas) ? filas.length > 0 : !!filas; }
+
     async function setChallengeLive(challengeId, live) {
       try {
-        await supabaseQuery(`challenges?id=eq.${challengeId}`, 'PATCH', { live });
+        const filas = await supabaseQuery(`challenges?id=eq.${challengeId}`, 'PATCH',
+                                          { live }, '?select=*');
+        if (!seGuardo(filas)) { alert(t('notSaved')); }
         loadChallenges();
       } catch (error) {
         console.error('Live:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    /* La ventana, ya creado el reto. Antes esto era entrar al editor
+       de SQL — y el día de un partido, con los nenes esperando, eso
+       no es una opción. */
+    async function guardarVentana(challengeId) {
+      const abre = document.getElementById('abre-' + challengeId);
+      const cierra = document.getElementById('cierra-' + challengeId);
+      if (!abre || !cierra) return;
+
+      const problema = ventanaMal(abre.value, cierra.value, false);
+      if (problema) { alert(problema); return; }
+
+      try {
+        const filas = await supabaseQuery(`challenges?id=eq.${challengeId}`, 'PATCH', {
+          opens_at: ventanaAISO(abre.value),
+          closes_at: ventanaAISO(cierra.value)
+        }, '?select=*');
+        if (!seGuardo(filas)) { alert(t('notSaved')); return; }
+        alert(t('windowSaved'));
+        loadChallenges();
+      } catch (error) {
+        console.error('Ventana:', error);
         alert('Error: ' + error.message);
       }
     }
@@ -4816,6 +4934,25 @@
                   <input type="checkbox" ${ch.live ? 'checked' : ''} onchange="setChallengeLive('${ch.id}',this.checked)" style="width:16px;height:16px;">
                   <span>${ch.live ? t('liveOn') : t('liveOff')}</span>
                 </label>
+
+                <!-- La ventana, a la vista y editable. Vivo sin
+                     ventana es el estado que no dice nada y no deja
+                     jugar a nadie, así que aquí se dice. -->
+                <div style="margin-top:8px;display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap;">
+                  <div>
+                    <small style="display:block;color:#888;font-size:10px;">${t('opensAt')}</small>
+                    <input type="datetime-local" id="abre-${ch.id}" value="${ventanaALocal(ch.opens_at)}"
+                           style="padding:5px 7px;font-size:11px;border-radius:7px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;">
+                  </div>
+                  <div>
+                    <small style="display:block;color:#888;font-size:10px;">${t('closesAt')}</small>
+                    <input type="datetime-local" id="cierra-${ch.id}" value="${ventanaALocal(ch.closes_at)}"
+                           style="padding:5px 7px;font-size:11px;border-radius:7px;border:1px solid #ffffff1d;background:#0e0a11;color:#fff;font-family:inherit;">
+                  </div>
+                  <button class="btn alt" onclick="guardarVentana('${ch.id}')" style="padding:6px 10px;font-size:11px;">${t('saveWindow')}</button>
+                </div>
+                ${(!ch.opens_at || !ch.closes_at) ? `
+                  <p style="margin:6px 0 0 0;font-size:11px;color:#FFB020;">${t('noWindowYet')}</p>` : ''}
               </div>
               <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
                 <button class="btn" onclick="copyChallengeLink('${ch.id}','${ch.game}','${ch.campaign_id}')" style="padding:6px 10px;font-size:11px;">${t('teamLink')}</button>
