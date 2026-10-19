@@ -1985,11 +1985,13 @@
               <div style="color:#888;font-size:11px;margin-top:5px;">${t('logoNote')}</div>
             </div>
 
-            <button class="btn" onclick="gameForm('${campaignId}')" style="margin-bottom:10px;">+ ${t('addGame')}</button>
-            <div id="gameFormBox-${campaignId}" style="display:none;margin-bottom:12px;"></div>
-            <button class="btn alt" onclick="shareBoard('${campaignId}')" style="margin-bottom:10px;">${t('waBoard')}</button>
+            ${hayCalendario(campaignId) ? `
+              <button class="btn" onclick="gameForm('${campaignId}')" style="margin-bottom:10px;">+ ${t('addGame')}</button>
+              <div id="gameFormBox-${campaignId}" style="display:none;margin-bottom:12px;"></div>
+              <button class="btn alt" onclick="shareBoard('${campaignId}')" style="margin-bottom:10px;">${t('waBoard')}</button>` : ''}
             <button class="btn alt" onclick="sharePlayers('${campaignId}')" style="margin-bottom:10px;">${t('waPlayers')}</button>
-            <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="margin-bottom:10px;">${t('copyBoard')}</button>
+            ${hayCalendario(campaignId) ? `
+              <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="margin-bottom:10px;">${t('copyBoard')}</button>` : ''}
             <button class="btn alt" onclick="copyJoinLink('${campaignId}')" style="margin-bottom:10px;">${t('copyJoin')}</button>
 
             <div id="playerPledges-${campaignId}"></div>
@@ -2083,8 +2085,21 @@
       }
     }
 
+    /* "Su enlace" — el que el jugador manda a su familia.
+
+       En Cada Punto es el calendario filtrado por él: el padrino
+       escoge un partido y promete por los puntos del equipo esa
+       noche. En Hooporia no hay calendario que filtrar, así que es
+       su página de prometer, donde se promete por SUS puntos.
+
+       Mismo botón, misma idea —dale esto a tu familia— y dos
+       páginas distintas, porque son dos productos distintos. Antes
+       era scoreboard.html para los dos, que en hooporia.com no
+       existe. */
     function copyPlayerBoard(campaignId, playerId) {
-      const url = `https://cadapunto.com/scoreboard.html?c=${campaignId}&p=${playerId}`;
+      const url = hayCalendario(campaignId)
+        ? `${sitioDe(campaignId)}/scoreboard.html?c=${campaignId}&p=${playerId}`
+        : `${pledgeBase(null, campaignId)}?c=${campaignId}&p=${playerId}`;
       navigator.clipboard.writeText(url)
         .then(() => alert(t('copied') + '\n\n' + url))
         .catch(() => prompt(t('copyManually'), url));
@@ -2468,7 +2483,7 @@
     }
 
     function shareBoard(campaignId) {
-      const url = `https://cadapunto.com/scoreboard.html?c=${campaignId}`;
+      const url = `${sitioDe(campaignId)}/scoreboard.html?c=${campaignId}`;
       waShare(
         '¡Apoya a nuestro equipo! Aquí está nuestro calendario. Escoges un juego, prometes unos ' +
         'centavos por cada punto que anotemos, y pagas sólo después del juego. Ganemos o perdamos, ' +
@@ -2481,7 +2496,7 @@
     }
 
     function copyBoardLink(campaignId) {
-      const url = `https://cadapunto.com/scoreboard.html?c=${campaignId}`;
+      const url = `${sitioDe(campaignId)}/scoreboard.html?c=${campaignId}`;
       navigator.clipboard.writeText(url)
         .then(() => alert(t('copied') + '\n\n' + url))
         .catch(() => prompt(t('copyManually'), url));
@@ -4199,6 +4214,22 @@
         return productoDe(campaignId) !== 'anotado';
       }
 
+      /* ── ¿Tiene calendario este producto? ─────────────────────────
+         Cada Punto sí: su evento es un partido de verdad, con su
+         fecha y su rival, y los padrinos prometen por los puntos que
+         anote el equipo esa noche. De ahí el calendario, el tablero
+         público y "+ Añadir juego".
+
+         Hooporia no. Su evento es la corrida de un jugador dentro de
+         una ventana, y no hay rival ni fecha que poner. Ofrecerle un
+         calendario a un entrenador de Hooporia no es un enlace
+         equivocado: es una función entera del otro producto puesta
+         en el suyo, y encima apuntando al otro dominio, donde
+         scoreboard.html sí existe. */
+      function hayCalendario(campaignId) {
+        return productoDe(campaignId) !== 'anotado';
+      }
+
     function siteFor(game, campaignId) {
       return sitioDe(campaignId, game);
     }
@@ -5129,10 +5160,12 @@
               </div>` : ''}
 
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
-              <button class="btn" onclick="gameForm('${campaignId}')" style="padding:6px 10px;font-size:11px;">+ ${t('addGame')}</button>
-              <button class="btn alt" onclick="shareBoard('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('waBoard')}</button>
+              ${hayCalendario(campaignId) ? `
+                <button class="btn" onclick="gameForm('${campaignId}')" style="padding:6px 10px;font-size:11px;">+ ${t('addGame')}</button>
+                <button class="btn alt" onclick="shareBoard('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('waBoard')}</button>` : ''}
               <button class="btn alt" onclick="sharePlayers('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('waPlayers')}</button>
-              <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('copyBoard')}</button>
+              ${hayCalendario(campaignId) ? `
+                <button class="btn alt" onclick="copyBoardLink('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('copyBoard')}</button>` : ''}
               <button class="btn alt" onclick="copyJoinLink('${campaignId}')" style="padding:6px 10px;font-size:11px;">${t('copyJoin')}</button>
             </div>
 
